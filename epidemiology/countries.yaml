@@ -1,0 +1,344 @@
+# Tier-1 country reference data for synthea-eu-cancer
+#
+# Scope: EU-27 + EFTA-4 (the ECIS coverage area).
+#
+# Per-country fields:
+#   iso_alpha2 / iso_alpha3 — ISO 3166-1
+#   nuts0                   — NUTS level-0 code (= alpha-2, except EL for Greece)
+#   eu27                    — EU member state (true) or EFTA (false)
+#   primary_identifier      — FHIR Patient.identifier.system for the dominant
+#                             national patient/insurance identifier
+#
+# Identifier-system URIs marked `TBD` need verification against the relevant
+# national FHIR base IG (e.g. DE Basisprofile, NL Nictiz, CH Core, FR Core,
+# IT IG, ES IG). Do NOT publish synthetic data with a TBD identifier system —
+# either confirm the URI from the IG, or use an explicitly-namespaced placeholder
+# such as `urn:synderai:placeholder:<country>:<id-kind>` and document it.
+#
+# Sources for reference data:
+#   ISO 3166:  https://www.iso.org/obp/ui/
+#   NUTS:      https://ec.europa.eu/eurostat/web/nuts
+#   Eurostat demography (demo_pjan): https://ec.europa.eu/eurostat/databrowser/view/demo_pjan
+#   National FHIR IGs:
+#     DE — https://simplifier.net/basisprofil-de-r4
+#     NL — https://simplifier.net/packages/nictiz.fhir.nl.r4.zib2020
+#     CH — https://fhir.ch/ig/ch-core/
+#     FR — https://hl7.fr/ig/fhir/core/
+#     AT — https://www.elga.gv.at/cdaaustria/fhir/
+#     IT — https://hl7italia.it/
+
+countries:
+
+  # ────────────────────── EU-27 ──────────────────────
+
+  - name: Austria
+    iso_alpha2: AT
+    iso_alpha3: AUT
+    nuts0: AT
+    eu27: true
+    primary_identifier:
+      label: Sozialversicherungsnummer (SVNR)
+      system: urn:oid:1.2.40.0.10.1.4.3.1   # verify against AT FHIR IG
+      verified: false
+
+  - name: Belgium
+    iso_alpha2: BE
+    iso_alpha3: BEL
+    nuts0: BE
+    eu27: true
+    primary_identifier:
+      label: Rijksregisternummer / Numéro National
+      system: TBD
+      verified: false
+
+  - name: Bulgaria
+    iso_alpha2: BG
+    iso_alpha3: BGR
+    nuts0: BG
+    eu27: true
+    primary_identifier:
+      label: EGN (Edinen grazhdanski nomer)
+      system: TBD
+      verified: false
+
+  - name: Croatia
+    iso_alpha2: HR
+    iso_alpha3: HRV
+    nuts0: HR
+    eu27: true
+    primary_identifier:
+      label: OIB (Osobni identifikacijski broj)
+      system: TBD
+      verified: false
+
+  - name: Cyprus
+    iso_alpha2: CY
+    iso_alpha3: CYP
+    nuts0: CY
+    eu27: true
+    primary_identifier:
+      label: Civil Registry Number
+      system: TBD
+      verified: false
+
+  - name: Czechia
+    iso_alpha2: CZ
+    iso_alpha3: CZE
+    nuts0: CZ
+    eu27: true
+    primary_identifier:
+      label: Rodné číslo
+      system: TBD
+      verified: false
+
+  - name: Denmark
+    iso_alpha2: DK
+    iso_alpha3: DNK
+    nuts0: DK
+    eu27: true
+    primary_identifier:
+      label: CPR-nummer
+      system: TBD
+      verified: false
+
+  - name: Estonia
+    iso_alpha2: EE
+    iso_alpha3: EST
+    nuts0: EE
+    eu27: true
+    primary_identifier:
+      label: Isikukood
+      system: TBD
+      verified: false
+
+  - name: Finland
+    iso_alpha2: FI
+    iso_alpha3: FIN
+    nuts0: FI
+    eu27: true
+    primary_identifier:
+      label: Henkilötunnus (HETU)
+      system: TBD
+      verified: false
+
+  - name: France
+    iso_alpha2: FR
+    iso_alpha3: FRA
+    nuts0: FR
+    eu27: true
+    primary_identifier:
+      label: Identité Nationale de Santé (INS-NIR)
+      system: TBD                          # check hl7.fr/ig/fhir/core
+      verified: false
+
+  - name: Germany
+    iso_alpha2: DE
+    iso_alpha3: DEU
+    nuts0: DE
+    eu27: true
+    primary_identifier:
+      label: KVNR (gesetzliche Krankenversicherung)
+      system: http://fhir.de/sid/gkv/kvid-10
+      verified: true                       # DE Basisprofile R4
+
+  - name: Greece
+    iso_alpha2: GR
+    iso_alpha3: GRC
+    nuts0: EL                              # NUTS uses EL, ISO uses GR
+    eu27: true
+    primary_identifier:
+      label: AMKA (Social Security Number)
+      system: TBD
+      verified: false
+
+  - name: Hungary
+    iso_alpha2: HU
+    iso_alpha3: HUN
+    nuts0: HU
+    eu27: true
+    primary_identifier:
+      label: TAJ-szám
+      system: TBD
+      verified: false
+
+  - name: Ireland
+    iso_alpha2: IE
+    iso_alpha3: IRL
+    nuts0: IE
+    eu27: true
+    primary_identifier:
+      label: PPS Number / IHI
+      system: TBD
+      verified: false
+
+  - name: Italy
+    iso_alpha2: IT
+    iso_alpha3: ITA
+    nuts0: IT
+    eu27: true
+    primary_identifier:
+      label: Codice Fiscale
+      system: TBD                          # check HL7 Italia base IG
+      verified: false
+
+  - name: Latvia
+    iso_alpha2: LV
+    iso_alpha3: LVA
+    nuts0: LV
+    eu27: true
+    primary_identifier:
+      label: Personas kods
+      system: TBD
+      verified: false
+
+  - name: Lithuania
+    iso_alpha2: LT
+    iso_alpha3: LTU
+    nuts0: LT
+    eu27: true
+    primary_identifier:
+      label: Asmens kodas
+      system: TBD
+      verified: false
+
+  - name: Luxembourg
+    iso_alpha2: LU
+    iso_alpha3: LUX
+    nuts0: LU
+    eu27: true
+    primary_identifier:
+      label: Matricule national
+      system: TBD
+      verified: false
+
+  - name: Malta
+    iso_alpha2: MT
+    iso_alpha3: MLT
+    nuts0: MT
+    eu27: true
+    primary_identifier:
+      label: ID Card Number
+      system: TBD
+      verified: false
+
+  - name: Netherlands
+    iso_alpha2: NL
+    iso_alpha3: NLD
+    nuts0: NL
+    eu27: true
+    primary_identifier:
+      label: Burgerservicenummer (BSN)
+      system: http://fhir.nl/fhir/NamingSystem/bsn
+      verified: true                       # Nictiz zib2020
+
+  - name: Poland
+    iso_alpha2: PL
+    iso_alpha3: POL
+    nuts0: PL
+    eu27: true
+    primary_identifier:
+      label: PESEL
+      system: TBD
+      verified: false
+
+  - name: Portugal
+    iso_alpha2: PT
+    iso_alpha3: PRT
+    nuts0: PT
+    eu27: true
+    primary_identifier:
+      label: Número de Utente do SNS
+      system: TBD
+      verified: false
+
+  - name: Romania
+    iso_alpha2: RO
+    iso_alpha3: ROU
+    nuts0: RO
+    eu27: true
+    primary_identifier:
+      label: CNP (Cod Numeric Personal)
+      system: TBD
+      verified: false
+
+  - name: Slovakia
+    iso_alpha2: SK
+    iso_alpha3: SVK
+    nuts0: SK
+    eu27: true
+    primary_identifier:
+      label: Rodné číslo
+      system: TBD
+      verified: false
+
+  - name: Slovenia
+    iso_alpha2: SI
+    iso_alpha3: SVN
+    nuts0: SI
+    eu27: true
+    primary_identifier:
+      label: EMŠO
+      system: TBD
+      verified: false
+
+  - name: Spain
+    iso_alpha2: ES
+    iso_alpha3: ESP
+    nuts0: ES
+    eu27: true
+    primary_identifier:
+      label: DNI / NIE / CIP
+      system: TBD                          # check ES FHIR base
+      verified: false
+
+  - name: Sweden
+    iso_alpha2: SE
+    iso_alpha3: SWE
+    nuts0: SE
+    eu27: true
+    primary_identifier:
+      label: Personnummer
+      system: TBD
+      verified: false
+
+  # ────────────────────── EFTA-4 ──────────────────────
+
+  - name: Iceland
+    iso_alpha2: IS
+    iso_alpha3: ISL
+    nuts0: IS
+    eu27: false
+    primary_identifier:
+      label: Kennitala
+      system: TBD
+      verified: false
+
+  - name: Liechtenstein
+    iso_alpha2: LI
+    iso_alpha3: LIE
+    nuts0: LI
+    eu27: false
+    primary_identifier:
+      label: AHV-Nummer
+      system: TBD
+      verified: false
+
+  - name: Norway
+    iso_alpha2: NO
+    iso_alpha3: NOR
+    nuts0: NO
+    eu27: false
+    primary_identifier:
+      label: Fødselsnummer
+      system: TBD
+      verified: false
+
+  - name: Switzerland
+    iso_alpha2: CH
+    iso_alpha3: CHE
+    nuts0: CH
+    eu27: false
+    primary_identifier:
+      label: AHV-Nummer (AHVN13)
+      system: urn:oid:2.16.756.5.32
+      verified: false                      # verify against CH Core

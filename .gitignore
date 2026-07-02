@@ -1,0 +1,12 @@
+output/
+synthea/output/
+/synthea/
+synthea-with-dependencies.jar
+*.log
+.DS_Store
+.gradle/
+build/
+.idea/
+*.iml
+.venv/
+__pycache__/

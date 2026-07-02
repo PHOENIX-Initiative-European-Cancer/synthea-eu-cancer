@@ -1,0 +1,1452 @@
+{
+  "name": "Prostate (BPH / Prostate Cancer)",
+  "remarks": [
+    "Synthea Generic Module Framework state machine for the prostate pathway in males aged 50-60.",
+    "CLINICAL MODEL (agreed with domain expert): BPH is NOT modelled as a precursor of prostate cancer.",
+    "Instead, a shared SYMPTOM TRIGGER (LUTS: nocturia, weak stream, pelvic/urinary pain) brings the man to",
+    "urology; the diagnostic work-up (PSA + DRE + TRUS, then mpMRI + biopsy if PSA elevated) then BRANCHES into",
+    "either benign prostatic hyperplasia (BPH) or prostate cancer (PCa). BPH is the diagnostic OCCASION, not the cause.",
+    "",
+    "CALIBRATION: EAU-EANM-ESTRO-ESUR-ISUP-SIOG 2024 guideline provides the STRUCTURE of the pathway;",
+    "German S3-Leitlinie Prostatakarzinom v8.1 (2025) and German cancer-registry data (ZfKD/RKI 'Krebs in",
+    "Deutschland', ECIS) calibrate the transition PROBABILITIES. Every calibrated arrow carries a 'remarks'",
+    "citation; the full source trace is in epidemiology/prostate_calibration.md.",
+    "",
+    "SCOPE: this is a PROTOTYPE (module-JSON only, not yet run). All terminology codes VALIDATED against",
+    "the CEIR-OS terminology server (SNOMED INT 20250701); full trace in terminology/snomed_data_dictionary.md.",
+    "Note: TRUS/mpMRI need prostate bodySite post-coordination; PI-RADS uses LOINC 82717-8 (no SNOMED).",
+    "",
+    "COHORT DESIGN (deliberate selection, NOT epidemiology): 100% of males 50-60 present symptomatically to",
+    "  urology (LUTS trigger). This defines a SELECTED symptomatic cohort for maximal pathway-trace yield.",
+    "All downstream probabilities are clinically calibrated - see remarks + epidemiology/prostate_calibration.md.",
+    "Medications are dual-coded WHO-ATC (http://www.whocc.no/atc, validated on tx.fhir.org) + ATC-DE/BfArM (http://fhir.de/CodeSystem/bfarm/atc, validated on MII termserver) per MII-Onko issue #283 (intl + national)."
+  ],
+  "gmf_version": 2,
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "direct_transition": "Male_Guard"
+    },
+    "Male_Guard": {
+      "type": "Guard",
+      "remarks": [
+        "Only males proceed - prostate pathway."
+      ],
+      "allow": {
+        "condition_type": "Gender",
+        "gender": "M"
+      },
+      "direct_transition": "Age_50_Guard"
+    },
+    "Age_50_Guard": {
+      "type": "Guard",
+      "remarks": [
+        "Cohort = symptomatic men 50-60 presenting to urology. Every male reaching 50 presents with LUTS (100% presentation) - a deliberately SELECTED population for a high-yield test corpus, NOT an epidemiologically representative presentation rate."
+      ],
+      "allow": {
+        "condition_type": "Age",
+        "operator": ">=",
+        "quantity": 50,
+        "unit": "years"
+      },
+      "direct_transition": "Nocturia_Symptom"
+    },
+    "Nocturia_Symptom": {
+      "type": "Symptom",
+      "symptom": "Nocturia",
+      "cause": "Lower urinary tract symptoms",
+      "probability": 1,
+      "range": {
+        "low": 40,
+        "high": 80
+      },
+      "direct_transition": "Voiding_Symptom"
+    },
+    "Voiding_Symptom": {
+      "type": "Symptom",
+      "symptom": "Weak urinary stream",
+      "cause": "Lower urinary tract symptoms",
+      "probability": 1,
+      "range": {
+        "low": 40,
+        "high": 85
+      },
+      "direct_transition": "Urology_Encounter"
+    },
+    "Urology_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "reason": "lower_urinary_tract_symptoms",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185345009",
+          "display": "Encounter for symptom"
+        }
+      ],
+      "direct_transition": "DRE"
+    },
+    "DRE": {
+      "type": "Procedure",
+      "remarks": [
+        "Digital rectal exam. S3 v8.1 demoted DRE from first screening test but it remains part of work-up."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "410006001",
+          "display": "Digital examination of rectum"
+        }
+      ],
+      "duration": {
+        "low": 3,
+        "high": 8,
+        "unit": "minutes"
+      },
+      "direct_transition": "Workup_Branch"
+    },
+    "Workup_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Split of symptomatic 50-60 men after PSA/DRE into 'benign, no biopsy indication' vs 'elevated PSA -> imaging/biopsy'.",
+        "Among symptomatic men the eventual diagnosis is overwhelmingly BPH; cancer is found only in the PSA-elevated minority",
+        "(LUTS is not itself a PCa risk factor per EAU). Calibrated to ~30% suspicious/elevated-PSA entering the imaging pathway",
+        "(BPH inflates PSA in symptomatic men, so higher than the ~5% healthy-population >3.2 ng/mL rate).",
+        "Source: PMC8317798 (LUTS cohort ~67% benign); EAU 2024 diagnostic pathway."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "BPH_PSA_Obs",
+          "distribution": 0.7
+        },
+        {
+          "transition": "Elevated_PSA_Obs",
+          "distribution": 0.3
+        }
+      ]
+    },
+    "BPH_PSA_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "ng/mL",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "2857-1",
+          "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      "range": {
+        "low": 1.2,
+        "high": 4.0
+      },
+      "direct_transition": "TRUS_Benign"
+    },
+    "TRUS_Benign": {
+      "type": "Procedure",
+      "remarks": [
+        "Transrectal ultrasound - benign enlarged gland picture. Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "429820004",
+          "display": "Endorectal ultrasonography"
+        }
+      ],
+      "duration": {
+        "low": 10,
+        "high": 20,
+        "unit": "minutes"
+      },
+      "direct_transition": "BPH_Onset"
+    },
+    "Elevated_PSA_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "ng/mL",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "2857-1",
+          "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      "remarks": [
+        "Grey-zone / elevated PSA. EAU functional action threshold 3 ng/mL; S3 confirmed-biopsy threshold 4 ng/mL."
+      ],
+      "range": {
+        "low": 4.0,
+        "high": 12.0
+      },
+      "direct_transition": "TRUS_Suspicious"
+    },
+    "TRUS_Suspicious": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "429820004",
+          "display": "Endorectal ultrasonography"
+        }
+      ],
+      "duration": {
+        "low": 10,
+        "high": 20,
+        "unit": "minutes"
+      },
+      "direct_transition": "mpMRI"
+    },
+    "mpMRI": {
+      "type": "Procedure",
+      "remarks": [
+        "EAU 2024: mpMRI BEFORE biopsy to avoid unnecessary biopsies. Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "1144760005",
+          "display": "Multiparametric magnetic resonance imaging"
+        }
+      ],
+      "duration": {
+        "low": 30,
+        "high": 45,
+        "unit": "minutes"
+      },
+      "direct_transition": "PIRADS_Branch"
+    },
+    "PIRADS_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "PI-RADS distribution among elevated-PSA symptomatic men (ESTIMATE - flag). PI-RADS 1-2 => no biopsy (EAU/S3).",
+        "Resulting csPCa yield among those entering MRI ~= 0.20*0.16 + 0.25*0.59 + 0.15*0.85 ~= 31% (matches PRECISION-era",
+        "MRI-pathway ~35-38% csPCa among biopsied). Detection rates per PI-RADS from Oerther meta-analysis PMC9184264."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "PIRADS_1_2",
+          "distribution": 0.4
+        },
+        {
+          "transition": "PIRADS_3",
+          "distribution": 0.2
+        },
+        {
+          "transition": "PIRADS_4",
+          "distribution": 0.25
+        },
+        {
+          "transition": "PIRADS_5",
+          "distribution": 0.15
+        }
+      ]
+    },
+    "PIRADS_1_2": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "82717-8",
+          "display": "Prostate Imaging Reporting and Data System version 2 category"
+        }
+      ],
+      "range": {
+        "low": 1,
+        "high": 2
+      },
+      "remarks": [
+        "PI-RADS <=2: EAU/S3 - no biopsy. Elevated PSA attributed to BPH; enter benign branch with PSA monitoring."
+      ],
+      "direct_transition": "No_Biopsy_Benign"
+    },
+    "No_Biopsy_Benign": {
+      "type": "Simple",
+      "direct_transition": "BPH_Onset"
+    },
+    "PIRADS_3": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "82717-8",
+          "display": "Prostate Imaging Reporting and Data System version 2 category"
+        }
+      ],
+      "exact": {
+        "quantity": 3
+      },
+      "direct_transition": "Biopsy_PR3"
+    },
+    "Biopsy_PR3": {
+      "type": "Procedure",
+      "remarks": [
+        "Targeted + systematic biopsy after PI-RADS 3. csPCa (ISUP>=2) yield 16% (patient-level, Oerther PMC9184264).",
+        "Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "236258004",
+          "display": "Needle biopsy of prostate"
+        }
+      ],
+      "duration": {
+        "low": 15,
+        "high": 25,
+        "unit": "minutes"
+      },
+      "distributed_transition": [
+        {
+          "transition": "Cancer_RiskGroup_Branch",
+          "distribution": 0.16
+        },
+        {
+          "transition": "Benign_Biopsy",
+          "distribution": 0.84
+        }
+      ]
+    },
+    "PIRADS_4": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "82717-8",
+          "display": "Prostate Imaging Reporting and Data System version 2 category"
+        }
+      ],
+      "exact": {
+        "quantity": 4
+      },
+      "direct_transition": "Biopsy_PR4"
+    },
+    "Biopsy_PR4": {
+      "type": "Procedure",
+      "remarks": [
+        "csPCa yield 59% at PI-RADS 4 (patient-level, Oerther PMC9184264). Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "236258004",
+          "display": "Needle biopsy of prostate"
+        }
+      ],
+      "duration": {
+        "low": 15,
+        "high": 25,
+        "unit": "minutes"
+      },
+      "distributed_transition": [
+        {
+          "transition": "Cancer_RiskGroup_Branch",
+          "distribution": 0.59
+        },
+        {
+          "transition": "Benign_Biopsy",
+          "distribution": 0.41
+        }
+      ]
+    },
+    "PIRADS_5": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "82717-8",
+          "display": "Prostate Imaging Reporting and Data System version 2 category"
+        }
+      ],
+      "exact": {
+        "quantity": 5
+      },
+      "direct_transition": "Biopsy_PR5"
+    },
+    "Biopsy_PR5": {
+      "type": "Procedure",
+      "remarks": [
+        "csPCa yield 85% at PI-RADS 5 (patient-level, Oerther PMC9184264). Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "236258004",
+          "display": "Needle biopsy of prostate"
+        }
+      ],
+      "duration": {
+        "low": 15,
+        "high": 25,
+        "unit": "minutes"
+      },
+      "distributed_transition": [
+        {
+          "transition": "Cancer_RiskGroup_Branch",
+          "distribution": 0.85
+        },
+        {
+          "transition": "Benign_Biopsy",
+          "distribution": 0.15
+        }
+      ]
+    },
+    "Benign_Biopsy": {
+      "type": "Simple",
+      "remarks": [
+        "Negative biopsy in a symptomatic man with elevated PSA -> managed as BPH."
+      ],
+      "direct_transition": "BPH_Onset"
+    },
+    "BPH_Onset": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "266569009",
+          "display": "Hyperplasia of prostate"
+        }
+      ],
+      "target_encounter": "Urology_Encounter",
+      "assign_to_attribute": "bph",
+      "direct_transition": "Diagnostic_Encounter_End_BPH"
+    },
+    "Diagnostic_Encounter_End_BPH": {
+      "type": "EncounterEnd",
+      "direct_transition": "BPH_Management_Branch"
+    },
+    "BPH_Management_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "BPH management ladder (indicative textbook priors, EAU/AUA-aligned - flag as approximate, not registry):",
+        "~1/3 watchful waiting, ~1/2 medical therapy, ~15% surgery over time. Source: Medscape BPH mgmt, PMC7109311."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "BPH_Watchful_Waiting",
+          "distribution": 0.33
+        },
+        {
+          "transition": "BPH_Medical_Therapy",
+          "distribution": 0.52
+        },
+        {
+          "transition": "BPH_Surgery_Encounter",
+          "distribution": 0.15
+        }
+      ]
+    },
+    "BPH_Watchful_Waiting": {
+      "type": "CarePlanStart",
+      "remarks": [
+        "Watchful waiting for mild symptoms (IPSS<=7). Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "373818007",
+          "display": "Watchful waiting"
+        }
+      ],
+      "reason": "bph",
+      "direct_transition": "BPH_Terminal"
+    },
+    "BPH_Medical_Therapy": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185349003",
+          "display": "Encounter for check up"
+        }
+      ],
+      "direct_transition": "Tamsulosin"
+    },
+    "Tamsulosin": {
+      "type": "MedicationOrder",
+      "remarks": [
+        "First-line alpha-1-blocker for moderate-severe LUTS. SNOMED substance code, validated INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "G04CA02",
+          "display": "tamsulosin"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "G04CA02",
+          "display": "Tamsulosin"
+        }
+      ],
+      "reason": "bph",
+      "distributed_transition": [
+        {
+          "transition": "Finasteride",
+          "distribution": 0.5
+        },
+        {
+          "transition": "BPH_Medical_Encounter_End",
+          "distribution": 0.5
+        }
+      ]
+    },
+    "Finasteride": {
+      "type": "MedicationOrder",
+      "remarks": [
+        "5-ARI added for enlarged gland (>40 mL) / progression risk (combination therapy). SNOMED substance code, validated INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "G04CB01",
+          "display": "finasteride"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "G04CB01",
+          "display": "Finasterid"
+        }
+      ],
+      "reason": "bph",
+      "direct_transition": "BPH_Medical_Encounter_End"
+    },
+    "BPH_Medical_Encounter_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "BPH_Terminal"
+    },
+    "BPH_Surgery_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "32485007",
+          "display": "Hospital admission"
+        }
+      ],
+      "direct_transition": "TURP"
+    },
+    "TURP": {
+      "type": "Procedure",
+      "remarks": [
+        "Transurethral resection of prostate - benchmark BPH surgery. Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "90199006",
+          "display": "Transurethral prostatectomy"
+        }
+      ],
+      "duration": {
+        "low": 45,
+        "high": 90,
+        "unit": "minutes"
+      },
+      "direct_transition": "TURP_Incidental_Check"
+    },
+    "TURP_Incidental_Check": {
+      "type": "Simple",
+      "remarks": [
+        "Incidental prostate cancer in ~14% of TURP/HoLEP specimens (PMC12459874). These are typically low-grade,",
+        "incidentally-detected cancers -> route to the low-risk cancer node. The other 86% remain pure BPH."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "BPH_Surgery_Encounter_End_Incidental",
+          "distribution": 0.14
+        },
+        {
+          "transition": "BPH_Surgery_Encounter_End",
+          "distribution": 0.86
+        }
+      ]
+    },
+    "BPH_Surgery_Encounter_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "BPH_Terminal"
+    },
+    "BPH_Surgery_Encounter_End_Incidental": {
+      "type": "EncounterEnd",
+      "direct_transition": "Incidental_Cancer_Onset"
+    },
+    "Incidental_Cancer_Onset": {
+      "type": "SetAttribute",
+      "attribute": "pca_detection",
+      "value": "incidental_turp",
+      "direct_transition": "Cancer_Low"
+    },
+    "BPH_Terminal": {
+      "type": "Terminal"
+    },
+    "Cancer_RiskGroup_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "EAU risk-group distribution at diagnosis, skewed toward LOCALIZED/lower grade for the 50-60 cohort",
+        "(younger men: more localized, M1 ~4% vs ~9% overall - SEER under-50 PMC11758148).",
+        "Base proportions from SEER/EAU classification (Xie PMC8076565) + grade migration (NCDB PMC10133398),",
+        "re-weighted younger. Low 0.32 / Intermediate 0.34 / High 0.17 / Locally-advanced 0.11 / Metastatic 0.06."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Cancer_Low",
+          "distribution": 0.32
+        },
+        {
+          "transition": "Cancer_Intermediate",
+          "distribution": 0.34
+        },
+        {
+          "transition": "Cancer_High",
+          "distribution": 0.17
+        },
+        {
+          "transition": "Cancer_LocAdv",
+          "distribution": 0.11
+        },
+        {
+          "transition": "Cancer_Metastatic",
+          "distribution": 0.06
+        }
+      ]
+    },
+    "Cancer_Low": {
+      "type": "ConditionOnset",
+      "remarks": [
+        "EAU low risk: PSA<10, ISUP 1 (Gleason 6), cT1-2a."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "399068003",
+          "display": "Malignant tumor of prostate"
+        }
+      ],
+      "target_encounter": "Urology_Encounter",
+      "assign_to_attribute": "prostate_cancer",
+      "direct_transition": "Set_Risk_Low"
+    },
+    "Set_Risk_Low": {
+      "type": "SetAttribute",
+      "attribute": "pca_risk_group",
+      "value": "low",
+      "direct_transition": "Stage_Low"
+    },
+    "Stage_Low": {
+      "type": "SetAttribute",
+      "attribute": "pca_ctnm",
+      "value": "cT1cN0M0",
+      "direct_transition": "Gleason_Low"
+    },
+    "Gleason_Low": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "35266-6",
+          "display": "Gleason score in Specimen"
+        }
+      ],
+      "exact": {
+        "quantity": 6
+      },
+      "direct_transition": "PSA_Dx_Low"
+    },
+    "PSA_Dx_Low": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "ng/mL",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "2857-1",
+          "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      "range": {
+        "low": 4.0,
+        "high": 9.9
+      },
+      "direct_transition": "Diagnostic_Encounter_End_Cancer_Low"
+    },
+    "Diagnostic_Encounter_End_Cancer_Low": {
+      "type": "EncounterEnd",
+      "direct_transition": "Active_Surveillance"
+    },
+    "Active_Surveillance": {
+      "type": "CarePlanStart",
+      "remarks": [
+        "EAU 2024: Active surveillance is the PREFERRED option for low-risk with life expectancy >10 yr (strong rec).",
+        "Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "424313000",
+          "display": "Active surveillance"
+        }
+      ],
+      "reason": "prostate_cancer",
+      "direct_transition": "AS_Followup_Delay"
+    },
+    "AS_Followup_Delay": {
+      "type": "Delay",
+      "range": {
+        "low": 1,
+        "high": 5,
+        "unit": "years"
+      },
+      "direct_transition": "AS_Progression_Branch"
+    },
+    "AS_Progression_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "~50% of AS patients receive definitive treatment within 5 years (PMC7407781; German HAROW AS PMC8332563).",
+        "Cancer-specific survival on AS remains ~99-100% at 5 yr, so no death arrow from the AS branch."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Deferred_Treatment_Encounter",
+          "distribution": 0.5
+        },
+        {
+          "transition": "Cancer_Terminal",
+          "distribution": 0.5
+        }
+      ]
+    },
+    "Deferred_Treatment_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185349003",
+          "display": "Encounter for check up"
+        }
+      ],
+      "remarks": [
+        "AS patient converting to definitive therapy - split RP vs radiotherapy."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Radical_Prostatectomy",
+          "distribution": 0.5
+        },
+        {
+          "transition": "Radiotherapy_EBRT",
+          "distribution": 0.5
+        }
+      ]
+    },
+    "Cancer_Intermediate": {
+      "type": "ConditionOnset",
+      "remarks": [
+        "EAU intermediate risk: PSA 10-20 OR ISUP 2-3 OR cT2b."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "399068003",
+          "display": "Malignant tumor of prostate"
+        }
+      ],
+      "target_encounter": "Urology_Encounter",
+      "assign_to_attribute": "prostate_cancer",
+      "direct_transition": "Set_Risk_Intermediate"
+    },
+    "Set_Risk_Intermediate": {
+      "type": "SetAttribute",
+      "attribute": "pca_risk_group",
+      "value": "intermediate",
+      "direct_transition": "Stage_Intermediate"
+    },
+    "Stage_Intermediate": {
+      "type": "SetAttribute",
+      "attribute": "pca_ctnm",
+      "value": "cT2bN0M0",
+      "direct_transition": "Gleason_Intermediate"
+    },
+    "Gleason_Intermediate": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "35266-6",
+          "display": "Gleason score in Specimen"
+        }
+      ],
+      "exact": {
+        "quantity": 7
+      },
+      "direct_transition": "PSA_Dx_Intermediate"
+    },
+    "PSA_Dx_Intermediate": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "ng/mL",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "2857-1",
+          "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      "range": {
+        "low": 8.0,
+        "high": 20.0
+      },
+      "direct_transition": "Diagnostic_Encounter_End_Cancer_Int"
+    },
+    "Diagnostic_Encounter_End_Cancer_Int": {
+      "type": "EncounterEnd",
+      "direct_transition": "Intermediate_Treatment_Branch"
+    },
+    "Intermediate_Treatment_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "EAU 2024 intermediate risk: RP (+/- pelvic LND) OR EBRT + short-course (4-6 mo) ADT.",
+        "German real-world (HAROW, localized pooled) is RP-heavy (~57% RP); split RP 0.55 / EBRT+ADT 0.45 here."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "RP_Encounter",
+          "distribution": 0.55
+        },
+        {
+          "transition": "EBRT_ShortADT_Encounter",
+          "distribution": 0.45
+        }
+      ]
+    },
+    "RP_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "32485007",
+          "display": "Hospital admission"
+        }
+      ],
+      "direct_transition": "Radical_Prostatectomy"
+    },
+    "Radical_Prostatectomy": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "26294005",
+          "display": "Radical prostatectomy"
+        }
+      ],
+      "duration": {
+        "low": 120,
+        "high": 240,
+        "unit": "minutes"
+      },
+      "direct_transition": "RP_Encounter_End"
+    },
+    "RP_Encounter_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Cancer_Followup_Localized"
+    },
+    "EBRT_ShortADT_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185349003",
+          "display": "Encounter for check up"
+        }
+      ],
+      "direct_transition": "Radiotherapy_EBRT"
+    },
+    "Radiotherapy_EBRT": {
+      "type": "Procedure",
+      "remarks": [
+        "External beam radiotherapy. Validated SNOMED INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "33195004",
+          "display": "Teleradiotherapy procedure"
+        }
+      ],
+      "duration": {
+        "low": 20,
+        "high": 40,
+        "unit": "minutes"
+      },
+      "direct_transition": "Short_ADT"
+    },
+    "Short_ADT": {
+      "type": "MedicationOrder",
+      "remarks": [
+        "Short-course (4-6 mo) ADT with EBRT for intermediate risk. LHRH agonist. SNOMED substance code, validated INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L02AE02",
+          "display": "leuprorelin"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L02AE02",
+          "display": "Leuprorelin"
+        }
+      ],
+      "reason": "prostate_cancer",
+      "direct_transition": "EBRT_Encounter_End"
+    },
+    "EBRT_Encounter_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Cancer_Followup_Localized"
+    },
+    "Cancer_High": {
+      "type": "ConditionOnset",
+      "remarks": [
+        "EAU high risk (localized): PSA>20 OR ISUP 4-5 OR cT2c."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "399068003",
+          "display": "Malignant tumor of prostate"
+        }
+      ],
+      "target_encounter": "Urology_Encounter",
+      "assign_to_attribute": "prostate_cancer",
+      "direct_transition": "Set_Risk_High"
+    },
+    "Set_Risk_High": {
+      "type": "SetAttribute",
+      "attribute": "pca_risk_group",
+      "value": "high",
+      "direct_transition": "Stage_High"
+    },
+    "Stage_High": {
+      "type": "SetAttribute",
+      "attribute": "pca_ctnm",
+      "value": "cT2cN0M0",
+      "direct_transition": "Gleason_High"
+    },
+    "Gleason_High": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "35266-6",
+          "display": "Gleason score in Specimen"
+        }
+      ],
+      "exact": {
+        "quantity": 8
+      },
+      "direct_transition": "PSA_Dx_High"
+    },
+    "PSA_Dx_High": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "ng/mL",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "2857-1",
+          "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      "range": {
+        "low": 20.0,
+        "high": 45.0
+      },
+      "direct_transition": "Diagnostic_Encounter_End_Cancer_High"
+    },
+    "Diagnostic_Encounter_End_Cancer_High": {
+      "type": "EncounterEnd",
+      "direct_transition": "HighRisk_Treatment_Branch"
+    },
+    "Cancer_LocAdv": {
+      "type": "ConditionOnset",
+      "remarks": [
+        "EAU locally advanced / very high: cT3-4 or cN+."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "399068003",
+          "display": "Malignant tumor of prostate"
+        }
+      ],
+      "target_encounter": "Urology_Encounter",
+      "assign_to_attribute": "prostate_cancer",
+      "direct_transition": "Set_Risk_LocAdv"
+    },
+    "Set_Risk_LocAdv": {
+      "type": "SetAttribute",
+      "attribute": "pca_risk_group",
+      "value": "locally_advanced",
+      "direct_transition": "Stage_LocAdv"
+    },
+    "Stage_LocAdv": {
+      "type": "SetAttribute",
+      "attribute": "pca_ctnm",
+      "value": "cT3aN0M0",
+      "direct_transition": "Gleason_LocAdv"
+    },
+    "Gleason_LocAdv": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "35266-6",
+          "display": "Gleason score in Specimen"
+        }
+      ],
+      "exact": {
+        "quantity": 9
+      },
+      "direct_transition": "PSA_Dx_LocAdv"
+    },
+    "PSA_Dx_LocAdv": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "ng/mL",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "2857-1",
+          "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      "range": {
+        "low": 20.0,
+        "high": 80.0
+      },
+      "direct_transition": "Diagnostic_Encounter_End_Cancer_LocAdv"
+    },
+    "Diagnostic_Encounter_End_Cancer_LocAdv": {
+      "type": "EncounterEnd",
+      "direct_transition": "HighRisk_Treatment_Branch"
+    },
+    "HighRisk_Treatment_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "EAU 2024 high-risk / locally advanced: EBRT + long-course ADT (2-3 yr, strong rec) OR RP + extended pelvic LND",
+        "as multimodal therapy (weak rec). ADT monotherapy NOT recommended for fit patients. Split EBRT+longADT 0.6 / RP 0.4."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "EBRT_LongADT_Encounter",
+          "distribution": 0.6
+        },
+        {
+          "transition": "RP_HighRisk_Encounter",
+          "distribution": 0.4
+        }
+      ]
+    },
+    "EBRT_LongADT_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185349003",
+          "display": "Encounter for check up"
+        }
+      ],
+      "direct_transition": "Radiotherapy_EBRT_High"
+    },
+    "Radiotherapy_EBRT_High": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "33195004",
+          "display": "Teleradiotherapy procedure"
+        }
+      ],
+      "duration": {
+        "low": 20,
+        "high": 40,
+        "unit": "minutes"
+      },
+      "direct_transition": "Long_ADT"
+    },
+    "Long_ADT": {
+      "type": "MedicationOrder",
+      "remarks": [
+        "Long-course (2-3 yr) ADT with EBRT for high-risk / locally-advanced. SNOMED substance code, validated INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L02AE02",
+          "display": "leuprorelin"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L02AE02",
+          "display": "Leuprorelin"
+        }
+      ],
+      "reason": "prostate_cancer",
+      "direct_transition": "EBRT_High_Encounter_End"
+    },
+    "EBRT_High_Encounter_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Cancer_Followup_HighRisk"
+    },
+    "RP_HighRisk_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "32485007",
+          "display": "Hospital admission"
+        }
+      ],
+      "direct_transition": "Radical_Prostatectomy_PLND"
+    },
+    "Radical_Prostatectomy_PLND": {
+      "type": "Procedure",
+      "remarks": [
+        "Radical prostatectomy + extended pelvic lymph node dissection (multimodal)."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "26294005",
+          "display": "Radical prostatectomy"
+        }
+      ],
+      "duration": {
+        "low": 150,
+        "high": 300,
+        "unit": "minutes"
+      },
+      "direct_transition": "RP_HighRisk_Encounter_End"
+    },
+    "RP_HighRisk_Encounter_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Cancer_Followup_HighRisk"
+    },
+    "Cancer_Followup_Localized": {
+      "type": "Delay",
+      "remarks": [
+        "Localized (low/intermediate) follow-up. 5-yr relative survival >90% (German NRW registry, PubMed 39742793)."
+      ],
+      "range": {
+        "low": 2,
+        "high": 6,
+        "unit": "years"
+      },
+      "direct_transition": "Cancer_Terminal"
+    },
+    "Cancer_Followup_HighRisk": {
+      "type": "Delay",
+      "range": {
+        "low": 1,
+        "high": 5,
+        "unit": "years"
+      },
+      "direct_transition": "HighRisk_Progression_Branch"
+    },
+    "HighRisk_Progression_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "A minority of treated high-risk / locally-advanced patients progress to metastatic disease over follow-up.",
+        "Modelled at 15% progression (indicative). The cancer condition already exists, so route into the systemic-therapy",
+        "chain WITHOUT a second ConditionOnset."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "ADT_Encounter",
+          "distribution": 0.15
+        },
+        {
+          "transition": "Cancer_Terminal",
+          "distribution": 0.85
+        }
+      ]
+    },
+    "Cancer_Metastatic": {
+      "type": "ConditionOnset",
+      "remarks": [
+        "De-novo metastatic (M1) at diagnosis. ~4-6% in the younger cohort (SEER under-50 PMC11758148)."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "399068003",
+          "display": "Malignant tumor of prostate"
+        }
+      ],
+      "target_encounter": "Urology_Encounter",
+      "assign_to_attribute": "prostate_cancer",
+      "direct_transition": "Set_Risk_Metastatic"
+    },
+    "Set_Risk_Metastatic": {
+      "type": "SetAttribute",
+      "attribute": "pca_risk_group",
+      "value": "metastatic",
+      "direct_transition": "Stage_Metastatic"
+    },
+    "Stage_Metastatic": {
+      "type": "SetAttribute",
+      "attribute": "pca_ctnm",
+      "value": "cT3bN1M1",
+      "direct_transition": "Gleason_Metastatic"
+    },
+    "Gleason_Metastatic": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "{score}",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "35266-6",
+          "display": "Gleason score in Specimen"
+        }
+      ],
+      "exact": {
+        "quantity": 9
+      },
+      "direct_transition": "PSA_Dx_Metastatic"
+    },
+    "PSA_Dx_Metastatic": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "ng/mL",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "2857-1",
+          "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      "range": {
+        "low": 50.0,
+        "high": 500.0
+      },
+      "direct_transition": "Diagnostic_Encounter_End_Cancer_Met"
+    },
+    "Diagnostic_Encounter_End_Cancer_Met": {
+      "type": "EncounterEnd",
+      "direct_transition": "ADT_Encounter"
+    },
+    "ADT_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185349003",
+          "display": "Encounter for check up"
+        }
+      ],
+      "direct_transition": "ADT_Backbone"
+    },
+    "ADT_Backbone": {
+      "type": "MedicationOrder",
+      "remarks": [
+        "mHSPC: ADT backbone is mandatory (LHRH agonist). SNOMED substance code, validated INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L02AE02",
+          "display": "leuprorelin"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L02AE02",
+          "display": "Leuprorelin"
+        }
+      ],
+      "reason": "prostate_cancer",
+      "direct_transition": "mHSPC_Intensification_Branch"
+    },
+    "mHSPC_Intensification_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "EAU 2024 Part II: mHSPC ADT alone is NO LONGER standard - intensify with ARPI (doublet) or docetaxel.",
+        "Split ARPI 0.6 / docetaxel 0.4 (indicative)."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "ARPI",
+          "distribution": 0.6
+        },
+        {
+          "transition": "Docetaxel",
+          "distribution": 0.4
+        }
+      ]
+    },
+    "ARPI": {
+      "type": "MedicationOrder",
+      "remarks": [
+        "Androgen-receptor pathway inhibitor (abiraterone/enzalutamide/apalutamide/darolutamide). SNOMED substance code, validated INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L02BB04",
+          "display": "enzalutamide"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L02BB04",
+          "display": "Enzalutamid"
+        }
+      ],
+      "reason": "prostate_cancer",
+      "direct_transition": "mCRPC_Delay"
+    },
+    "Docetaxel": {
+      "type": "MedicationOrder",
+      "remarks": [
+        "Docetaxel chemotherapy (esp. high-volume disease). SNOMED substance code, validated INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01CD02",
+          "display": "docetaxel"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01CD02",
+          "display": "Docetaxel"
+        }
+      ],
+      "reason": "prostate_cancer",
+      "direct_transition": "mCRPC_Delay"
+    },
+    "mCRPC_Delay": {
+      "type": "Delay",
+      "remarks": [
+        "Time on first-line systemic therapy before castration resistance."
+      ],
+      "range": {
+        "low": 1,
+        "high": 3,
+        "unit": "years"
+      },
+      "direct_transition": "mCRPC_Branch"
+    },
+    "mCRPC_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Progression to mCRPC and second-line therapy vs stable disease. Distant-stage 5-yr relative survival is low",
+        "(~30% range, German NRW registry PubMed 39742793); the death arrow lives here."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Second_Line_Encounter",
+          "distribution": 0.65
+        },
+        {
+          "transition": "Cancer_Terminal",
+          "distribution": 0.35
+        }
+      ]
+    },
+    "Second_Line_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185349003",
+          "display": "Encounter for check up"
+        }
+      ],
+      "direct_transition": "Second_Line_Therapy"
+    },
+    "Second_Line_Therapy": {
+      "type": "MedicationOrder",
+      "remarks": [
+        "mCRPC second line (cabazitaxel / Lu-177-PSMA / PARPi per biomarker). Cabazitaxel encoded. SNOMED substance code, validated INT 20250701."
+      ],
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01CD04",
+          "display": "cabazitaxel"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01CD04",
+          "display": "Cabazitaxel"
+        }
+      ],
+      "reason": "prostate_cancer",
+      "direct_transition": "Second_Line_Encounter_End"
+    },
+    "Second_Line_Encounter_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "mCRPC_Outcome_Branch"
+    },
+    "mCRPC_Outcome_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Outcome after second-line mCRPC therapy: prostate-cancer death vs survival to end of simulation."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Prostate_Cancer_Death",
+          "distribution": 0.55
+        },
+        {
+          "transition": "Cancer_Terminal",
+          "distribution": 0.45
+        }
+      ]
+    },
+    "Prostate_Cancer_Death": {
+      "type": "Death",
+      "referenced_by_attribute": "prostate_cancer",
+      "range": {
+        "low": 1,
+        "high": 4,
+        "unit": "years"
+      },
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "399068003",
+          "display": "Malignant tumor of prostate"
+        }
+      ],
+      "direct_transition": "Cancer_Terminal"
+    },
+    "Cancer_Terminal": {
+      "type": "Terminal"
+    }
+  }
+}
