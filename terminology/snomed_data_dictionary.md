@@ -59,6 +59,7 @@ Generic findings for the symptomatic presentation **before** the BPH/PCa branch 
 | Small cell carcinoma of prostate | SNOMED | `1208457007` | (small cell carcinoma, prostate) | spec |
 | Squamous cell carcinoma of prostate | SNOMED | `399590005` | Squamous cell carcinoma of prostate | spec |
 | Hormone-refractory (castration-resistant) PCa | SNOMED | `427492003` | Hormone refractory prostate cancer | termsvc |
+| Recurrent malignant neoplasm of prostate (BCR) | SNOMED | `1098981000119101` | Recurrent malignant neoplasm of prostate | termsvc ✓ (v2) |
 | Secondary malignant neoplasm of bone | SNOMED | `94216004` | Secondary malignant neoplasm of bone and articular cartilage | termsvc |
 | Metastasis to bone | SNOMED | `154572002` | Metastasis to bone | termsvc |
 
@@ -89,6 +90,7 @@ Morphology-only SCT: acinar `1187332001` · ductal `82711006` · IDC-P `11628140
 | Needle biopsy of prostate | SNOMED | `236258004` | Needle biopsy of prostate | termsvc **[FIXES PROTOTYPE 396487001]** |
 | Biopsy of prostate (generic) | SNOMED | `65575008` | Biopsy of prostate | termsvc |
 | Radionuclide bone study (bone scan) | SNOMED | `146371003` | Radionuclide bone study | termsvc |
+| PSMA-PET (recurrence/staging) | SNOMED | `1620551000168100` | PSMA-PET - prostate-specific membrane antigen positron emission tomography | termsvc ✓ (v2) |
 | PI-RADS category | LOINC | `82717-8` | PI-RADS category | — ⚠ no SNOMED equivalent |
 
 ### Grading & staging observations (spec)

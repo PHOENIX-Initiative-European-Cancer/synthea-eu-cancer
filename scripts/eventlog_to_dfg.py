@@ -47,6 +47,7 @@ lines = ['digraph DFG {', '  rankdir=TB;', '  bgcolor="white";',
 
 # color cancer-branch nodes differently
 cancer = {"mpMRI", "PI-RADS", "Prostate biopsy", "Diagnosis: Prostate cancer",
+          "Biochemical recurrence", "PSMA-PET",
           "Gleason score", "Radical prostatectomy", "Radiotherapy (EBRT)",
           "Active surveillance", "Med: leuprorelin (ADT)", "Med: enzalutamide (ARPI)",
           "Med: docetaxel", "Med: cabazitaxel"}

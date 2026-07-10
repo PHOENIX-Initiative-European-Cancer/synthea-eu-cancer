@@ -19,7 +19,8 @@
     "COHORT DESIGN (deliberate selection, NOT epidemiology): 100% of males 50-60 present symptomatically to",
     "  urology (LUTS trigger). This defines a SELECTED symptomatic cohort for maximal pathway-trace yield.",
     "All downstream probabilities are clinically calibrated - see remarks + epidemiology/prostate_calibration.md.",
-    "Medications are dual-coded WHO-ATC (http://www.whocc.no/atc, validated on tx.fhir.org) + ATC-DE/BfArM (http://fhir.de/CodeSystem/bfarm/atc, validated on MII termserver) per MII-Onko issue #283 (intl + national)."
+    "Medications are dual-coded WHO-ATC (http://www.whocc.no/atc, validated on tx.fhir.org) + ATC-DE/BfArM (http://fhir.de/CodeSystem/bfarm/atc, validated on MII termserver) per MII-Onko issue #283 (intl + national).",
+    "BCR->salvage: curatively treated patients enter PSA follow-up -> risk-dependent biochemical recurrence -> PSMA-PET -> salvage RT (post-RP) / salvage prostatectomy (post-RT) -> cured or systemic/metastatic. Codes validated (SNOMED INT). See epidemiology/prostate_calibration.md."
   ],
   "gmf_version": 2,
   "states": {
@@ -863,7 +864,7 @@
     },
     "RP_Encounter_End": {
       "type": "EncounterEnd",
-      "direct_transition": "Cancer_Followup_Localized"
+      "direct_transition": "Set_Modality_RP"
     },
     "EBRT_ShortADT_Encounter": {
       "type": "Encounter",
@@ -918,7 +919,7 @@
     },
     "EBRT_Encounter_End": {
       "type": "EncounterEnd",
-      "direct_transition": "Cancer_Followup_Localized"
+      "direct_transition": "Set_Modality_RT"
     },
     "Cancer_High": {
       "type": "ConditionOnset",
@@ -1117,7 +1118,7 @@
     },
     "EBRT_High_Encounter_End": {
       "type": "EncounterEnd",
-      "direct_transition": "Cancer_Followup_HighRisk"
+      "direct_transition": "Set_Modality_RT"
     },
     "RP_HighRisk_Encounter": {
       "type": "Encounter",
@@ -1152,46 +1153,7 @@
     },
     "RP_HighRisk_Encounter_End": {
       "type": "EncounterEnd",
-      "direct_transition": "Cancer_Followup_HighRisk"
-    },
-    "Cancer_Followup_Localized": {
-      "type": "Delay",
-      "remarks": [
-        "Localized (low/intermediate) follow-up. 5-yr relative survival >90% (German NRW registry, PubMed 39742793)."
-      ],
-      "range": {
-        "low": 2,
-        "high": 6,
-        "unit": "years"
-      },
-      "direct_transition": "Cancer_Terminal"
-    },
-    "Cancer_Followup_HighRisk": {
-      "type": "Delay",
-      "range": {
-        "low": 1,
-        "high": 5,
-        "unit": "years"
-      },
-      "direct_transition": "HighRisk_Progression_Branch"
-    },
-    "HighRisk_Progression_Branch": {
-      "type": "Simple",
-      "remarks": [
-        "A minority of treated high-risk / locally-advanced patients progress to metastatic disease over follow-up.",
-        "Modelled at 15% progression (indicative). The cancer condition already exists, so route into the systemic-therapy",
-        "chain WITHOUT a second ConditionOnset."
-      ],
-      "distributed_transition": [
-        {
-          "transition": "ADT_Encounter",
-          "distribution": 0.15
-        },
-        {
-          "transition": "Cancer_Terminal",
-          "distribution": 0.85
-        }
-      ]
+      "direct_transition": "Set_Modality_RP"
     },
     "Cancer_Metastatic": {
       "type": "ConditionOnset",
@@ -1447,6 +1409,266 @@
     },
     "Cancer_Terminal": {
       "type": "Terminal"
+    },
+    "Set_Modality_RP": {
+      "type": "SetAttribute",
+      "attribute": "curative_modality",
+      "value": "RP",
+      "direct_transition": "PSA_Followup"
+    },
+    "Set_Modality_RT": {
+      "type": "SetAttribute",
+      "attribute": "curative_modality",
+      "value": "RT",
+      "direct_transition": "PSA_Followup"
+    },
+    "PSA_Followup": {
+      "type": "Delay",
+      "remarks": [
+        "Post-curative PSA surveillance window before biochemical recurrence (BCR) may surface."
+      ],
+      "range": {
+        "low": 1,
+        "high": 4,
+        "unit": "years"
+      },
+      "direct_transition": "BCR_Check"
+    },
+    "BCR_Check": {
+      "type": "Simple",
+      "remarks": [
+        "Biochemical recurrence after curative therapy, risk-dependent (S3 Ch. 7). High / locally-advanced ~40%,",
+        "low / intermediate ~20% (indicative 10-yr BCR ranges). Replaces the old direct 15%->metastatic jump."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "pca_risk_group",
+            "operator": "==",
+            "value": "high"
+          },
+          "distributions": [
+            {
+              "transition": "BCR_Encounter",
+              "distribution": 0.4
+            },
+            {
+              "transition": "Cancer_Terminal",
+              "distribution": 0.6
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "pca_risk_group",
+            "operator": "==",
+            "value": "locally_advanced"
+          },
+          "distributions": [
+            {
+              "transition": "BCR_Encounter",
+              "distribution": 0.4
+            },
+            {
+              "transition": "Cancer_Terminal",
+              "distribution": 0.6
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "BCR_Encounter",
+              "distribution": 0.2
+            },
+            {
+              "transition": "Cancer_Terminal",
+              "distribution": 0.8
+            }
+          ]
+        }
+      ]
+    },
+    "BCR_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185349003",
+          "display": "Encounter for check up"
+        }
+      ],
+      "direct_transition": "Rising_PSA_Obs"
+    },
+    "Rising_PSA_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "ng/mL",
+      "remarks": [
+        "Rising PSA = BCR. S3 def: post-RP confirmed PSA >0.2 x2 (Stmt 7.2); post-RT nadir+2 (Phoenix, Stmt 7.3)."
+      ],
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "2857-1",
+          "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+        }
+      ],
+      "range": {
+        "low": 0.3,
+        "high": 6.0
+      },
+      "direct_transition": "BCR_Onset"
+    },
+    "BCR_Onset": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "1098981000119101",
+          "display": "Recurrent malignant neoplasm of prostate"
+        }
+      ],
+      "target_encounter": "BCR_Encounter",
+      "assign_to_attribute": "biochemical_recurrence",
+      "direct_transition": "PSMA_PET"
+    },
+    "PSMA_PET": {
+      "type": "Procedure",
+      "remarks": [
+        "PSMA-PET/CT to localise recurrence (local vs systemic), S3 Empf. 7.6."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "1620551000168100",
+          "display": "PSMA-PET - prostate-specific membrane antigen positron emission tomography"
+        }
+      ],
+      "duration": {
+        "low": 30,
+        "high": 60,
+        "unit": "minutes"
+      },
+      "direct_transition": "Salvage_Branch"
+    },
+    "Salvage_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Salvage by prior modality: post-RP -> salvage RT (S3 7.14); post-RT -> salvage prostatectomy (S3 7.20)."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "curative_modality",
+            "operator": "==",
+            "value": "RT"
+          },
+          "transition": "Salvage_Prostatectomy"
+        },
+        {
+          "transition": "Salvage_RT"
+        }
+      ]
+    },
+    "Salvage_RT": {
+      "type": "Procedure",
+      "remarks": [
+        "Salvage radiotherapy, start early (PSA <0.5), >=66 Gy (S3 Empf. 7.14/7.18)."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "33195004",
+          "display": "External beam radiation therapy procedure"
+        }
+      ],
+      "duration": {
+        "low": 20,
+        "high": 40,
+        "unit": "minutes"
+      },
+      "direct_transition": "Salvage_ADT_Branch"
+    },
+    "Salvage_ADT_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Add ADT to salvage RT if unfavorable (PSA>0.7, PSA-DT<12mo, Gleason 8-10): 6 or 24 mo (S3 7.15-7.17)."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Salvage_ADT",
+          "distribution": 0.5
+        },
+        {
+          "transition": "Salvage_Outcome",
+          "distribution": 0.5
+        }
+      ]
+    },
+    "Salvage_ADT": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L02AE02",
+          "display": "leuprorelin"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L02AE02",
+          "display": "Leuprorelin"
+        }
+      ],
+      "reason": "prostate_cancer",
+      "direct_transition": "Salvage_Outcome"
+    },
+    "Salvage_Prostatectomy": {
+      "type": "Procedure",
+      "remarks": [
+        "Salvage prostatectomy after RT recurrence (S3 Empf. 7.20)."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "26294005",
+          "display": "Radical prostatectomy"
+        }
+      ],
+      "duration": {
+        "low": 150,
+        "high": 300,
+        "unit": "minutes"
+      },
+      "direct_transition": "Salvage_Outcome"
+    },
+    "Salvage_Outcome": {
+      "type": "Simple",
+      "remarks": [
+        "Salvage durable biochemical control ~55% at 5 yr (early salvage RT); failure -> systemic/metastatic."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Salvage_Cured_End",
+          "distribution": 0.55
+        },
+        {
+          "transition": "Salvage_Fail_End",
+          "distribution": 0.45
+        }
+      ]
+    },
+    "Salvage_Cured_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Cancer_Terminal"
+    },
+    "Salvage_Fail_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "ADT_Encounter"
     }
   }
 }

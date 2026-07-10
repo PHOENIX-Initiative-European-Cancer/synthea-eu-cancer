@@ -19,6 +19,8 @@ ACT = {
     # Conditions
     "266569009": "Diagnosis: BPH",
     "399068003": "Diagnosis: Prostate cancer",
+    "1098981000119101": "Biochemical recurrence",
+    "1620551000168100": "PSMA-PET",
     # Procedures
     "410006001": "DRE",
     "429820004": "TRUS (endorectal US)",

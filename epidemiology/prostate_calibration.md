@@ -166,3 +166,20 @@ PDFs read directly from the Zotero collection and checked against the arrows abo
 | **Treatment / survival** | DE vs US 5-/10-yr RS **93.3/90.7** vs 99.4/99.6 ✅ exact · EAU-2024 by-risk pathway ✅ · NRW stage-survival direction ✅ (exact % paywalled, unverifiable) · **AS→treatment 0.50 VINDICATED** (see row above) |
 
 **Overall: ~19/20 confirmed exact or directionally.** Corrections applied: Zhou→Xie, Epstein→Egevad. Minor unverified: "40–60% symptomatic BPH" (context, not an arrow) and German 10-yr risk at exactly age 40/70 (plausible). **No module transition probability requires a change based on the verification** — the one flag I raised myself (AS 0.50) was refuted on deeper reading. Open user decision remains: de-novo M1 0.06 vs ~0.08.
+
+
+## 10. Biochemical recurrence -> salvage (v2 module addition, 2026-07-09)
+
+Inserted between curative treatment and terminal/metastatic; replaces the old direct 15%->metastatic jump.
+
+| Arrow | Value | Basis | Conf |
+|---|---|---|---|
+| `BCR_Check` -> BCR (high / locally-advanced) | **0.40** | Indicative 10-yr BCR after curative therapy is higher for high-risk (lit. ~30-50%). S3 Ch. 7. | 🔴 prior |
+| `BCR_Check` -> BCR (low / intermediate) | **0.20** | Indicative 10-yr BCR ~15-25% for low/intermediate. | 🔴 prior |
+| BCR definition (encoded as rising-PSA obs) | post-RP PSA >0.2 x2; post-RT nadir+2 | S3 Stmt 7.2 / 7.3 (Phoenix) | 🟢 |
+| Salvage by modality | post-RP -> salvage RT; post-RT -> salvage prostatectomy | S3 Empf. 7.14 / 7.20 | 🟢 |
+| Salvage RT + ADT | **0.50** add ADT | S3 Empf. 7.15-7.17 (add ADT if unfavorable; 6 or 24 mo) | 🟡 |
+| `Salvage_Outcome` -> cured / failure | **0.55 / 0.45** | Early salvage RT ~50-60% durable biochemical control at 5 yr; failure -> systemic/metastatic. | 🟡 prior |
+
+New validated codes (SNOMED INT, CEIR-OS server): recurrent prostate cancer **1098981000119101**; PSMA-PET **1620551000168100**.
+Age caveat: in a 50-60 cross-section the BCR/salvage tail unfolds only for patients diagnosed early enough (end-age near 60); wider age ranges surface it more.
