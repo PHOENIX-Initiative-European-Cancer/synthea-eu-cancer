@@ -10,3 +10,4 @@ build/
 *.iml
 .venv/
 __pycache__/
+.claude/

@@ -1,0 +1,36 @@
+{
+  "run_id": "run_seed42_20260716T041143Z",
+  "timestamp_utc": "20260716T041143Z",
+  "parameters": {
+    "population": 1000,
+    "age_range": "50-60",
+    "gender": "M",
+    "state": "Massachusetts",
+    "seed": "42",
+    "clinician_seed": "42",
+    "reference_date": "today"
+  },
+  "generator": {
+    "synthea_version": "master-branch-latest",
+    "synthea_commit": "2b0a55bab0ab9ae22204320c80f5880ceb8925aa",
+    "java": "openjdk version \"17.0.17\" 2025-10-21"
+  },
+  "module": {
+    "file": "modules/adult/prostate.json",
+    "sha256": "f03ac23200059a89a30a6d059a568184996fb57047e683b2c29137b5df6a19d8",
+    "repo_commit": "48db267",
+    "repo_dirty": true
+  },
+  "output": {
+    "fhir_dir": "/Users/thome/code/interop-prototypes/synthea-eu-cancer/synthea/output/fhir",
+    "bundles_total": 1112,
+    "bundles_with_prostate_or_bph": 1024,
+    "note": "counts reflect all bundles currently in fhir_dir; clear it before a run for a per-run count"
+  },
+  "host": {
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "user": "thome"
+  },
+  "reproducibility": "Bit-identical given the same synthea_version + module.sha256 + seed + clinician_seed (+ reference_date for identical timelines).",
+  "disclaimer": "Synthetic data. No real patient data; no resemblance to any real person. Not for medical use or medical research, and not for any diagnosis, treatment, or care decision. Provided only as interoperable example data for testing, development, validation, and education in European health-data sharing and analysis projects (e.g. EHDS, HL7 Europe Common Cancer Data Model). Provided 'as is', without warranty."
+}

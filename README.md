@@ -2,6 +2,15 @@
 
 Synthetic cancer patient cohorts for the **HL7 Europe Common Cancer Data Model (CCDM)**, generated via [Synthea](https://github.com/synthetichealth/synthea) with EU-specific epidemiology and post-processing into CCDM-conformant FHIR.
 
+## ⚠️ Disclaimer — synthetic data
+
+**This repository contains synthetic (computer-generated) data and a synthetic-data generator. It contains no real patient data.**
+
+- **No real persons.** The data does not describe, and is not derived from, any real individual. Any resemblance to an actual person, living or dead, is coincidental.
+- **Not for medical use or medical research.** This data must not be used to derive, support, or validate any clinical, epidemiological, statistical, or other medical or scientific finding, nor for diagnosis, treatment, or any decision affecting the care of any person. The transition probabilities are calibrated to published literature **for plausibility only** and do not constitute medical evidence.
+- **Intended purpose.** The sole purpose of this project is to provide interoperable example data for the testing, development, validation, demonstration, and education of European health-data sharing and analysis projects — in particular the European Health Data Space (EHDS) and the HL7 Europe Common Cancer Data Model.
+- **No warranty.** The data and code are provided "as is", without warranty of any kind, express or implied. Use is at your own risk.
+
 ## Cooperation
 
 Developed in cooperation with:
@@ -61,3 +70,15 @@ Upstream Synthea is added as a git submodule (not forked) so we stay in lockstep
 ## Status
 
 Scaffold only. See beads `interop-prototypes-dve` for tracking.
+
+## Terminology attribution & license
+
+This repository — the code and the Synthea module — is offered under **CC0 1.0 Universal**, matching the HL7 Europe Common Cancer Model (`hl7-eu/cancer-common`) it targets.
+
+The module and the generated data reference standard terminologies. These are **not** covered by CC0; they remain the property of their respective owners and may require a licence in your jurisdiction:
+
+- **SNOMED CT®** — © SNOMED International. Used by permission; SNOMED and SNOMED CT are registered trademarks of SNOMED International. Use of SNOMED CT requires a valid SNOMED CT Affiliate Licence in the applicable territory (in Germany administered nationally by BfArM). <https://www.snomed.org>
+- **LOINC®** — this material contains content from LOINC (<http://loinc.org>), copyright © 1995–2024 Regenstrief Institute, Inc. and the LOINC Committee, available at no cost under the LOINC license (<http://loinc.org/license>). LOINC® is a registered trademark of Regenstrief Institute, Inc.
+- **ATC / DDD** — © WHO Collaborating Centre for Drug Statistics Methodology (WHOCC), Oslo (<https://www.whocc.no>). The German ATC version (ATC-DE) is published by BfArM (`http://fhir.de/CodeSystem/bfarm/atc`).
+
+See also the [synthetic-data disclaimer](#️-disclaimer--synthetic-data) above: this data is not for medical use or research.

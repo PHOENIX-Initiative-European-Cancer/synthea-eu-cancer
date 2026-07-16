@@ -1,0 +1,259 @@
+{
+  "resourceType": "Bundle",
+  "id": "provenance-bundle-run_seed42_20260716T041143Z",
+  "type": "collection",
+  "timestamp": "2026-07-16T04:11:43Z",
+  "entry": [
+    {
+      "fullUrl": "Provenance/provenance-run_seed42_20260716T041143Z",
+      "resource": {
+        "resourceType": "Provenance",
+        "id": "provenance-run_seed42_20260716T041143Z",
+        "target": [
+          {
+            "reference": "Group/cohort-run_seed42_20260716T041143Z"
+          }
+        ],
+        "occurredDateTime": "2026-07-16T04:11:43Z",
+        "recorded": "2026-07-16T04:11:43Z",
+        "activity": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-DataOperation",
+              "code": "CREATE",
+              "display": "create"
+            }
+          ]
+        },
+        "agent": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "assembler"
+                }
+              ]
+            },
+            "who": {
+              "reference": "Device/device-synthea-run_seed42_20260716T041143Z"
+            }
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "custodian"
+                }
+              ]
+            },
+            "who": {
+              "reference": "Organization/org-phoenix"
+            }
+          }
+        ],
+        "entity": [
+          {
+            "role": "source",
+            "what": {
+              "reference": "DocumentReference/module-prostate-run_seed42_20260716T041143Z"
+            }
+          }
+        ],
+        "extension": [
+          {
+            "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/generation-seed",
+            "valueString": "42"
+          },
+          {
+            "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/generation-clinician-seed",
+            "valueString": "42"
+          },
+          {
+            "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/generation-reference-date",
+            "valueString": "today"
+          },
+          {
+            "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/generation-population-requested",
+            "valueInteger": 1000
+          },
+          {
+            "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/synthetic-data-disclaimer",
+            "valueString": "Synthetic data. No real patient data; no resemblance to any real person. Not for medical use or medical research, and not for any diagnosis, treatment, or care decision. Provided only as interoperable example data for testing, development, validation, and education in European health-data sharing and analysis projects (e.g. EHDS, HL7 Europe Common Cancer Data Model). Provided 'as is', without warranty."
+          }
+        ],
+        "meta": {
+          "security": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+              "code": "SYNTH",
+              "display": "synthetic data"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fullUrl": "Group/cohort-run_seed42_20260716T041143Z",
+      "resource": {
+        "resourceType": "Group",
+        "id": "cohort-run_seed42_20260716T041143Z",
+        "meta": {
+          "security": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+              "code": "SYNTH",
+              "display": "synthetic data"
+            }
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Synthetic cohort.</b> Synthetic data. No real patient data; no resemblance to any real person. Not for medical use or medical research, and not for any diagnosis, treatment, or care decision. Provided only as interoperable example data for testing, development, validation, and education in European health-data sharing and analysis projects (e.g. EHDS, HL7 Europe Common Cancer Data Model). Provided 'as is', without warranty.</p></div>"
+        },
+        "type": "person",
+        "actual": true,
+        "quantity": 1112,
+        "code": {
+          "text": "Synthetic prostate-pathway cohort (Synthea)"
+        },
+        "characteristic": [
+          {
+            "code": {
+              "text": "gender"
+            },
+            "valueCodeableConcept": {
+              "text": "male"
+            },
+            "exclude": false
+          },
+          {
+            "code": {
+              "text": "age at generation (years)"
+            },
+            "valueRange": {
+              "low": {
+                "value": 50
+              },
+              "high": {
+                "value": 60
+              }
+            },
+            "exclude": false
+          },
+          {
+            "code": {
+              "text": "demographic basis"
+            },
+            "valueCodeableConcept": {
+              "text": "Massachusetts"
+            },
+            "exclude": false
+          }
+        ],
+        "extension": [
+          {
+            "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/cohort-bundles-total",
+            "valueInteger": 1112
+          },
+          {
+            "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/cohort-bundles-with-prostate-or-bph",
+            "valueInteger": 1024
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "Device/device-synthea-run_seed42_20260716T041143Z",
+      "resource": {
+        "resourceType": "Device",
+        "id": "device-synthea-run_seed42_20260716T041143Z",
+        "deviceName": [
+          {
+            "name": "Synthea Patient Generator",
+            "type": "manufacturer-name"
+          }
+        ],
+        "version": [
+          {
+            "value": "master-branch-latest"
+          }
+        ],
+        "property": [
+          {
+            "type": {
+              "text": "seed"
+            },
+            "valueCode": [
+              {
+                "text": "42"
+              }
+            ]
+          },
+          {
+            "type": {
+              "text": "clinicianSeed"
+            },
+            "valueCode": [
+              {
+                "text": "42"
+              }
+            ]
+          },
+          {
+            "type": {
+              "text": "syntheaCommit"
+            },
+            "valueCode": [
+              {
+                "text": "2b0a55bab0ab9ae22204320c80f5880ceb8925aa"
+              }
+            ]
+          }
+        ],
+        "note": [
+          {
+            "text": "Deterministic given identical version + module SHA-256 + seed 42 + clinicianSeed 42 (+ referenceDate for identical timelines)."
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "Organization/org-phoenix",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "org-phoenix",
+        "name": "Phoenix Initiative (HL7 Europe)"
+      }
+    },
+    {
+      "fullUrl": "DocumentReference/module-prostate-run_seed42_20260716T041143Z",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "module-prostate-run_seed42_20260716T041143Z",
+        "status": "current",
+        "type": {
+          "text": "Synthea generic module — prostate cancer pathway (calibrated)"
+        },
+        "description": "SHA-256: f03ac23200059a89a30a6d059a568184996fb57047e683b2c29137b5df6a19d8",
+        "content": [
+          {
+            "attachment": {
+              "contentType": "application/json",
+              "url": "https://raw.githubusercontent.com/PHOENIX-Initiative-European-Cancer/synthea-eu-cancer/48db267/modules/adult/prostate.json",
+              "title": "modules/adult/prostate.json",
+              "hash": "8DrCMgAFmomjCm0FmlaBhJlvtXBH5oOywpE3td9qGdg="
+            }
+          }
+        ],
+        "identifier": [
+          {
+            "system": "urn:sha-256",
+            "value": "f03ac23200059a89a30a6d059a568184996fb57047e683b2c29137b5df6a19d8"
+          }
+        ]
+      }
+    }
+  ]
+}
