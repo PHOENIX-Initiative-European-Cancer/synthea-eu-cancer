@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "synthea_eu_cancer",
+  "project_id": "3a872163-9da3-410f-8a9d-3a2f9935224c"
+}
