@@ -183,3 +183,98 @@ Inserted between curative treatment and terminal/metastatic; replaces the old di
 
 New validated codes (SNOMED INT, CEIR-OS server): recurrent prostate cancer **1098981000119101**; PSMA-PET **1620551000168100**.
 Age caveat: in a 50-60 cross-section the BCR/salvage tail unfolds only for patients diagnosed early enough (end-age near 60); wider age ranges surface it more.
+
+---
+
+## 11. TNM staging (v3 module addition, 2026-08-27 — for ECCDM `ObservationCancerStage`)
+
+Target: emit **clinical TNM at diagnosis** (evidence: mpMRI) and **pathological TNM only where a resection
+specimen exists** (RP branch; TURP-incidental pathway). Classification frame: **UICC TNM 8th edition**.
+Staging-rule guardrails (EAU 2024 / S3 v8.1 / UICC): a needle biopsy yields grading + histology but **never pT**
+(pT starts at pT2; a core cannot exclude extraprostatic extension); pN requires lymphadenectomy; RT/AS patients
+keep cTNM only; T1a/T1b are *defined* by the TURP specimen.
+
+### 11.1 Clinical T spread within risk groups (replaces single anchor `pca_ctnm`)
+
+Anchor: cT1c is the dominant category at diagnosis, **62.9%** overall (German RP cohort, Springer
+10.1007/s00120-016-0264-5). Within-group splits are modelling priors consistent with the EAU risk-group
+definitions (§3) — a group's cT range is *bounded* by its definition; the spread inside the bound is 🔴.
+
+| Group | cT split | cN / cM | Conf |
+|---|---|---|---|
+| Low | cT1c **0.80** / cT2a **0.20** | cN0 M0 | 🔴 (bound 🟢: EAU low ⇒ cT1–2a) |
+| Intermediate | cT1c **0.55** / cT2a **0.15** / cT2b **0.30** | cN0 M0 | 🔴 (intermediate is mostly ISUP/PSA-driven, not palpation-driven ⇒ cT1c majority) |
+| High (localized) | cT1c **0.40** / cT2b **0.25** / cT2c **0.35** | cN0 M0 | 🔴 |
+| Locally advanced | cT3a **0.60** / cT3b **0.25** / cT4 **0.15** | cN1 **0.25** / cN0 0.75; M0 | 🔴 |
+| Metastatic | cT3b anchor (unchanged) | cN1 **0.60**; M1 split below | 🔴 |
+
+### 11.2 M1 sub-staging (metastatic branch)
+
+| Value | Split | Basis | Conf |
+|---|---|---|---|
+| M1a (non-regional LN) / M1b (bone) / M1c (visceral) | **0.09 / 0.79 / 0.12** | mCRPC cohort 9.4/78/12% (PMC11531415); de-novo mHSPC M1b ~72.7% (PMC7650780) — bone-dominant in both | 🟡 |
+
+### 11.3 Pathological stage after RP (Partin transition matrix)
+
+Cell sources: **Eifler et al. 2013** Partin update, Table 2 (PMC3876476; full-text read 2026-08-27); confirmed
+methodologically unchanged in the **2017 update** (Tosoian, BJU Int 119:676–683, PubMed 27367645 — OC share stable
+since 2000; full tables paywalled). Cross-check: NCDB upstaging trends 2006–2020 (PMC11442602) low 6–15% /
+intermediate 20–33% / high 42–58%; high-risk RP 65% pT3/4 (Nature s41391-025-01018-y).
+
+Raw Partin cells (cT1c unless noted): GS6 PSA4–10 → OC 84–80 / EPE 15–18 / SV+ 1 / LN+ 0.
+GG2 PSA6–10 → 59/34/6/1. GG3 PSA6–10 → 53/35/9/3. cT2a GG4 PSA>10 → 24/45/20/10. cT2b/c GG5 PSA>10 → 6/27/30/36.
+
+Encoded per-risk-group matrix (module granularity is the risk group, not the Partin cell — group-typical cell,
+degraded for the group's PSA/cT mix):
+
+| Group (RP branch) | pT2 (OC) | pT3a (EPE) | pT3b (SV+) | pN1 | Conf |
+|---|---|---|---|---|---|
+| Low (post-AS conversion RP) | **0.82** | **0.16** | **0.02** | **0.00** | 🟢 Partin-exact |
+| Intermediate | **0.53** | **0.35** | **0.08** | **0.04** | 🟡 (Partin GG2/GG3 blend; NCDB reports lower upstaging — JHU-cohort caveat) |
+| High (localized) | **0.22** | **0.44** | **0.22** | **0.12** | 🟡 (Partin cT2a GG4; consistent with NCDB high 42–58% + 65% pT3/4) |
+| Locally advanced (RP+ePLND subset) | **0.05** | **0.28** | **0.32** | **0.35** | 🟡 (Partin cT2b/c GG5 as proxy for cT3) |
+
+Accompanying **pathological Gleason upgrading** at RP for biopsy-GG1 patients: **0.35** upgraded to GG2
+(contemporary GG1 upgrade 25–60%, Glasgow RALP PMC10709727 60.6% upgrade incl. minor; NCDB-era central ~1/3) 🔴.
+
+### 11.4 TURP-incidental pathway (cT1a/cT1b)
+
+Incidental PCa at TURP/HoLEP stays 0.14 (§4). The specimen defines the T category:
+**cT1a 0.60 / cT1b 0.40** (≤5% vs >5% of resected tissue involved) 🔴 prior; grade split already covered by the
+62.2%-low-grade routing (Sid Ahmed 2025). Classification quirk: although determined histologically, T1a/T1b are
+**clinical** categories — **prostate TNM has no pT1** (UICC 8th ed.); the pT scale starts at pT2.
+
+### 11.5 Emission codes (✅ validated 2026-08-27 against CEIR-OS terminology server; LOINC 2.81, SNOMED INT 20260501)
+
+Category observations (LOINC):
+
+| Concept | Code | Display (verified) |
+|---|---|---|
+| cT category | 21905-5 | Primary tumor.clinical [Class] Cancer |
+| cN category | 21906-3 | Regional lymph nodes.clinical [Class] Cancer |
+| cM category | 21907-1 | Distant metastases.clinical [Class] Cancer |
+| pT category | 21899-0 | Primary tumor.pathology Cancer |
+| pN category | 21900-6 | Regional lymph nodes.pathology [Class] Cancer |
+
+Category values (SNOMED CT **UICC-8** qualifier values — deliberately UICC, not the parallel AJCC codes):
+
+| Value | Code | | Value | Code |
+|---|---|---|---|---|
+| cT1a | 1352983006 | | cN0 | 1353041009 |
+| cT1b | 1352968001 | | cN1 | 1353043007 |
+| cT1c | 1352973007 | | cM0 | 1352512001 |
+| cT2a | 1352962000 | | cM1a | 1352517007 |
+| cT2b | 1352972002 | | cM1b | 1352514000 |
+| cT2c | 1352969009 | | cM1c | 1352516003 |
+| cT3a | 1352989005 | | pT2 | 1352545001 |
+| cT3b | 1352991002 | | pT3a | 1352551006 |
+| cT4 | 1352997003 | | pT3b | 1352534004 |
+| | | | pN1 | 1352614009 |
+
+Histology (for `observation-histology-behaviour-eu-ccm`): ICD-O-3 **8140/3** (acinar adenocarcinoma of prostate);
+SNOMED CT morphology **1187332001** |Adenocarcinoma (morphologic abnormality)| — the classic 35917007 is
+**inactive since 2022-01-31**, do not use it.
+
+ECCDM mapping note: the post-processor collapses the per-category observations into one
+`ObservationCancerStage` per staging event (T/N/M as `component[]`, `CinicalorPathological` extension set from
+the c/p prefix, `EvidenceReference` → mpMRI procedure for clinical, RP/TURP procedure for pathological).

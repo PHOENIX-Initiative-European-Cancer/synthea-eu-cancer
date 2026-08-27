@@ -6,7 +6,9 @@ INDEPENDENT re-implementation of that convention (no SYNDERAI/AGPL code is used 
 ported): we only reference the public CodeSystem URI as an identifier. Each resource
 gets, in meta:
   - tag:      https://synderai.net/fhir/CodeSystem/tags#synthetic   (SYNDERAI marker)
-  - security: http://terminology.hl7.org/CodeSystem/v3-ActReason#SYNTH  (HL7 label)
+  - security: http://terminology.hl7.org/CodeSystem/v3-ActReason#HTEST + #TRAIN
+    (SYNDERAI convention; the earlier "SYNTH" code does not exist in v3-ActReason
+    and made every resource fail base validation - fixed 2026-08-27)
 Idempotent + additive. Bundle.entry[].resource are tagged; the Bundle itself too.
 
 Usage: python3 scripts/postprocess_synthetic_tag.py [fhir_dir]
@@ -16,8 +18,10 @@ import json, os, sys, glob
 
 SYNDERAI_SYS = "https://synderai.net/fhir/CodeSystem/tags"
 SYNDERAI_TAG = {"system": SYNDERAI_SYS, "code": "synthetic", "display": "Synthetic data"}
-SYNTH_SEC = {"system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
-             "code": "SYNTH", "display": "synthetic data"}
+SEC_HTEST = {"system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+             "code": "HTEST", "display": "test health data"}
+SEC_TRAIN = {"system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+             "code": "TRAIN", "display": "training"}
 
 
 def ensure_coding(meta, key, coding):
@@ -35,7 +39,8 @@ def tag_resource(res):
         return False
     meta = res.setdefault("meta", {})
     added = ensure_coding(meta, "tag", SYNDERAI_TAG)
-    added = ensure_coding(meta, "security", SYNTH_SEC) or added
+    added = ensure_coding(meta, "security", SEC_HTEST) or added
+    added = ensure_coding(meta, "security", SEC_TRAIN) or added
     return added
 
 

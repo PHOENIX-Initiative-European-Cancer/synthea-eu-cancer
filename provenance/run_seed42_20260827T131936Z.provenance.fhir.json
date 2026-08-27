@@ -1,21 +1,21 @@
 {
   "resourceType": "Bundle",
-  "id": "provenance-bundle-run_seed42_20260827T135244Z",
+  "id": "provenance-bundle-run_seed42_20260827T131936Z",
   "type": "collection",
-  "timestamp": "2026-08-27T13:52:44Z",
+  "timestamp": "2026-08-27T13:19:36Z",
   "entry": [
     {
-      "fullUrl": "Provenance/provenance-run_seed42_20260827T135244Z",
+      "fullUrl": "Provenance/provenance-run_seed42_20260827T131936Z",
       "resource": {
         "resourceType": "Provenance",
-        "id": "provenance-run_seed42_20260827T135244Z",
+        "id": "provenance-run_seed42_20260827T131936Z",
         "target": [
           {
-            "reference": "Group/cohort-run_seed42_20260827T135244Z"
+            "reference": "Group/cohort-run_seed42_20260827T131936Z"
           }
         ],
-        "occurredDateTime": "2026-08-27T13:52:44Z",
-        "recorded": "2026-08-27T13:52:44Z",
+        "occurredDateTime": "2026-08-27T13:19:36Z",
+        "recorded": "2026-08-27T13:19:36Z",
         "activity": {
           "coding": [
             {
@@ -36,7 +36,7 @@
               ]
             },
             "who": {
-              "reference": "Device/device-synthea-run_seed42_20260827T135244Z"
+              "reference": "Device/device-synthea-run_seed42_20260827T131936Z"
             }
           },
           {
@@ -57,7 +57,7 @@
           {
             "role": "source",
             "what": {
-              "reference": "DocumentReference/module-prostate-run_seed42_20260827T135244Z"
+              "reference": "DocumentReference/module-prostate-run_seed42_20260827T131936Z"
             }
           }
         ],
@@ -76,7 +76,7 @@
           },
           {
             "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/generation-population-requested",
-            "valueInteger": 1000
+            "valueInteger": 20
           },
           {
             "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/synthetic-data-disclaimer",
@@ -95,10 +95,10 @@
       }
     },
     {
-      "fullUrl": "Group/cohort-run_seed42_20260827T135244Z",
+      "fullUrl": "Group/cohort-run_seed42_20260827T131936Z",
       "resource": {
         "resourceType": "Group",
-        "id": "cohort-run_seed42_20260827T135244Z",
+        "id": "cohort-run_seed42_20260827T131936Z",
         "meta": {
           "security": [
             {
@@ -114,7 +114,7 @@
         },
         "type": "person",
         "actual": true,
-        "quantity": 1131,
+        "quantity": 21,
         "code": {
           "text": "Synthetic prostate-pathway cohort (Synthea)"
         },
@@ -155,20 +155,20 @@
         "extension": [
           {
             "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/cohort-bundles-total",
-            "valueInteger": 1131
+            "valueInteger": 21
           },
           {
             "url": "https://phoenix-initiative.eu/fhir/StructureDefinition/cohort-bundles-with-prostate-or-bph",
-            "valueInteger": 1044
+            "valueInteger": 20
           }
         ]
       }
     },
     {
-      "fullUrl": "Device/device-synthea-run_seed42_20260827T135244Z",
+      "fullUrl": "Device/device-synthea-run_seed42_20260827T131936Z",
       "resource": {
         "resourceType": "Device",
-        "id": "device-synthea-run_seed42_20260827T135244Z",
+        "id": "device-synthea-run_seed42_20260827T131936Z",
         "deviceName": [
           {
             "name": "Synthea Patient Generator",
@@ -228,29 +228,29 @@
       }
     },
     {
-      "fullUrl": "DocumentReference/module-prostate-run_seed42_20260827T135244Z",
+      "fullUrl": "DocumentReference/module-prostate-run_seed42_20260827T131936Z",
       "resource": {
         "resourceType": "DocumentReference",
-        "id": "module-prostate-run_seed42_20260827T135244Z",
+        "id": "module-prostate-run_seed42_20260827T131936Z",
         "status": "current",
         "type": {
           "text": "Synthea generic module — prostate cancer pathway (calibrated)"
         },
-        "description": "SHA-256: aee59de23d9874fc06e05c31569ab2bd3860475d5ff389e2ed2bd016e40d5133",
+        "description": "SHA-256: a80fff7a39b0283b46f43f7fef79fe150b594aad9c591634a6079f0a2dac7637",
         "content": [
           {
             "attachment": {
               "contentType": "application/json",
               "url": "https://raw.githubusercontent.com/PHOENIX-Initiative-European-Cancer/synthea-eu-cancer/13c86b1/modules/adult/prostate.json",
               "title": "modules/adult/prostate.json",
-              "hash": "ruWd4j2YdPwG4FwxVpqyvThgR11f84ni7SvQFuQNUTM="
+              "hash": "qA//ejmwKDtG9D9/73n+FQtZSq2cWRY0pgefCi2sdjc="
             }
           }
         ],
         "identifier": [
           {
             "system": "urn:sha-256",
-            "value": "aee59de23d9874fc06e05c31569ab2bd3860475d5ff389e2ed2bd016e40d5133"
+            "value": "a80fff7a39b0283b46f43f7fef79fe150b594aad9c591634a6079f0a2dac7637"
           }
         ]
       }

@@ -37,8 +37,9 @@ Synthea ships realistic patient simulation but is US-centric: epidemiology, demo
 | Demographics localization (DE, FR, IT, ES, NL, … ) | TODO |
 | New cancer modules (melanoma, pancreatic, hematologic, …) | TODO |
 | Pediatric oncology modules | TODO |
-| Synthea-FHIR → HL7-EU CCDM mapping | TODO |
-| Validation against CCDM IG | TODO |
+| Synthea-FHIR → HL7-EU CCDM mapping | **DONE (draft)** — `scripts/postprocess_ccdm.py` reshapes prostate bundles to the 13 ECCDM draft profiles (stage/EOC/progression/follow-up derived; pinned draft build in `profiles/eccdm/`) |
+| Validation against CCDM IG | **DONE (draft)** — `scripts/validate_ccdm.sh` gates a bundle sample against the vendored package |
+| TNM staging emission (UICC-8, clinical + pathological) | **DONE** — module v3, calibration `epidemiology/prostate_calibration.md` §11 (Partin matrix, M1a/b/c split) |
 
 ## Repo layout
 
@@ -49,7 +50,8 @@ synthea-eu-cancer/
 │   └── pediatric/   # Pediatric oncology modules
 ├── epidemiology/    # EU registry data (ECIS/ENCR), per-country incidence tables
 ├── mappings/        # Synthea-FHIR → HL7-EU CCDM transformations
-├── scripts/         # Run scripts, post-processing pipelines
+├── profiles/eccdm/  # Vendored local build of the ECCDM draft profiles (pinned commit, see README there)
+├── scripts/         # Run scripts, post-processing pipelines (incl. postprocess_ccdm.py, validate_ccdm.sh)
 └── docs/            # Design notes, CCDM mapping decisions
 ```
 

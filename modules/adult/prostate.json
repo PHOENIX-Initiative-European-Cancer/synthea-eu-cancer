@@ -579,13 +579,13 @@
     },
     "BPH_Surgery_Encounter_End_Incidental": {
       "type": "EncounterEnd",
-      "direct_transition": "Incidental_Cancer_Onset"
+      "direct_transition": "Incidental_FollowUp_Delay"
     },
     "Incidental_Cancer_Onset": {
       "type": "SetAttribute",
       "attribute": "pca_detection",
       "value": "incidental_turp",
-      "direct_transition": "Cancer_Low"
+      "direct_transition": "Cancer_Low_Incidental"
     },
     "BPH_Terminal": {
       "type": "Terminal"
@@ -641,13 +641,7 @@
       "type": "SetAttribute",
       "attribute": "pca_risk_group",
       "value": "low",
-      "direct_transition": "Stage_Low"
-    },
-    "Stage_Low": {
-      "type": "SetAttribute",
-      "attribute": "pca_ctnm",
-      "value": "cT1cN0M0",
-      "direct_transition": "Gleason_Low"
+      "direct_transition": "CT_Split_Low"
     },
     "Gleason_Low": {
       "type": "Observation",
@@ -772,13 +766,7 @@
       "type": "SetAttribute",
       "attribute": "pca_risk_group",
       "value": "intermediate",
-      "direct_transition": "Stage_Intermediate"
-    },
-    "Stage_Intermediate": {
-      "type": "SetAttribute",
-      "attribute": "pca_ctnm",
-      "value": "cT2bN0M0",
-      "direct_transition": "Gleason_Intermediate"
+      "direct_transition": "CT_Split_Intermediate"
     },
     "Gleason_Intermediate": {
       "type": "Observation",
@@ -860,7 +848,7 @@
         "high": 240,
         "unit": "minutes"
       },
-      "direct_transition": "RP_Encounter_End"
+      "direct_transition": "Path_Split_RP"
     },
     "RP_Encounter_End": {
       "type": "EncounterEnd",
@@ -941,13 +929,7 @@
       "type": "SetAttribute",
       "attribute": "pca_risk_group",
       "value": "high",
-      "direct_transition": "Stage_High"
-    },
-    "Stage_High": {
-      "type": "SetAttribute",
-      "attribute": "pca_ctnm",
-      "value": "cT2cN0M0",
-      "direct_transition": "Gleason_High"
+      "direct_transition": "CT_Split_High"
     },
     "Gleason_High": {
       "type": "Observation",
@@ -1006,13 +988,7 @@
       "type": "SetAttribute",
       "attribute": "pca_risk_group",
       "value": "locally_advanced",
-      "direct_transition": "Stage_LocAdv"
-    },
-    "Stage_LocAdv": {
-      "type": "SetAttribute",
-      "attribute": "pca_ctnm",
-      "value": "cT3aN0M0",
-      "direct_transition": "Gleason_LocAdv"
+      "direct_transition": "CT_Split_LocAdv"
     },
     "Gleason_LocAdv": {
       "type": "Observation",
@@ -1149,7 +1125,7 @@
         "high": 300,
         "unit": "minutes"
       },
-      "direct_transition": "RP_HighRisk_Encounter_End"
+      "direct_transition": "Path_Split_PLND"
     },
     "RP_HighRisk_Encounter_End": {
       "type": "EncounterEnd",
@@ -1175,13 +1151,7 @@
       "type": "SetAttribute",
       "attribute": "pca_risk_group",
       "value": "metastatic",
-      "direct_transition": "Stage_Metastatic"
-    },
-    "Stage_Metastatic": {
-      "type": "SetAttribute",
-      "attribute": "pca_ctnm",
-      "value": "cT3bN1M1",
-      "direct_transition": "Gleason_Metastatic"
+      "direct_transition": "Obs_cT_Met"
     },
     "Gleason_Metastatic": {
       "type": "Observation",
@@ -1669,6 +1639,1067 @@
     "Salvage_Fail_End": {
       "type": "EncounterEnd",
       "direct_transition": "ADT_Encounter"
+    },
+    "CT_Split_Low": {
+      "type": "Simple",
+      "remarks": [
+        "Calibration §11.1/§11.4. Incidental-at-TURP -> cT1a 0.60 / cT1b 0.40; otherwise cT1c 0.80 / cT2a 0.20."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "pca_detection",
+            "operator": "==",
+            "value": "incidental_turp"
+          },
+          "distributions": [
+            {
+              "transition": "Obs_cT_Low_cT1a",
+              "distribution": 0.6
+            },
+            {
+              "transition": "Obs_cT_Low_cT1b",
+              "distribution": 0.4
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "Obs_cT_Low_cT1c",
+              "distribution": 0.8
+            },
+            {
+              "transition": "Obs_cT_Low_cT2a",
+              "distribution": 0.2
+            }
+          ]
+        }
+      ]
+    },
+    "Obs_cT_Low_cT1a": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352983006",
+        "display": "cT1a (UICC)"
+      },
+      "direct_transition": "Obs_cN_Low"
+    },
+    "Obs_cT_Low_cT1b": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352968001",
+        "display": "cT1b (UICC)"
+      },
+      "direct_transition": "Obs_cN_Low"
+    },
+    "Obs_cT_Low_cT1c": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352973007",
+        "display": "cT1c (UICC)"
+      },
+      "direct_transition": "Obs_cN_Low"
+    },
+    "Obs_cT_Low_cT2a": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352962000",
+        "display": "cT2a (UICC)"
+      },
+      "direct_transition": "Obs_cN_Low"
+    },
+    "Obs_cN_Low": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353041009",
+        "display": "cN0 (UICC)"
+      },
+      "direct_transition": "Obs_cM_Low"
+    },
+    "Obs_cM_Low": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352512001",
+        "display": "cM0 (UICC)"
+      },
+      "direct_transition": "Histology_Low"
+    },
+    "Histology_Low": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1187332001",
+        "display": "Adenocarcinoma (morphologic abnormality)"
+      },
+      "remarks": [
+        "Acinar adenocarcinoma of prostate, ICD-O-3 8140/3. SNOMED morphology 1187332001 (active successor of retired 35917007)."
+      ],
+      "direct_transition": "Gleason_Low"
+    },
+    "CT_Split_Intermediate": {
+      "type": "Simple",
+      "remarks": [
+        "Calibration §11.1: cT1c 0.55 / cT2a 0.15 / cT2b 0.30."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Obs_cT_Int_cT1c",
+          "distribution": 0.55
+        },
+        {
+          "transition": "Obs_cT_Int_cT2a",
+          "distribution": 0.15
+        },
+        {
+          "transition": "Obs_cT_Int_cT2b",
+          "distribution": 0.3
+        }
+      ]
+    },
+    "Obs_cT_Int_cT1c": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352973007",
+        "display": "cT1c (UICC)"
+      },
+      "direct_transition": "Obs_cN_Int"
+    },
+    "Obs_cT_Int_cT2a": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352962000",
+        "display": "cT2a (UICC)"
+      },
+      "direct_transition": "Obs_cN_Int"
+    },
+    "Obs_cT_Int_cT2b": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352972002",
+        "display": "cT2b (UICC)"
+      },
+      "direct_transition": "Obs_cN_Int"
+    },
+    "Obs_cN_Int": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353041009",
+        "display": "cN0 (UICC)"
+      },
+      "direct_transition": "Obs_cM_Int"
+    },
+    "Obs_cM_Int": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352512001",
+        "display": "cM0 (UICC)"
+      },
+      "direct_transition": "Histology_Int"
+    },
+    "Histology_Int": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1187332001",
+        "display": "Adenocarcinoma (morphologic abnormality)"
+      },
+      "remarks": [
+        "Acinar adenocarcinoma of prostate, ICD-O-3 8140/3. SNOMED morphology 1187332001 (active successor of retired 35917007)."
+      ],
+      "direct_transition": "Gleason_Intermediate"
+    },
+    "CT_Split_High": {
+      "type": "Simple",
+      "remarks": [
+        "Calibration §11.1: cT1c 0.40 / cT2b 0.25 / cT2c 0.35."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Obs_cT_High_cT1c",
+          "distribution": 0.4
+        },
+        {
+          "transition": "Obs_cT_High_cT2b",
+          "distribution": 0.25
+        },
+        {
+          "transition": "Obs_cT_High_cT2c",
+          "distribution": 0.35
+        }
+      ]
+    },
+    "Obs_cT_High_cT1c": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352973007",
+        "display": "cT1c (UICC)"
+      },
+      "direct_transition": "Obs_cN_High"
+    },
+    "Obs_cT_High_cT2b": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352972002",
+        "display": "cT2b (UICC)"
+      },
+      "direct_transition": "Obs_cN_High"
+    },
+    "Obs_cT_High_cT2c": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352969009",
+        "display": "cT2c (UICC)"
+      },
+      "direct_transition": "Obs_cN_High"
+    },
+    "Obs_cN_High": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353041009",
+        "display": "cN0 (UICC)"
+      },
+      "direct_transition": "Obs_cM_High"
+    },
+    "Obs_cM_High": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352512001",
+        "display": "cM0 (UICC)"
+      },
+      "direct_transition": "Histology_High"
+    },
+    "Histology_High": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1187332001",
+        "display": "Adenocarcinoma (morphologic abnormality)"
+      },
+      "remarks": [
+        "Acinar adenocarcinoma of prostate, ICD-O-3 8140/3. SNOMED morphology 1187332001 (active successor of retired 35917007)."
+      ],
+      "direct_transition": "Gleason_High"
+    },
+    "CT_Split_LocAdv": {
+      "type": "Simple",
+      "remarks": [
+        "Calibration §11.1: cT3a 0.60 / cT3b 0.25 / cT4 0.15; cN1 in 0.25."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Obs_cT_LocAdv_cT3a",
+          "distribution": 0.6
+        },
+        {
+          "transition": "Obs_cT_LocAdv_cT3b",
+          "distribution": 0.25
+        },
+        {
+          "transition": "Obs_cT_LocAdv_cT4",
+          "distribution": 0.15
+        }
+      ]
+    },
+    "Obs_cT_LocAdv_cT3a": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352989005",
+        "display": "cT3a (UICC)"
+      },
+      "direct_transition": "CN_Split_LocAdv"
+    },
+    "Obs_cT_LocAdv_cT3b": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352991002",
+        "display": "cT3b (UICC)"
+      },
+      "direct_transition": "CN_Split_LocAdv"
+    },
+    "Obs_cT_LocAdv_cT4": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352997003",
+        "display": "cT4 (UICC)"
+      },
+      "direct_transition": "CN_Split_LocAdv"
+    },
+    "CN_Split_LocAdv": {
+      "type": "Simple",
+      "distributed_transition": [
+        {
+          "transition": "Obs_cN1_LocAdv",
+          "distribution": 0.25
+        },
+        {
+          "transition": "Obs_cN0_LocAdv",
+          "distribution": 0.75
+        }
+      ]
+    },
+    "Obs_cN1_LocAdv": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353043007",
+        "display": "cN1 (UICC)"
+      },
+      "direct_transition": "Obs_cM_LocAdv"
+    },
+    "Obs_cN0_LocAdv": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353041009",
+        "display": "cN0 (UICC)"
+      },
+      "direct_transition": "Obs_cM_LocAdv"
+    },
+    "Obs_cM_LocAdv": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352512001",
+        "display": "cM0 (UICC)"
+      },
+      "direct_transition": "Histology_LocAdv"
+    },
+    "Histology_LocAdv": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1187332001",
+        "display": "Adenocarcinoma (morphologic abnormality)"
+      },
+      "remarks": [
+        "Acinar adenocarcinoma of prostate, ICD-O-3 8140/3. SNOMED morphology 1187332001 (active successor of retired 35917007)."
+      ],
+      "direct_transition": "Gleason_LocAdv"
+    },
+    "Obs_cT_Met": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352991002",
+        "display": "cT3b (UICC)"
+      },
+      "direct_transition": "CN_Split_Met"
+    },
+    "CN_Split_Met": {
+      "type": "Simple",
+      "remarks": [
+        "Calibration §11.1: cN1 0.60 at de-novo M1."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Obs_cN1_Met",
+          "distribution": 0.6
+        },
+        {
+          "transition": "Obs_cN0_Met",
+          "distribution": 0.4
+        }
+      ]
+    },
+    "Obs_cN1_Met": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353043007",
+        "display": "cN1 (UICC)"
+      },
+      "direct_transition": "CM_Split_Met"
+    },
+    "Obs_cN0_Met": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353041009",
+        "display": "cN0 (UICC)"
+      },
+      "direct_transition": "CM_Split_Met"
+    },
+    "CM_Split_Met": {
+      "type": "Simple",
+      "remarks": [
+        "Calibration §11.2: M1a 0.09 / M1b 0.79 / M1c 0.12 (bone-dominant)."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Obs_cM_Met_M1a",
+          "distribution": 0.09
+        },
+        {
+          "transition": "Obs_cM_Met_M1b",
+          "distribution": 0.79
+        },
+        {
+          "transition": "Obs_cM_Met_M1c",
+          "distribution": 0.12
+        }
+      ]
+    },
+    "Obs_cM_Met_M1a": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352517007",
+        "display": "cM1a (UICC)"
+      },
+      "direct_transition": "Histology_Met"
+    },
+    "Obs_cM_Met_M1b": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352514000",
+        "display": "cM1b (UICC)"
+      },
+      "direct_transition": "Histology_Met"
+    },
+    "Obs_cM_Met_M1c": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352516003",
+        "display": "cM1c (UICC)"
+      },
+      "direct_transition": "Histology_Met"
+    },
+    "Histology_Met": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1187332001",
+        "display": "Adenocarcinoma (morphologic abnormality)"
+      },
+      "remarks": [
+        "Acinar adenocarcinoma of prostate, ICD-O-3 8140/3. SNOMED morphology 1187332001 (active successor of retired 35917007)."
+      ],
+      "direct_transition": "Gleason_Metastatic"
+    },
+    "Path_Split_RP": {
+      "type": "Simple",
+      "remarks": [
+        "Calibration §11.3 (Partin/Eifler 2013). Low (post-AS RP): pT2 0.82/pT3a 0.16/pT3b 0.02. Intermediate: pT2 0.53/pT3a 0.35/pT3b 0.12 (LN+ folded into pT3b; no PLND -> no pN)."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "pca_risk_group",
+            "operator": "==",
+            "value": "low"
+          },
+          "distributions": [
+            {
+              "transition": "Obs_pT_RP_pT2",
+              "distribution": 0.82
+            },
+            {
+              "transition": "Obs_pT_RP_pT3a",
+              "distribution": 0.16
+            },
+            {
+              "transition": "Obs_pT_RP_pT3b",
+              "distribution": 0.02
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "Obs_pT_RP_pT2",
+              "distribution": 0.53
+            },
+            {
+              "transition": "Obs_pT_RP_pT3a",
+              "distribution": 0.35
+            },
+            {
+              "transition": "Obs_pT_RP_pT3b",
+              "distribution": 0.12
+            }
+          ]
+        }
+      ]
+    },
+    "Obs_pT_RP_pT2": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352545001",
+        "display": "pT2 (UICC)"
+      },
+      "direct_transition": "RP_Encounter_End"
+    },
+    "Obs_pT_RP_pT3a": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352551006",
+        "display": "pT3a (UICC)"
+      },
+      "direct_transition": "RP_Encounter_End"
+    },
+    "Obs_pT_RP_pT3b": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352534004",
+        "display": "pT3b (UICC)"
+      },
+      "direct_transition": "RP_Encounter_End"
+    },
+    "Path_Split_PLND": {
+      "type": "Simple",
+      "remarks": [
+        "Calibration §11.3. High: pT2 0.22/pT3a 0.44/pT3b 0.22/LN+ 0.12. Locally advanced: 0.05/0.28/0.32/0.35. LN+ path emits pT3b+pN1."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "pca_risk_group",
+            "operator": "==",
+            "value": "high"
+          },
+          "distributions": [
+            {
+              "transition": "Obs_pT_PLND_pT2",
+              "distribution": 0.22
+            },
+            {
+              "transition": "Obs_pT_PLND_pT3a",
+              "distribution": 0.44
+            },
+            {
+              "transition": "Obs_pT_PLND_pT3b",
+              "distribution": 0.22
+            },
+            {
+              "transition": "Obs_pT_PLND_LN",
+              "distribution": 0.12
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "Obs_pT_PLND_pT2",
+              "distribution": 0.05
+            },
+            {
+              "transition": "Obs_pT_PLND_pT3a",
+              "distribution": 0.28
+            },
+            {
+              "transition": "Obs_pT_PLND_pT3b",
+              "distribution": 0.32
+            },
+            {
+              "transition": "Obs_pT_PLND_LN",
+              "distribution": 0.35
+            }
+          ]
+        }
+      ]
+    },
+    "Obs_pT_PLND_pT2": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352545001",
+        "display": "pT2 (UICC)"
+      },
+      "direct_transition": "Obs_pN0_PLND"
+    },
+    "Obs_pT_PLND_pT3a": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352551006",
+        "display": "pT3a (UICC)"
+      },
+      "direct_transition": "Obs_pN0_PLND"
+    },
+    "Obs_pT_PLND_pT3b": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352534004",
+        "display": "pT3b (UICC)"
+      },
+      "direct_transition": "Obs_pN0_PLND"
+    },
+    "Obs_pT_PLND_LN": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352534004",
+        "display": "pT3b (UICC)"
+      },
+      "direct_transition": "Obs_pN1_PLND"
+    },
+    "Obs_pN0_PLND": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21900-6",
+          "display": "Regional lymph nodes.pathology [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352621009",
+        "display": "pN0 (UICC)"
+      },
+      "direct_transition": "RP_HighRisk_Encounter_End"
+    },
+    "Obs_pN1_PLND": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21900-6",
+          "display": "Regional lymph nodes.pathology [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352614009",
+        "display": "pN1 (UICC)"
+      },
+      "direct_transition": "RP_HighRisk_Encounter_End"
+    },
+    "Incidental_FollowUp_Delay": {
+      "type": "Delay",
+      "range": {
+        "low": 2,
+        "high": 4,
+        "unit": "weeks"
+      },
+      "remarks": [
+        "Histology review of the TURP/HoLEP specimen -> urology follow-up to discuss incidental PCa."
+      ],
+      "direct_transition": "Incidental_FollowUp_Encounter"
+    },
+    "Incidental_FollowUp_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185347001",
+          "display": "Encounter for problem"
+        }
+      ],
+      "remarks": [
+        "Post-TURP follow-up; incidental prostate cancer (cT1a/cT1b) disclosed and staged here."
+      ],
+      "direct_transition": "Incidental_Cancer_Onset"
+    },
+    "Cancer_Low_Incidental": {
+      "type": "ConditionOnset",
+      "remarks": [
+        "Incidental PCa at TURP (cT1a/b, mostly low grade). Separate onset state because Cancer_Low targets Urology_Encounter, which never recurs on this path."
+      ],
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "399068003",
+          "display": "Malignant tumor of prostate"
+        }
+      ],
+      "target_encounter": "Incidental_FollowUp_Encounter",
+      "assign_to_attribute": "prostate_cancer",
+      "direct_transition": "Set_Risk_Low"
     }
   }
 }

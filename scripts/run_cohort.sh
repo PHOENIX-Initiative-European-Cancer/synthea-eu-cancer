@@ -48,7 +48,10 @@ fi
 echo "Generating $POP patients | age $AGE | gender $GENDER | $STATE | modules: $MODULES"
 echo "Reproducibility: seed=$SEED clinicianSeed=$CLINICIAN_SEED referenceDate=${REFERENCE_DATE:-<today>}"
 cd "$SYNTHEA"
-./run_synthea "${SEED_FLAGS[@]}" -p "$POP" -a "$AGE" -g "$GENDER" -d "$MODULES" "$STATE"
+# --exporter.fhir.use_us_core_ig=false: EU dataset - do not stamp US-Core meta.profile
+# claims on every resource (they drag US-Core conformance checks into ECCDM validation).
+./run_synthea "${SEED_FLAGS[@]}" -p "$POP" -a "$AGE" -g "$GENDER" -d "$MODULES" \
+  --exporter.fhir.use_us_core_ig=false "$STATE"
 echo "Done. Bundles in $SYNTHEA/output/fhir/"
 
 # --- post-processing: restore codings Synthea's exporter drops ---------------
@@ -58,6 +61,8 @@ echo "Post-processing: dual ATC (WHO + BfArM/ATC-DE)"
 python3 "$REPO/scripts/postprocess_atc_de.py" "$SYNTHEA/output/fhir"
 echo "Post-processing: synthetic-data tag (SYNDERAI convention) on every resource"
 python3 "$REPO/scripts/postprocess_synthetic_tag.py" "$SYNTHEA/output/fhir"
+echo "Post-processing: ECCDM layer (HL7-EU Cancer Common draft profiles)"
+python3 "$REPO/scripts/postprocess_ccdm.py" "$SYNTHEA/output/fhir"
 
 # --- provenance: document exactly how this cohort was produced -------------
 FHIR_DIR="$SYNTHEA/output/fhir"

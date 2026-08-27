@@ -1,6 +1,6 @@
 {
-  "run_id": "run_seed42_20260827T135244Z",
-  "timestamp_utc": "20260827T135244Z",
+  "run_id": "run_seed42_20260827T132535Z",
+  "timestamp_utc": "20260827T132535Z",
   "parameters": {
     "population": 1000,
     "age_range": "50-60",
@@ -17,14 +17,14 @@
   },
   "module": {
     "file": "modules/adult/prostate.json",
-    "sha256": "aee59de23d9874fc06e05c31569ab2bd3860475d5ff389e2ed2bd016e40d5133",
+    "sha256": "a80fff7a39b0283b46f43f7fef79fe150b594aad9c591634a6079f0a2dac7637",
     "repo_commit": "13c86b1",
     "repo_dirty": true
   },
   "output": {
     "fhir_dir": "/Users/thome/code/interop-prototypes/synthea-eu-cancer/synthea/output/fhir",
-    "bundles_total": 1131,
-    "bundles_with_prostate_or_bph": 1044,
+    "bundles_total": 1133,
+    "bundles_with_prostate_or_bph": 1046,
     "note": "counts reflect all bundles currently in fhir_dir; clear it before a run for a per-run count"
   },
   "host": {
