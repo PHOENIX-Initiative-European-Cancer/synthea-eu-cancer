@@ -1,10 +1,20 @@
 # Konzept: Synthea-Brustkrebs-Modul (Frauen 50–60)
 
 Analogon zu `modules/adult/prostate.json` + `epidemiology/prostate_calibration.md`. Dieses Papier legt das
-klinische Modell, die Stratifizierungsachsen, die Emissionscodes und die Arbeitspakete fest — **es ist noch keine
-Kalibrierungsdoku**. Die Zahlen unten sind bereits recherchiert und bequellt, wandern aber beim Umsetzen in
-`epidemiology/breast_calibration.md` (Epic `synthea-eu-cancer-4w3`), damit dieses Dokument als Architekturentscheid
-lesbar bleibt.
+klinische Modell, die Stratifizierungsachsen, die Emissionscodes und die Arbeitspakete fest — **es ist keine
+Kalibrierungsdoku**.
+
+> 📐 **Die kanonischen Zahlen leben in [`epidemiology/breast_calibration.md`](../epidemiology/breast_calibration.md)**
+> (3.081 Zeilen, Teile A/B/C aus Epic `synthea-eu-cancer-4w3`, Stand 2026-08-31). Dieses Konzept nennt nur noch die
+> Zahlen, an denen eine **Design-Entscheidung** hängt, und verweist im Übrigen dorthin. Bei Abweichungen zwischen
+> beiden Dokumenten **gilt die Kalibrierungsdatei** — sie ist gegen die Primärquellen verifiziert, dieses Papier
+> nicht.
+>
+> Die Evidenzrunde vom 2026-08-31 hat dieses Konzept an **19 Stellen korrigiert** (A §0: 6, B §8: 4, C §0: 9).
+> Alle Korrekturen sind unten eingearbeitet und mit „**korrigiert**" plus Fundstelle markiert. Die tragenden vier:
+> **(1)** Detektionsmix 44/18/38 statt 45/11/44 · **(2)** das deutsche MSP erhebt **kein BI-RADS** ·
+> **(3)** `bc_high_risk` ist eine Populations-, keine Patientinnengröße (0,35 % statt 2 %) ·
+> **(4)** die Rezidiv-Hazards müssen nicht mehr geschätzt werden — das TRM publiziert gemessene Jahresraten.
 
 **Kohortenfenster: Frauen 50–60** (Entscheid, spiegelt die Prostata-Kohorte 50–60). Das ist ein Screening-Fenster
 mit ~5–6 Einladungsrunden im 2-Jahres-Takt und hat mehrere nicht-triviale Konsequenzen für die Kalibrierung —
@@ -30,8 +40,16 @@ genau die gefragte Zahl) · 🟡 belegt, aber Übertragbarkeits-/Ära-Vorbehalt 
 | **Hochrisiko-/BRCA-Arm** | **JA, aber ausdrücklich schlank** — Minimalvariante in v1, Vollvariante v2 | §1.4.1 / §1.4.2 |
 | **Biomarker + Grading (FHIR-Profilierung)** | **unprofilierte LOINC-Observations**; TNM voll ECCDM-profiliert; Lücke als Feedback ans Phoenix-Team; **kein SenologieOnFHIR-Tagging in v1** | §8.3 Punkt 3 |
 | Ki-67-Cutoff | 14 % (St. Gallen 2013) als bewusste Modellkonvention | §3.1 |
-| BI-RADS | Emissions-Artefakt statt steuernder Branch (Option 1) | §2 |
+| BI-RADS | Emissions-Artefakt statt steuernder Branch — **alternativlos**, das MSP erhebt kein BI-RADS | §2 |
+| pCR-Definition | **`ypT0/is ypN0`** (korrigiert von „streng ypT0 ypN0") | §5.3 |
+| pCR-Wirkung auf Rezidiv | nur **TNBC- und HER2+-Ast** (S3-konform) | §6.2 |
 | Ausgeschlossen in v1 | bilaterale Karzinome, männliches Mamma-Ca, B3/ADH, Rekonstruktion, Psychoonkologie, Studienteilnahme | §10.2 |
+
+> ⚠️ **Offener Punkt zur S3-Version (Kalibrierung A §0).** Dieses Papier zitiert durchgängig **v5.1 (Juni 2026)**;
+> der lokale AWMF-Korpus, gegen den die Kalibrierung verifiziert wurde, enthält **v5.0 (Dezember 2025,
+> AWMF-Freigabe 23.01.2026)**. **Alle Empfehlungsnummern in der Kalibrierungsdatei sind gegen v5.0 verifiziert.**
+> Vor Modulbau ist abzugleichen, ob v5.1 die Nummerierung geändert hat — das betrifft u. a. die im Text
+> genannten Empf. 4.72, 4.73, 4.85, 4.138–4.161.
 
 **Leitlinien-Frame:** S3-Leitlinie Mammakarzinom **AWMF 032-045OL, Version 5.1 (Juni 2026)** gibt die *Struktur*;
 **AGO Kommission Mamma 2026.1D** die Therapie-Feinheiten; **RKI/ZfKD "Krebs in Deutschland 2021–2023" (KID 2025)**,
@@ -46,7 +64,7 @@ Klassifikationsrahmen für Staging: **UICC TNM 8. Auflage**.
 | Baustein | Prostata v3 | Mamma (Vorschlag) |
 |---|---|---|
 | Wurzel-Trigger | *ein* Symptom-Trigger (LUTS), 100 % der Kohorte | **drei Eintrittspfade** (Screening / Intervall / symptomatisch), Anteile epidemiologisch belegt |
-| Bildgebungs-Score im Workup | PI-RADS (LOINC 82717-8) → biopsierate-steuernd | **BI-RADS** (LOINC 72018-2, SNOMED-Werte) → identische Rolle |
+| Bildgebungs-Score im Workup | PI-RADS (LOINC 82717-8) → biopsierate-steuernd | **BI-RADS** (LOINC 72018-2) → nur **Emissions-Artefakt**; Steuerung über MSP-Prozesskennzahlen (§2) |
 | Haupt-Branch nach Diagnose | EAU-Risikogruppe (5 Klassen) | **Surrogat-Subtyp** (5 Klassen) — aber als *abgeleitete*, nicht als primäre Größe (§3.2) |
 | Zweite Stratifizierungsachse | — | **Detektionsmodus** (bedingt Stadium, Grading, Subtyp) — §1.3 |
 | Staging-Emission | LOINC 21905-5/21906-3/21907-1 + 21899-0/21900-6, SNOMED-UICC-8-Werte | **unverändert übernehmbar** (§5.4) + neu `yp`-Kategorien |
@@ -71,26 +89,50 @@ Mammographie-Screening-Programm (MSP) eine große, gut vermessene Teilpopulation
 systematisch kleiner, nodal-negativer und besser differenziert sind. Der Modus gehört deshalb an die *Wurzel*
 und wird als Patientenattribut (`bc_detection_mode`) durch das gesamte Modul getragen.
 
+> ✏️ **korrigiert (Kalibrierung A §7, §8.1).** Der ursprüngliche Split 45/11/44 stützte sich auf Braun 2018
+> (Münster, n=1.531). Es gibt eine 45-fach größere deutsche Quelle: **Buschmann 2024** (Krebsregister NRW,
+> alle Frauen 50–69 mit inzidentem C50 2006–2014, n=**68.230**, PMID 38287392). Braun 2018 bleibt für die
+> *bedingten* Merkmalsverteilungen (§1.3) unverzichtbar — Buschmann liefert diese Tabelle nicht — aber **nicht
+> mehr für die Marginale**.
+
 | Eintrittspfad | Anteil | Basis | Conf |
 |---|---|---|---|
-| **Screening-detektiert** (MSP) | **0.45** | Braun 2018 (Münster MSP 2006–2012, n=1.531): 46,6 %; national gegengerechnet ~50 %. **Quelle 50–69** | 🟡 (eine Region + Altersband) |
-| **Intervallkarzinom** (nach negativem Screening) | **0.11** | Braun 2018: 10,4 %; Programmsensitivität 69,9–71,7 % (Kaiser 2023, PMC10496211) ⇒ ~28 % Intervallanteil unter Teilnehmerinnen. **Quelle 50–69** | 🟡 |
-| **Symptomatisch / Nicht-Teilnehmerin** | **0.44** | Braun 2018: 42,9 %. **Quelle 50–69** | 🟡 |
-| **Hochrisiko / IFNP** (BRCA & Co.) | **0.03** *zusätzlich, überlagernd* | gBRCA1/2 in unselektierter BC 1,8 % (LIBRO-1, PMC6320715); Altersgradient >50 J. 3,3 % (PMC3240809). Im Fenster **50–60** höher als in 50–69, weil nur 26 % der BRCA1- und 33 % der BRCA2-Trägerinnen ≥60 J. bei Diagnose sind (LIBRO-1) | 🔴 |
+| **Screening-detektiert** (MSP) | **0.44** | Buschmann 2024, NRW, **2014er Steady-State** (die Gesamtperiode 2006–2014 ist durch die Rollout-Jahre nach unten verzerrt). **Quelle 50–69** | 🟡 |
+| **Intervallkarzinom** (nach negativem Screening) | **0.18** | ebd. — der bisherige Wert 0,11 war **um Faktor ~1,6 zu niedrig** | 🟡 |
+| **Symptomatisch / Nicht-Teilnehmerin** | **0.38** | ebd. | 🟡 |
+| **Hochrisiko / IFNP** (gBRCA1/2) | **0.0035** *auf Populationsebene* — siehe §1.4.1 | CARRIERS (n=32.544 Kontrollen) + BRIDGES (n=53.461): **0,353 % / 0,361 %** | 🟢 |
 
-**Richtung der Altersband-Verzerrung** für die drei Detektionsmodi: im Fenster 50–60 verschiebt sich der Mix
-**weg vom Screening**, weil (a) die Hintergrundinzidenz mit dem Alter steigt (259/100.000 bei 50–54 gegen
-350/100.000 bei 65–69, KoopMammo 2023) 🟢, die Detektionsrate im Screening also niedriger ist, während der
-symptomatische Arm relativ an Gewicht gewinnt, und (b) Intervallkarzinome bei dichterem Drüsengewebe jüngerer
-Frauen häufiger sind. Belegt ist diese Verschiebung **nicht** — Braun 2018 publiziert den Detektionsmix nicht
-nach Altersband. Der 45/11/44-Split bleibt deshalb der Startwert; er ist ein **Kalibrier-Kandidat für
-`synthea-eu-cancer-51w`** und keine gesetzte Größe.
+**Warum der neue Split nicht nur „eine größere Studie" ist — die interne Konsistenzprüfung entscheidet.**
+Der Intervallanteil *unter Teilnehmerinnen* beträgt bei 44/18 gerechnet 18/(44+18) = **28,6 %**, also eine
+implizierte Programmsensitivität von **71,4 %**. Das deckt sich mit **Heinze 2023** (BARMER-Abrechnungsdaten,
+n=1,99 Mio. Folgescreenings: IC-Anteil 27,6 %, PS 69,9–71,7 %) aus einer völlig unabhängigen Datenquelle 🟢.
+Der alte Split 45/11 ergibt dagegen 11/56 = 19,6 %, also **PS 80,4 %** — das ist der Erstrunden-Wert und für
+eine Dauerteilnehmerinnen-Kohorte im Fenster 50–60 nachweislich zu optimistisch. **Der alte Split war mit der
+Programmsensitivität, die dasselbe Modul an anderer Stelle verwendet, nicht vereinbar.** Genau diese
+Widerspruchsfreiheit ist das Argument, nicht die Stichprobengröße.
+
+> ✏️ **Zitatkorrektur (A §0.2):** die Programmsensitivität 69,9–71,7 % stammt von **Heinze F et al.**,
+> *BMC Cancer* 2023;23:855, **PMID 37697304** — nicht von „Kaiser", wie eine frühere Fassung dieses Papiers
+> angab. Der Zahlenwert war korrekt, der Erstautor falsch.
+
+**Design-Empfehlung: den Modus erzeugen statt setzen.** Die sauberste Umsetzung lässt `bc_detection_mode` aus
+der Teilnahme-Markov-Kette + Programmsensitivität + altersbandspezifischer Detektionsrate **emergieren** und
+benutzt 44/18/38 nur als **Validierungsziel**. Das ist exakt dasselbe Argument, mit dem §3.2 den Subtyp aus den
+Biomarkern ableitet statt ihn zu ziehen — und es hat hier einen zusätzlichen Vorteil: der resultierende Mix ist
+dann automatisch konsistent mit den Erstrunden-Effekten des schmalen Fensters (§1.2a), die man sonst doppelt
+einrechnen müsste.
 
 **Modellierungshinweis Screening-Teilnahme:** die Teilnahme ist stark „klebrig" und darf **nicht** als i.i.d.
 52-%-Münzwurf modelliert werden. KoopMammo 2023 liefert die Markov-Kette direkt: Ersteinladung **45,9 %**,
 Wiedereinladung nach Teilnahme **86,3 %**, nach Nicht-Teilnahme **15,3 %** (Gesamtteilnahme 52,1 %) 🟢.
-Das ist der Mechanismus, der die 45/11/44-Aufteilung *erzeugt*, statt sie zu postulieren — und er ist mit einer
-`Delay` + `complex_transition`-Schleife auf einem Attribut `msp_last_attended` in Synthea sauber abbildbar.
+Das ist der Mechanismus, der den Detektionsmix *erzeugt*, statt ihn zu postulieren — abbildbar als
+`Delay` + `complex_transition`-Schleife auf einem Attribut `msp_last_attended`.
+
+**Richtung der Altersband-Verzerrung:** im Fenster 50–60 verschiebt sich der Mix **weg vom Screening**, weil die
+Hintergrundinzidenz niedriger und die Programmsensitivität bei 50–54 am schlechtesten ist — der Intervallanteil
+ist also eher am oberen Rand anzusetzen. Belegt ist das nicht; **keine deutsche Quelle publiziert den
+Detektionsmix nach Altersband** 🔴. Der 44/18/38-Split bleibt Startwert und Kalibrier-Kandidat für
+`synthea-eu-cancer-51w`, keine gesetzte Größe.
 
 ### 1.2 Kohorten-Fenster 50–60 — Programmparameter und Altersband-Effekte
 
@@ -116,8 +158,18 @@ sich massiv von Folgeuntersuchungen (KoopMammo 2023, alle 🟢):
 | UICC II+ | 26 % | 21 % |
 
 Das Modul muss Erst- und Folgeuntersuchung deshalb als **getrennte Zustände** führen (Attribut
-`msp_round_index`), nicht als eine gemittelte Screening-Runde. In einer 50–69-Kohorte hätte man das mit dem
-Programmmittel wegmitteln können; in 50–60 wäre das ein systematischer Fehler.
+`msp_round_index`), nicht als eine gemittelte Screening-Runde.
+
+> ✏️ **korrigiert und quantifiziert (Kalibrierung A §3.5).** Die ursprüngliche Formulierung „die Kohorte ist
+> erstrundenlastig" war in dieser Schärfe falsch. **Auf Untersuchungsebene** hat eine Frau mit allen 6
+> Einladungen 1 Erst- und 5 Folgeuntersuchungen = 16,7 % — praktisch identisch zum Programmmittel von 16 %.
+> Der Effekt sitzt allein auf **Karzinomebene**, weil die Erstrunde die doppelte Detektionsrate hat:
+> `7,6 + 5 × 4,16 = 28,4` Karzinome je 1.000 Frauen, davon `7,6/28,4 =` **26,8 % aus der Erstrunde**
+> (programmweit 22,1 %). Daraus folgt ein gewichteter **DCIS-Anteil im Screening-Arm von ~19 %** —
+> nicht die 22 %, die eine frühere Fassung dieses Papiers als „oberen Rand" ansetzte. Der Erstrunden-Effekt
+> ist real und rechtfertigt getrennte Zustände, aber er ist beim DCIS-Anteil ein **1-Punkt-Effekt, kein
+> 4-Punkte-Effekt.** (Die Rechnung unterstellt vollständige Teilnahme; mit der Markov-Kette verschiebt sich
+> der Anteil leicht nach oben, weil Wiedereinsteigerinnen erneut in erstrundennahe Konstellationen geraten 🟡.)
 
 **(b) Die Fallzahl pro Kohortenkopf sinkt deutlich.** Die CDR bei 50–54 liegt in Folgeuntersuchungen bei
 **3,8 ‰** gegenüber 7,0 ‰ bei 65–69 🟢; das mediane Erkrankungsalter in Deutschland ist **65 Jahre**, und nur
@@ -184,9 +236,19 @@ und liefert die Aufhänger für `FamilyMemberHistory` + Checkliste:
 - **IFNP-Inhalt:** jährliches Kontrast-MRT, Mammographie (inkl. Tomosynthese) alle 1–2 J. ab 40, Sonographie bei
   jedem Termin 🟢. Programmsensitivität **89,6 %**, **84,5 %** der entdeckten Karzinome Stadium 0 oder I
   (Bick 2019, n=4.573) 🟢. Detektionsrate im Regelbetrieb **1,53 %** (DKG FBREK-Jahresbericht 2025) 🟢.
+- **Prävalenz — korrigierte Quellenbasis (Kalibrierung A §0.3, §8.1):** die frühere Fassung stützte sich auf
+  LIBRO-1 (1,8 %) und einen Altersgradienten von „3,3 % bei >50 J." Beides ist ersetzt: LIBRO-1 ist eine
+  **schwedische** Kohorte, und die 3,3 % waren **2 Ereignisse bei 60 Patientinnen** aus einer Athener Serie
+  (95 %-KI 0,4–11,5 %) — als Altersevidenz unbrauchbar und **gestrichen**. Maßgeblich sind jetzt zwei
+  Großkohorten, die auf 0,05 Prozentpunkte übereinstimmen: **CARRIERS** (Hu/Hart 2021, PMID 33471974,
+  n=32.247 Fälle) **2,15 %** und **BRIDGES/BCAC** (Dorling 2021, PMID 33471991, n=60.466) **2,10 %** — jeweils
+  **unter Brustkrebs-Patientinnen** 🟢. In der Allgemeinbevölkerung sind es **0,353 % / 0,361 %** (Kontrollen
+  beider Kohorten) 🟢. Der klassisch zitierte Bereich 1:400–1:800 stammt aus Segregationsanalysen der 1990er
+  und ist **zu niedrig**.
 - **Subtyp-Skew:** BRCA1-Tumoren sind zu **~69–71 %** triple-negativ, BRCA2 nur zu ~16–23 % (CIMBA 2012,
-  PMID 22144499) 🟢. Altersverschiebung BRCA1 ≈ −22 bis −25 J., BRCA2 ≈ −18 bis −20 J. gegenüber dem
-  deutschen Median von 65 J. 🔴; nur 26 % der BRCA1- und 33 % der BRCA2-Trägerinnen sind bei Diagnose ≥60 J.
+  PMID 22144499) 🟢. BRCA2 dominiert BRCA1 im Verhältnis **2:1** und im Fenster 50–60 noch stärker, weil
+  BRCA2-Trägerinnen 5–8 Jahre später erkranken (CARRIERS: mittleres Diagnosealter BRCA1 50,3–50,9 J.,
+  BRCA2 55,4–58,6 J.) 🟢; nur 26 % der BRCA1- und 33 % der BRCA2-Trägerinnen sind bei Diagnose ≥60 J.
   (LIBRO-1) 🟢. Das Fenster **50–60** trifft BRCA-Trägerinnen damit **besser** als 50–69 — der Hochrisiko-Arm
   ist hier relativ stärker besetzt (§1.1) — aber immer noch weit rechts vom Erkrankungsgipfel
   (BRCA1 30–40 J., BRCA2 40–50 J., Kuchenbaecker 2017) 🟢. Empfehlung unverändert: den Hochrisiko-Arm als
@@ -200,9 +262,20 @@ Ziel: der Arm soll **erkennbar** sein (Kohorte enthält Hochrisiko-Journeys mit 
 Subtyp-Skew), aber **keinen eigenen Zustandsbaum** aufziehen. Er kostet damit ~8–10 zusätzliche Zustände statt
 der ~40, die die Vollvariante bräuchte.
 
+> ✏️ **korrigiert (Kalibrierung A §0.4, §8.1) — der folgenreichste Zahlenfehler des Konzepts.** Die frühere
+> Fassung setzte `bc_high_risk = 0.02`. Die 2,1 % gelten aber **unter Brustkrebs-Patientinnen**; Synthea setzt
+> das Attribut im `Initial`-Bereich, also auf **Populationsebene** — dort sind es **0,35 %**. Ein Faktor 6.
+>
+> **Umsetzung v1:** `bc_high_risk = 0.0035` auf Populationsebene **plus** ein erhöhter Erkrankungs-Hazard für
+> Trägerinnen, sodass sich die 2,1 % unter den Erkrankten **ergeben**. Das ist etwas mehr Arbeit als ein fixer
+> Anteil, aber die einzige Variante, die *beide* publizierten Marginalen trifft — und sie passt zur
+> Grundlinie dieses Moduls, abgeleitete Größen abzuleiten statt zu setzen (§1.1, §3.2). Wird stattdessen der
+> bequeme Weg gewählt, muss in `README.md`: **die Kohorte überschätzt den BRCA-Anteil unter den
+> Nicht-Erkrankten um Faktor 6** — für ein Demo-Dataset vertretbar, für jede Prävalenzauswertung tödlich.
+
 | Element | Umsetzung in v1 | Wert | Conf |
 |---|---|---|---|
-| Zugehörigkeit | **ein Attribut** `bc_high_risk` (boolean), gesetzt im `Initial`-Bereich | **0.02** der Kohorte | 🔴 (Spanne 1,5–2,5 %, §1.1) |
+| Zugehörigkeit | **ein Attribut** `bc_high_risk` (boolean), gesetzt im `Initial`-Bereich | **0.0035** (Populationsebene) ⇒ **~2,1 %** unter den Erkrankten | 🟢 (CARRIERS + BRIDGES) |
 | Familienanamnese | **eine** `FamilyMemberHistory` (Mutter oder Schwester, Mamma-Ca), pauschal bei `bc_high_risk` | SCT 254837009, `onset` = Erkrankungsalter | 🟢 (Codes) |
 | Checkliste | **eine** Observation SCT 445039002, `valueBoolean = true`, Komponente `score` = 3–5 | — | 🟢 (Codes) |
 | Früherkennung | **intensivierte Bildgebung statt MSP**: jährliches Mamma-MRT (LOINC 30794-2) + Mammographie, ersetzt die 2-Jahres-Screening-Schleife | jährlich statt 2-jährlich | 🟢 (IFNP-Inhalt) |
@@ -230,11 +303,38 @@ Erst dann lohnt sich der Aufwand, weil die Journey-Vielfalt dann tatsächlich ab
 
 ---
 
-## 2. Workup — BI-RADS als PI-RADS-Analogon
+## 2. Workup — das BI-RADS-Analogon trägt nicht, und das ist der Befund
 
-Kaskade: **Mammographie → (Sonographie / MRT) → Stanz- oder Vakuumbiopsie**. Strukturell identisch zum
-`PIRADS_Branch` → `Biopsy_PR{3,4,5}`-Muster des Prostata-Moduls: ein ordinaler Bildgebungs-Score steuert die
-Biopsierate, und die Malignitätswahrscheinlichkeit hängt an der Score-Stufe.
+> ✏️ **korrigiert, strukturell (Kalibrierung A §4).** Die Überschrift dieses Kapitels lautete
+> „BI-RADS als PI-RADS-Analogon". Die Recherche hat den Vergleich **widerlegt**:
+>
+> **Das deutsche MSP erhebt keine BI-RADS-Kategorien.** Die Befundung ist **binär** („unauffällig" vs.
+> „Konsensuskonferenz erforderlich"); danach entscheidet die Konsensuskonferenz über den Abklärungsbedarf.
+> Die einzige verpflichtende Kategorisierung im Programm ist die **B-Klassifikation B1–B5** der Histologie
+> (BMV-Ä Anlage 9.2 — BI-RADS kommt im gesamten Anlagentext nicht vor). Auch die **S3 v5.0 knüpft in keiner
+> einzigen Empfehlung eine Handlungskonsequenz an eine BI-RADS-Kategorie**; der Term erscheint im
+> 497-seitigen Langtext genau einmal, als Literaturstelle. Die Leitlinie steuert über
+> **Befundkonstellationen** (Herdbefund / Mikrokalk / Dichte / Diskordanz), nicht über eine Suspicion-Skala.
+>
+> Eine deutsche BI-RADS-Stufenverteilung mit Karzinomraten je Stufe ist damit nicht „zufällig nicht
+> publiziert", sondern **strukturell nicht erhebbar**. Damit ist die frühere „Option 1" nicht mehr die
+> pragmatischere von zwei Wahlmöglichkeiten, sondern **die einzige fachlich haltbare** — die Abwägung unten
+> entfällt.
+
+Kaskade im Screening-Arm, gesteuert über die deutschen Prozess-Kennzahlen statt über eine Score-Stufe:
+
+`MSP_Exam → (binär) Recall → Stufe-1-Abklärung → Biopsieindikation → Biopsie → B-Klassifikation → Karzinom`
+
+Der BI-RADS-Wert wird **rückwärts konsistent gesetzt** (4 bei Biopsieindikation, 5 bei hoher
+Malignitätswahrscheinlichkeit) — er bleibt als Emissions-Artefakt im Bundle, weil er ein Pflicht-Datenelement
+in SenologieOnFHIR und ein wichtiges Testartefakt ist, steuert aber nichts.
+
+**Im symptomatischen Arm ist BI-RADS dagegen real im Gebrauch** (ACR BI-RADS 5th ed., Fachkonsens
+Müller-Schimpfle 2016) 🟢. Nur dort lohnt sich eine Stufenlogik — mit US-/NL-Proxy-PPVs
+(4A 7,6 % · 4B 22,0 % · 4C 69,3 % · 5 92,9 %), die in der Kalibrierungsdatei stehen und als Proxy markiert
+sind 🟡. **Achtung beim Import:** der deutsche PPV II liegt mit 55,6 % fast doppelt so hoch wie der US-PPV3
+(~29 %), weil die zweistufige Abklärung filtert, bevor die Nadel kommt — ein 1:1-Import US-amerikanischer
+BI-RADS-4-PPVs würde die Biopsierate im Modell massiv überschätzen.
 
 KoopMammo veröffentlicht Wiedereinbestellung und CDR **nach 5-Jahres-Altersband**. Diese Arrows sind daher die
 einzigen im ganzen Dokument, die direkt auf 50–60 kalibriert werden können — sie sollten unbedingt
@@ -248,35 +348,37 @@ altersbandspezifisch kodiert werden statt mit dem Programmmittel.
 | Detektionsrate (CDR), **reguläre Folge** | **3,8 ‰** (50–54) | 5,3 ‰ | ebd. §9 (Anstieg auf 7,0 ‰ bei 65–69) | 🟢 |
 | Hintergrundinzidenz (Nenner der relativen CDR) | **259/100.000** (50–54) | — | ebd. §9 (350/100.000 bei 65–69) | 🟢 |
 | Wiedereinbestellung → Abklärung wahrgenommen | **0.98** | 0.98 | ebd. | 🟢 (altersunabhängig) |
-| Abklärung → Biopsieindikation | **1,1 %** aller Untersuchten | dito | ebd. | 🟡 (nicht nach Alter berichtet) |
-| **PPV I** (Karzinom unter Wiedereinbestellten) | **0.16** | dito | ebd. | 🟡 (nicht nach Alter berichtet; in 50–54 wegen höherer Recall- und niedrigerer Detektionsrate rechnerisch **niedriger**) |
-| **PPV II** (Karzinom unter nicht-invasiv Abgeklärten) | **0.56** | dito | ebd. | 🟡 |
-| Präoperativ histologisch gesichert | **0.95** | dito | ebd. | 🟢 |
-| `BIRADS_Branch` → 1–2 / 3 / 4 / 5 | **Modellierungsprior**, muss PPV I und die altersband-spezifische CDR reproduzieren | — | keine deutsche BI-RADS-Verteilung im Abklärungskollektiv publiziert | 🔴 |
+| Abklärung → Biopsieindikation | **0.011** aller Untersuchten | dito | ebd. | 🟡 (nicht nach Alter berichtet) |
+| Recall → Biopsie (abgeleitet) | **0.279** | dito | ebd., eigene Rechnung | 🟡 |
+| **PPV I**, **Erstuntersuchung** | **0.070** (50–54) / 0.101 (55–59) | **0.083** | abgeleitet `CDR / Recall` | 🟢 |
+| **PPV I**, **reguläre Folge** | **0.119** (50–54) / **0.183** (55–59) | **0.206** | dito | 🟢 |
+| **PPV II** (Karzinom je Biopsieindikation) | **0.556** | dito | ebd. | 🟡 (nicht nach Alter berichtet) |
+| Präoperativ histologisch gesichert | **0.952** | dito | ebd. | 🟢 |
+| Kontrolluntersuchung statt Abklärung (dt. Analogon zu BI-RADS 3) | **0.005** aller Untersuchten | — | ebd. | 🟢 |
 
-Die PPV-Werte sind programmweit berichtet, nicht nach Alter. Da bei 50–54 die Wiedereinbestellungsrate *höher*
-und die CDR *niedriger* ist als im Programmmittel, muss der PPV I in dieser Altersgruppe rechnerisch unter
-0,16 liegen. Wer die drei Größen (Recall, CDR, PPV) gleichzeitig aus dem Programmmittel übernimmt, erzeugt eine
-**inkonsistente Kette**. Empfehlung: Recall und CDR altersbandspezifisch setzen (beide 🟢) und den PPV daraus
-**ableiten** statt ihn zu setzen — das ist zugleich die Konsistenzprüfung für `synthea-eu-cancer-51w`.
+> ✏️ **korrigiert (Kalibrierung A §0.5, §3.3).** Die frühere Fassung führte **einen** PPV I von 0,16. Das ist
+> der bundesweite *Mischwert*; nach Untersuchungsart trennt der Bericht in **Erst 8,3 %** und **reguläre Folge
+> 20,6 %**. Ein pauschaler 0,16 ist damit **in beide Richtungen um Faktor ~2 falsch** — für die Erstrunde bei
+> 50–54 sogar um Faktor 2,3.
 
-**Der eine bewusst zu wählende Schwellenwert** (Analogon zur PSA-3-vs-4-Notiz im Prostata-Modul): das
-Prostata-Modul steuert die Biopsie über PI-RADS-*Stufen* mit publizierten stufenspezifischen Detektionsraten
-(Oerther 2021). Für BI-RADS existiert **keine gleichwertige deutsche Stufen-Detektionsrate** 🔴. Zwei Optionen:
+**Die im Konzept vorgeschlagene Ableitung ist durchgerechnet und schließt sich.** `PPV I = CDR / Recall` ergibt
+untersuchungsgewichtet **8,19 % (Erst)** und **20,80 % (Folge)** gegen die publizierten **8,3 %** und
+**20,6 %** — eine Abweichung von 0,1–0,2 Prozentpunkten. Damit ist bewiesen, dass Recall, CDR und PPV I aus
+demselben Bericht arithmetisch kohärent sind und die abgeleiteten Bandwerte belastbar. **Das ist das
+Konsistenz-Gate für `synthea-eu-cancer-51w`:** jede spätere Änderung an Recall oder CDR muss diese Rechnung
+erneut bestehen.
 
-1. **BI-RADS als Emissions-Artefakt** — Biopsie und Malignität direkt aus PPV I / PPV II ziehen, BI-RADS
-   *rückwärts* konsistent setzen (BI-RADS 4 bei Biopsie, 5 bei hoher Malignitätswahrscheinlichkeit).
-   Vorteil: alle Arrows bleiben 🟢, nichts wird erfunden.
-2. **BI-RADS als steuernder Branch** — analog PI-RADS, aber mit 🔴-Prior für die Stufenverteilung.
+Bemerkenswert und für die Kohorte relevant: der PPV I ist bei **50–54 in der Erstrunde mit 7,0 % der
+schlechteste Wert des gesamten Programms** — hoher Recall trifft auf niedrige Inzidenz. Genau dieser Punkt
+liegt im Kohortenfenster, und zwar bei jeder Teilnehmerin.
 
-**Empfehlung: Option 1.** Sie hält den Anteil roter Arrows niedrig und nutzt aus, dass die deutsche
-Screening-Kette anders als die Prostata-Kette an ihren *Ergebnis*-Kennzahlen (PPV, CDR) vermessen ist,
-nicht an ihren Zwischenstufen. Der BI-RADS-Wert wird trotzdem emittiert — er ist ein Pflicht-Datenelement in
-SenologieOnFHIR und ein wichtiges Testartefakt.
+Nur ~28 % der Wiedereinbestellten werden überhaupt biopsiert; drei Viertel werden in der nicht-invasiven Stufe 1
+(Palpation, Zusatzaufnahmen, Sonographie, ggf. MRT) entlastet. Das ist der Grund für den hohen deutschen PPV II
+— und die Warnung gegen den Import von US-BI-RADS-PPVs oben.
 
 Der symptomatische Arm überspringt das Screening und geht über `Tastbefund` → `Diagnostische Mammographie +
-Sonographie` → Biopsie; hier ist die Malignitätsrate deutlich höher, aber ohne publizierte deutsche Zahl 🔴 —
-sie wird stattdessen implizit über die Kohortenzusammensetzung (§1.1) gesteuert.
+Sonographie` → Biopsie; die Karzinomwahrscheinlichkeit bei symptomatischer Vorstellung steht in der
+Kalibrierungsdatei (Teil A §6).
 
 ---
 
@@ -363,7 +465,9 @@ Therapiepfad und ohne Systemtherapie. Anteil stark detektionsmodus-abhängig:
 | DKG-Zentren, Primärfälle | 9,6 % | OnkoZert JB 2025 (alle Alter) | 🟢 |
 
 Weil in der 50–60-Kohorte jede Teilnehmerin die Erstrunde durchläuft (§1.2a), liegt der DCIS-Anteil im
-Screening-Arm **am oberen Rand** dieser Spanne — die 22-%-Zeile ist für die frühen Runden der relevantere Wert.
+Screening-Arm über dem Folgerunden-Wert von 18 % — der **gewichtete Zielwert ist ~19 %** (Herleitung §1.2a).
+Die frühere Formulierung „am oberen Rand, 22 %" nahm den reinen Erstrunden-Wert und überschätzte den Effekt
+(korrigiert, Kalibrierung A §3.5).
 
 Grading beim DCIS läuft über **Van Nuys / Kerngrading**, nicht Elston-Ellis: Kerngrad niedrig 11,6 % /
 intermediär 26,1 % / hoch 33,3 % (TRM Tab. 25, 28,9 % ohne Angabe) 🟢.
@@ -406,7 +510,7 @@ angeben; **Reflex-ISH bei jedem 2+** 🟢.
 | Größe | Lum A | Lum B HER2− | Lum B HER2+ | HER2-enriched | TNBC | Conf |
 |---|---|---|---|---|---|---|
 | ER (%) | 80–100 (Modus ~90) | 60–100 | 50–100 | 0 (Tail 1–10 in ~2–3 %) | 0 (dito) | 🔴 |
-| PR (%) | 50–95 | 0–60 (PR− in 30–40 %) | 0–70 | 0 | 0 | 🔴 |
+| PR (%) | 50–95 | 0–60 (**PR− in ~10–15 %**, korrigiert von 30–40 %) | 0–70 | 0 | 0 | 🔴 |
 | HER2 IHC | 0/1+ | 0/1+ | 3+ oder 2+/ISH+ | 3+ oder 2+/ISH+ | 0/1+ | 🟢 (Definition) |
 | Ki-67 Median (IQR) | 10 (6–13) | 25 (18–35) | 30 (20–45) | 40 (25–55) | 60 (40–80) | 🔴 |
 | Grading G1/G2/G3 | **31,5 / 65,9 / 2,7** | 7,2 / 69,7 / 22,9 | 2,9 / 52,8 / 44,3 | 0,8 / 34,0 / 65,2 | **1,4 / 25,4 / 73,2** | 🟢 (TRM 2016) |
@@ -451,8 +555,14 @@ Abgeleitet aus KoopMammo 2023 (Größen-/N-Klassen) kreuzgerechnet mit der TRM-p
 | T4 | ~1,8 % | ~4,5 % | 🟡 |
 
 Nodalstatus: **N0 / N+ = 75,5 / 23,4 %** (screen), **59,9 / 32,0 %** (Intervall), **61,3 / 30,7 %**
-(symptomatisch) — Braun 2018, **Quelle 50–69** 🟡. Die N+-Fälle werden mit der TRM-Marginalen
-**N1 : N2 : N3 = 70 : 19 : 11** aufgeteilt 🔴 (kein detektionsmodus- und kein altersspezifischer Split publiziert).
+(symptomatisch) — Braun 2018, **Quelle 50–69** 🟡.
+
+> ✏️ **korrigiert (Kalibrierung B §5.2, §8).** Der 🔴-Prior „N1 : N2 : N3 = 70 : 19 : 11" ist **ersetzt**: die
+> NCDB-Auswertung liefert für cN0-Patientinnen die gemessene Feinverteilung
+> **pN1mi 20,1 / pN1 63,7 / pN2 11,7 / pN3 4,5 %**. Damit fällt einer der roten Arrows weg. Zusätzlich neu
+> erschlossen und im Konzept bisher gar nicht vorgesehen: eine vollständige **cN0 → pN+ Übergangsmatrix**
+> (das Mamma-Analogon zur Partin-Matrix des Prostata-Moduls, §5.2) und eine **cT → pT-Upstaging-Tabelle**.
+> Beide stehen in der Kalibrierungsdatei Teil B §5.4 / §5.7.
 
 UICC-Gesamtstadium zur Gegenprobe (RKI KID 2025, gültige Werte, Frauen **50–69**): **I 51 / II 35 / III 7 / IV 7 %**
 — **Quelle 50–69**, RKI stratifiziert nicht feiner 🟡. Richtung für 50–60: der Stadienmix wird durch die
@@ -485,13 +595,29 @@ Staging-Guardrails (analog zur „kein pT1 beim Prostata-Ca"-Notiz): pN erforder
 `(sn)`-Suffix nur nach Sentinel-Biopsie (SNOMED hat dafür eigene Werte, §5.4); DCIS ist **pTis(DCIS)**, nie pT1;
 nach neoadjuvanter Therapie sind **alle** Kategorien mit `y` zu präfigieren, auch die klinischen.
 
+**Das Partin-Analogon existiert jetzt.** Beim Prostata-Modul ist die Partin-Matrix (cT/PSA/Gleason → pT/pN) das
+Herzstück der pathologischen Staging-Emission. Für das Mammakarzinom hat die Kalibrierungsrunde das Gegenstück
+**neu erschlossen** — eine `cN0 → pN+`-Übergangsmatrix aus NCDB (17,9 %) und INSEMA (17,0 %), plus
+cT→pT-Upstaging (Kalibrierungsdatei Teil B §5.4/§5.7). Damit hat das Mamma-Modul an dieser Stelle **dieselbe
+Belegtiefe wie das Prostata-Modul**, was beim Schreiben dieses Konzepts noch nicht absehbar war.
+
 ### 5.3 ypTNM und pCR — der strukturell neue Teil
 
 Das Prostata-Modul kennt keine Neoadjuvanz. Für das Mammakarzinom ist sie tragend (§6.2) und braucht eine
-eigene Staging-Emission: **pCR = ypT0 ypN0**. SNOMED hält die vollständige `yp`-Hierarchie bereit (verifiziert,
-SNOMED INT 20260501) — u. a. **ypT0 1352650002**, **ypTis(DCIS) 1352633004**, **ypN0 1352797005**. Damit ist
-sowohl `ypT0 ypN0` (strenge pCR) als auch `ypT0/is ypN0` (weiche pCR) sauber kodierbar; das Modul sollte die
-**strenge** Definition verwenden (bessere prognostische Trennschärfe: HR(DFS) 0,446 vs. 0,523).
+eigene Staging-Emission. SNOMED hält die vollständige `yp`-Hierarchie bereit (verifiziert, SNOMED INT
+20260501) — u. a. **ypT0 1352650002**, **ypTis(DCIS) 1352633004**, **ypN0 1352797005**. Damit sind beide
+pCR-Definitionen sauber kodierbar.
+
+> ✏️ **korrigiert (Kalibrierung C §0 K11, §3.5).** Die frühere Fassung wählte die **strenge** Definition
+> `ypT0 ypN0` mit dem Argument der besseren Trennschärfe (HR 0,446 vs. 0,523). Das kehrt sich um: die S3 ist
+> **in sich inkonsistent** — das Pathologiekapitel und die RT-Tabelle 8 definieren `ypT0/is ypN0`, nur
+> Empfehlung 4.111 schreibt `ypT0 und ypN0`. Maßgeblich ist die Mehrheitsschreibweise, und vor allem: sie
+> entspricht der Definition **aller Zulassungsstudien** (KEYNOTE-522, TRYPHAENA, KATHERINE), aus denen die
+> pCR-Raten stammen, die das Modul verwendet.
+>
+> **Modellkonvention: durchgängig `ypT0/is ypN0`** (DCIS im Resektat zulässig). Andernfalls würden gemessene
+> pCR-Raten gegen eine strengere Definition gezogen, als die Studien sie erhoben haben — ein systematischer
+> Fehler zugunsten zu niedriger pCR-Häufigkeit.
 
 ### 5.4 Emissionscodes (SNOMED UICC-8, alle verifiziert gegen SNOMED INT 20260501)
 
@@ -560,8 +686,9 @@ bzw. **D05.1** (DCIS) / D05.0 (LCIS) 🟡.
 | BET bei **DCIS** | **0.793** | ebd. (n=6.824) | 🟢 |
 | BET bei M1 | 0.361 | ebd. | 🟢 |
 | BET gesamt (operierte Fälle) | 0.737 | ebd. | 🟢 |
-| **Radiatio nach BET, invasiv** | **0.978** | OnkoZert KZ 4 (LL-QI) | 🟢 |
-| **Radiatio nach BET, DCIS** | **0.784** | OnkoZert KZ 5 | 🟢 |
+| Radiatio nach BET, invasiv — **Indikation** | 0.978 | OnkoZert KZ 4 (LL-QI) | 🟢 |
+| **Radiatio nach BET, invasiv — Durchführung** | **~0.91** | Heinig 2022, PMID 35109813 (Dx-Jahr 2008) | 🟡 |
+| **Radiatio nach BET, DCIS — begonnen** | **0.784** | OnkoZert KZ 5 | 🟢 |
 | Primärfälle **nicht operiert** | 0.161 gesamt (M1: 0.846; cT1N0M0: 0.072) | OnkoZert JB 2025 | 🟢 |
 | Revisionsoperation | 0.024 | OnkoZert KZ 22 | 🟢 |
 
@@ -572,33 +699,62 @@ OnkoZert-Kennzahlen sind zwar **nicht altersstratifiziert** (alle Alter, 96,9 % 
 Modul über das Stadium konditioniert und der Stadienmix altersband-korrekt gezogen wird (§5.1), trägt sich der
 Alterseffekt implizit durch. Das ist der Grund, die Kennzahlen stadien- und nicht altersbezogen anzusetzen.
 
+> ✏️ **korrigiert (Kalibrierung C §0 K4).** Die frühere Fassung las die 97,8 % als Durchführungsrate. OnkoZert
+> KZ 4 misst aber den Anteil, **denen eine Radiatio *empfohlen* wurde** — eine Indikations-, keine
+> Durchführungskennzahl. Für ein Modul, das Procedures emittiert, ist die Durchführung die relevante Größe.
+> KZ 5 (DCIS) misst dagegen tatsächlich „begonnen" und bleibt unverändert.
+
 Bestrahlung: Zielvolumina aus SenologieOnFHIR (`vs-senologie-rt-zielvolumen`, SNOMED): ganze Brust 76752008,
 Thoraxwand 78904004, axilläre LK 68171009, supraklavikuläre LK 76838003, parasternale LK 245282001 🟡.
-Typische Dosis 50 Gy + 10–16 Gy Boost (aus den Senologie-Beispielfällen); moderne Hypofraktionierung
-40 Gy / 2,5 Gy Einzeldosis ist im OncoBox-Testfall belegt.
+**Hypofraktionierung ist heute Standard** (Details und Dosisschemata: Kalibrierungsdatei Teil C §2.2) — das
+im OncoBox-Testfall belegte Schema 40 Gy / 2,5 Gy ist also der Normalfall, nicht die Ausnahme; die 50 Gy +
+10–16 Gy Boost der Senologie-Beispielfälle sind das ältere Schema.
 
 ### 6.2 Neoadjuvanz und pCR-Branch
 
-Anteil neoadjuvant behandelter Patientinnen, **alle Primärfälle 2023: 21,4 %** (OnkoZert) 🟢; nach klinischem
-Stadium cT1N0M0 18,9 / cT2N0M0 32,7 / N+M0 29,5 % 🟢. Nach Subtyp liegt nur eine ältere deutsche
-Realwelt-Auswertung vor (Ortmann 2022, 55 DKG-Zentren, 2007–2018, n=94.638) 🟢: TNBC 31,8 %, HR−/HER2+ 31,9 %,
-HR+/HER2+ 26,5 %, HR+/HER2− 5,8 % — bei einer damaligen Gesamtrate von 11,0 %, die sich seither auf 21,4 %
-verdoppelt hat.
+Anteil neoadjuvant behandelter Patientinnen, **alle Primärfälle 2023: 21,4 %** (OnkoZert, 15.699/73.505) 🟢;
+nach klinischem Stadium cT1N0M0 18,9 / cT2N0M0 32,7 / N+M0 29,5 % 🟢 (alle drei exakt bestätigt).
 
-⚠️ **Ära-Vorbehalt.** Diese Subtyp-Anteile reproduzieren die heutige Gesamtrate nicht. Vorgeschlagene
-Reskalierung auf 2023 (post-KEYNOTE-522 / post-KATHERINE), so gewählt, dass sie gewichtet mit den deutschen
-Subtyp-Prävalenzen die beobachteten 21,4 % ergibt: **TNBC 60–70 %, HR−/HER2+ ~60 %, HR+/HER2+ 45–50 %,
-HR+/HER2− ~10 %** 🔴. Das ist der wichtigste rote Arrow im Therapieteil.
+> ✏️ **präzisiert (Kalibrierung C §0 K5).** Zwei Fallstricke: **(a) Nenner.** Der parallel kursierende Wert
+> 25,45 % ist derselbe Zähler auf dem Nenner *operierte* Primärfälle (61.675) — beide korrekt, zwei Nenner.
+> Das Modul muss den Nenner explizit festlegen. **(b) Kategoriename.** OnkoZert zählt „neoadjuvant **oder
+> präoperativ systemisch**", was breiter ist als reine Chemotherapie. **(c) Altersband:** für 50–60 kommt ein
+> belegter Multiplikator **1,28** hinzu ⇒ **0,25–0,28** statt 0,214.
 
-pCR-Raten (ypT0 ypN0), deutsche Realwelt (Ortmann 2022) 🟢: HR+/HER2− **12 %**, HR+/HER2+ **36 %**,
-HR−/HER2+ **53 %**, TNBC **38 %**. Moderne Regime-Anker: KEYNOTE-522 (TNBC + Pembrolizumab) **64,8 %** 🟢,
-NeoSphere (HER2+, Docetaxel+Trastuzumab+Pertuzumab) **45,8 %** 🟢, GeparOcto TNBC 48,5/51,7 % 🟢.
-Vorschlag als Modellprior 🔴: TNBC **60 %** (Pembro-Backbone) bzw. 38 % (nur Chemo), HER2+/HR− 60 %,
-HER2+/HR+ 40 %, Luminal B HER2− 12 %, Luminal A 6 %.
+Nach Subtyp: Ortmann 2023 (55 DKG-Zentren, 2007–2018, n=94.638) 🟢 — TNBC 31,8 %, HR−/HER2+ 31,9 %,
+HR+/HER2+ 26,5 %, HR+/HER2− 5,8 %, alle vier exakt bestätigt. Die Ära-Reskalierung auf 2023, die dieses Konzept
+als „wichtigsten roten Arrow" markiert hatte, ist in der Kalibrierungsdatei (Teil C §3.3) **hergeleitet** statt
+geschätzt — dort nachschlagen statt hier duplizieren.
 
-Prognostische Nuance, die das Modul abbilden sollte (von Minckwitz 2012, PMID 22508812, n=6.377): pCR ist
-prognostisch bei Luminal B/HER2−, HER2+ nicht-luminal und TNBC — **nicht** bei Luminal A (p=0,39) und nicht bei
-Luminal B/HER2+ (p=0,45) 🟢. Der pCR-Zustand darf also nur in den ersten drei Ästen auf den Rezidiv-Hazard wirken.
+> ✏️ **Zitatkorrektur (C §0 K13):** **Ortmann O et al., *J Cancer Res Clin Oncol* 2023;149(3):1195–1209,
+> PMID 35380257 / PMC9984341** (online first 04/2022). Das Konzept zitierte durchgängig „Ortmann 2022".
+
+**pCR-Raten** (jetzt `ypT0/is ypN0`, §5.3), deutsche Realwelt (Ortmann 2023) 🟢: HR+/HER2− **12 %**,
+HR+/HER2+ **36 %**, HR−/HER2+ **53 %**, TNBC **38 %**. Moderne Regime-Anker: KEYNOTE-522 **64,8 %** 🟢,
+GeparOcto TNBC 48,5/51,7 % 🟢.
+
+> ✏️ **korrigiert (C §0 K9, B §8).** **NeoSphere (45,8 %) ist als HER2+-Anker unbrauchbar** — die Studie misst
+> **pCR in der Brust allein**, ohne Nodalstatus, ist also gegenüber `ypT0/is ypN0` nach oben verzerrt und mit
+> KEYNOTE-522 nicht vergleichbar. Ersatz: **TRYPHAENA (45–52 %)** oder TRAIN-2.
+>
+> ✏️ **korrigiert (B §8):** die Modellpriors Luminal A **6 %** / Luminal B HER2− **12 %** reproduzieren
+> Ortmanns HR+/HER2−-Mischwert von 12 % nicht. Korrigiert auf **5 % / 18 %**.
+
+Prognostische Nuance (von Minckwitz 2012, PMID 22508812, n=6.377): pCR ist prognostisch bei Luminal B/HER2−,
+HER2+ nicht-luminal und TNBC — nicht bei Luminal A (p=0,39) und nicht bei Luminal B/HER2+ (p=0,45) 🟢.
+
+> ✏️ **vereinfacht (C §0 K12).** Die S3 ist enger als von Minckwitz: *„Nur bei triple-negativen und
+> HER2-positiven Mammakarzinomen wird die pCR derzeit als Surrogatmarker … anerkannt."* ⇒ **der pCR-Effekt
+> wirkt nur im TNBC- und im HER2+-Ast** — leitlinienkonform **und** einfacher als die bisherige Drei-Äste-Regel.
+
+**Verzweigungsbedingung Pembrolizumab — korrigiert (C §0 K10, §3.4):** die frühere Fassung schrieb
+„Pembrolizumab bei CPS≥10 bzw. Stadium II/III". **S3 Empfehlung 4.154 (neu 2025) nennt ausschließlich
+> 2 cm oder N+ — es gibt keinen PD-L1-/CPS-Cutoff.** Das entspricht KEYNOTE-522, wo der pCR-Vorteil
+unabhängig von der PD-L1-Expression war; die CPS-Abhängigkeit gilt **nur metastasiert** (KEYNOTE-355) 🟢.
+Ebenso leitliniengesteuert ist die HER2+-Weiche: **> 2 cm und/oder N+** → neoadjuvant mit dualer Blockade
+(Empf. 4.161), **≤ 2 cm und cN0** → primäre OP mit De-Eskalation auf Paclitaxel + Trastuzumab 12 Wochen
+(Empf. 4.160). Das ersetzt einen flachen Subtyp-Prior durch eine **stadienabhängige Verzweigung** — die
+vollständige Entscheidungstabelle steht in der Kalibrierungsdatei Teil C §3.4.
 
 **Post-neoadjuvante Eskalation:** HER2+ mit Resttumor → T-DM1 (KATHERINE: 3-J-iDFS 88,3 % vs. 77,0 %,
 HR 0,50) 🟢; TNBC mit Resttumor → Capecitabin bzw. Olaparib bei gBRCA. Anteil der HER2+ mit Resttumor
@@ -615,24 +771,42 @@ HR 0,50) 🟢; TNBC mit Resttumor → Capecitabin bzw. Olaparib bei gBRCA. Antei
 | **TNBC** | neoadjuvante Platin-/Taxan-Chemo + Pembrolizumab (bei CPS≥10 bzw. Stadium II/III), Olaparib bei gBRCA | KEYNOTE-522 | 🟢 |
 | **DCIS** | keine Systemtherapie; Tamoxifen optional bei ER+ | S3 | 🟢 |
 
-Endokrine Details: **AI 54,9 % vs. Tamoxifen 45,1 %** bei Therapiebeginn in Deutschland über alle Alter
-(Jacob/Kostev 2023, IQVIA LRx, n=284.383, PMID 36149512) 🟢. Die Mittelwerte der beiden Gruppen (AI 69,0 J.,
-TAM 59,1 J.) zeigen die starke Altersabhängigkeit — und weisen darauf hin, dass die **50–60-Kohorte deutlich
-Tamoxifen-lastiger** ist als eine 50–69-Kohorte: der TAM-Mittelwert von 59,1 J. liegt mitten im Fenster.
-Der zuvor für 50–69 vorgeschlagene Split AI 75–85 % ist für 50–60 daher zu AI-lastig; Vorschlag **AI ~55–65 % /
-TAM ~35–45 %** 🔴, zusätzlich konditioniert auf den Menopausenstatus (im Fenster 50–60 sind nicht alle Frauen
-postmenopausal — Tamoxifen bzw. AI+GnRH ist dort die leitliniengerechte Wahl). **Persistenz nach 5 Jahren (90-Tage-Lücke):
-AI 35,1 %, TAM 32,5 %** 🟢 — das ist ein schön modellierbarer Abbruch-Pfad, den kein anderes synthetisches
-Mamma-Dataset abbildet, und er ist direkt aus deutschen Verordnungsdaten belegt.
+> ✏️ **korrigiert, Vorzeichenwechsel (Kalibrierung C §0 K1, §4.1).** Die frühere Fassung schätzte für 50–60
+> **AI ~55–65 % / TAM ~35–45 %** 🔴. Die altersstratifizierte Rekonstruktion aus Kostev 2023 (IQVIA LRx,
+> n=284.383, PMID 36149512) ergibt für **51–60 Jahre: AI 46,4 % / Tamoxifen 53,6 %** 🟢.
+> **Der Split kippt — Tamoxifen ist in diesem Fenster die Mehrheit.** Der Konzeptvorschlag war 10–19
+> Prozentpunkte zu AI-lastig, und der Wert steigt von 🔴 auf 🟢.
+
+Endokrine Details: **AI 0,46 / Tamoxifen 0,54** für 50–60 🟢 (Gesamtmarkt über alle Alter: 54,9/45,1).
+Die **primäre latente Variable ist der Menopausenstatus, nicht das Alter** — und im Fenster 50–60 liegt
+genau der Übergang (Median Menopausenalter DE 50 J., IQR 47–53): bei 50 J. rund die Hälfte postmenopausal,
+bei 60 J. ~97 %. Das Modul braucht zusätzlich einen **Statuswechsel-Arm nach Chemotherapie**
+(chemotherapie-induzierte Amenorrhoe), keinen fixen Baseline-Status — S3 Empf. 4.142 verlangt dafür
+Hormonstatus-Monitoring.
+
+**Persistenz nach 5 Jahren (90-Tage-Lücke): AI 35,1 %, TAM 32,5 %** 🟢 — ein schön modellierbarer Abbruch-Pfad,
+den kein anderes synthetisches Mamma-Dataset abbildet, direkt aus deutschen Verordnungsdaten belegt.
+
+> ✏️ **korrigiert (C §0 K2).** Das Konzept unterstellte implizit „jüngere brechen häufiger ab". Kostev 2023
+> zeigt einen **U-förmigen** Verlauf: ≤50 J. HR 1,08, **51–60 J. HR 0,92**, 61–70 J. HR 0,89 (Referenz >70 J.).
+> **Die Zielgruppe 50–60 hat also unterdurchschnittliches Abbruchrisiko.** Stärkster Prädiktor ist ohnehin
+> nicht das Alter, sondern der **Verordner** (Hausarzt HR 1,24) — was für das Modul bedeutet, dass der
+> Abbruch-Arm an der Versorgungsstruktur hängen sollte, nicht am Geburtsdatum.
 
 CDK4/6-Inhibitoren im metastasierten HR+/HER2−-Setting: 38,5 % → 62,7 % in den ersten zwei Jahren nach
 Zulassung (PRAEGNANT-Register, Fasching 2020, PMID 32956934) 🟢; für 2023 extrapoliert ~80–85 % 🔴.
 Adjuvant (monarchE-Kriterien) betrifft ~13 % der HR+/HER2−-Frühfälle (dänische DBCG-Kohorte) 🟡 —
 kein deutscher Wert 🔴.
 
-Genexpressionstest: seit **20.06.2019** ist Oncotype DX für HR+/HER2−, nodal-negativ GKV-erstattet 🟢;
-die tatsächliche Nutzung liegt laut Experteneinschätzung bei **~20 % der Berechtigten** 🟡 — es gibt keine
-publizierte deutsche Nutzungsstudie 🔴, u. a. weil der Test **nicht** unter den 23 DKG-Qualitätsindikatoren ist 🟢.
+> ✏️ **korrigiert (C §0 K3).** Der Genexpressionstest-Stand des Konzepts („seit 20.06.2019 Oncotype DX für
+> HR+/HER2−, N0") gilt nur für 2019–2020. Aktuell: seit **15.10.2020 vier Tests** (Oncotype, EndoPredict,
+> MammaPrint, Prosigna); seit **17.07.2025 Oncotype auch bei N1** — dafür **alle vier eingeschränkt auf
+> postmenopausal** (oder prämenopausal mit Ovarialsuppression).
+>
+> Das ist mehr als eine Aktualisierung: der Testzugang ist ab 2025 **menopausenstatusabhängig**, und in einer
+> 50–60-Kohorte mit gemischtem Status wird daraus ein **echter Verzweigungspunkt** statt eines pauschalen
+> Nutzungsanteils. Die Nutzungsrate selbst bleibt unbelegt (~20 % Experteneinschätzung 🟡, keine deutsche
+> Studie 🔴 — der Test ist keiner der 23 DKG-Qualitätsindikatoren, es gibt also keinen Nenner).
 
 ---
 
@@ -651,8 +825,8 @@ strukturell interessanteste Teil des Moduls.
 | Größe | Wert | Basis | Conf |
 |---|---|---|---|
 | Lokalrezidiv, deutsche Population (kumulative Inzidenz, Tod konkurrierend) | **5,2 % @5J / 8,2 % @10J**; regionär nodal 2,2 / 3,2 % ⇒ locoregionär ≈7,4 / 11,4 % | TRM Survival C50, Tab. 5b (n=58.903, 1998–2020) | 🟢 |
-| Fernmetastasierung (M0 bei Diagnose) | **11,0 % @5J / 16,6 % @10J / 19,4 % @15J** | ebd. | 🟢 |
-| jede Progression | 16,3 / 24,0 / 28,7 % | ebd. | 🟢 |
+| Fernmetastasierung (M0 bei Diagnose) | **≈8,4 % @5J / ≈13,1 % @10J** (⚠ nicht 11,0/16,6 — siehe Kasten) | TRM-Spezialauswertung `RisikoM0`, n=46.418, Dx 2002–2020 | 🟢 |
+| jede Progression | 16,3 / 24,0 / 28,7 % | TRM Survival Tab. 5b | 🟢 |
 | Rezidiv-Hazard ER+ vs ER−, Jahre 0–5 | 9,9 %/J vs 11,5 %/J | Colleoni 2016, IBCSG I–V, PMID 26786933 | 🟢 (Ära-Vorbehalt) |
 | Jahre 5–10 / 10–15 | ER+ 5,4 / 2,9 %/J; ER− 3,3 / 1,3 %/J | ebd. | 🟢 |
 | **TNBC-Hazard-Form** | Gipfel bei ~3 J., danach steiler Abfall; kaum Rezidive nach ~8 J. | Dent 2007, PMID 17671126 | 🟢 |
@@ -660,16 +834,28 @@ strukturell interessanteste Teil des Moduls.
 | ER+ Fernrezidiv Jahre 5–20, nach Stadium | T1N0 **13 %** · T1N1-3 20 % · T2N0 19 % · T2N1-3 26 % · T1N4-9 34 % | ebd. | 🟢 |
 | Überleben **nach** Fernmetastasierung (modern, DE) | 1-J 69,3 % · 2-J 52,2 % · **5-J 23,8 %** · 10-J 10,7 % | TRM Survival Tab. 5f (n=8.811, ≥2007) | 🟢 |
 | Medianes Überleben nach Metastasierung je Subtyp | Lum A 2,2 J · Lum B 1,6 J · Lum/HER2 1,3 J · HER2-enriched 0,7 J · basal 0,5 J | Kennecke 2010, PMID 20498394 | 🟢 (alte Kohorte) |
-| Kontralaterales Mamma-Ca, BRCA1 @10J | 25,1 % (BRCA2 6,6 %, Nicht-Trägerinnen 4,6 %) | Engel 2020, PMID 31081934 | 🟢 |
+| Kontralaterales Mamma-Ca, BRCA1 @10J | 25,1 % (BRCA2 6,6 %, **Nicht-Trägerinnen 3,6 %** — korrigiert von 4,6 %) | Engel 2020, PMID 31081934 | 🟢 |
 
-**Vorgeschlagene Hazard-Formen** 🔴 (aus Colleoni + Pan + Dent synthetisiert): TNBC — Weibull mit Gipfel
-2–3 J. bei ~8–10 %/J, <2 %/J ab J. 5, <1 %/J ab J. 8 · Luminal A — ~1,5–2 %/J flach bis J. 20 ·
-Luminal B — ~3–4 %/J J. 0–5, ~2,5 %/J J. 5–15 · HER2+ (behandelt) — ~4 %/J J. 0–5, ~1,5 %/J danach.
+> ✏️ **korrigiert (Kalibrierung C §0 K6).** Es gibt **zwei TRM-Tabellen mit zwei Werten** für die
+> Fernmetastasierung: Survival Tab. 5b (11,0 / 16,6 %) und die Spezialauswertung `RisikoM0` (≈8,4 / ≈13,1 %).
+> **Nicht mischen.** Die Auflösung steht in der Kalibrierungsdatei Teil C §6.2. Ebenso korrigiert: das
+> kontralaterale Risiko der Nicht-Trägerinnen ist **3,6 %**, nicht 4,6 % (Zahlendreher im Konzept).
 
-Synthea kann keine kontinuierlichen Hazards; die Umsetzung ist eine **`Delay` + `complex_transition`-Schleife
-mit stückweise konstanten Jahresraten je Subtyp** — dieselbe Mechanik wie `PSA_Followup` → `BCR_Check`, nur
-mit mehreren Zeitfenstern. Das ist der Grund, warum das Modul deutlich mehr Zustände braucht als das
-Prostata-Modul (§9).
+> ⭐ **Die wichtigste Einzelkorrektur der ganzen Recherche (C §0 K8).** Dieses Kapitel schlug vor, die
+> Hazard-Formen aus Colleoni + Pan + Dent zu **synthetisieren** — ein 🔴-Konstrukt aus drei internationalen
+> KM-Kurven verschiedener Ären. Das ist nicht mehr nötig: **das TRM publiziert eine gemessene
+> Hazard-Rate-Spalte pro Jahresintervall** (Spezialauswertung `RisikoM0`, Tab. 21–24, Deutschland,
+> Dx 2002–2020, konkurrenzrisikokorrigiert).
+>
+> Damit werden die Rezidiv-Hazards von einem geschätzten zu einem **gemessenen deutschen Parameter** — der
+> zentrale Mechanismus des Rezidiv-Pfades steht nicht mehr auf einem Modellprior. Die konsolidierten
+> Jahresraten je Subtyp stehen in der Kalibrierungsdatei Teil C §6.3 und ersetzen die früher hier
+> vorgeschlagenen Weibull-Näherungen vollständig.
+
+Synthea kann keine kontinuierlichen Hazards; die Umsetzung bleibt eine **`Delay` + `complex_transition`-Schleife
+mit stückweise konstanten Jahresraten je Subtyp** — dieselbe Mechanik wie `PSA_Followup` → `BCR_Check`, nur mit
+mehreren Zeitfenstern. Die TRM-Jahresintervalle passen zu dieser Mechanik sogar besser als eine stetige
+Verteilung, weil sie bereits in der benötigten Granularität vorliegen.
 
 Überlebens-Validierungsanker (nicht als Arrows kodiert): 5-J-relatives Überleben nach UICC-Stadium
 **I 101 % · II 95 % · III 76 % · IV 31 %** (RKI KID 2025) 🟢; nach pTNM (TRM, 5-/10-J):
@@ -803,22 +989,25 @@ Aufwände in Personentagen (PT), Erfahrungswert aus dem Prostata-Modul (dort ~12
 validiertem ECCDM-Output). Reihenfolge ist eine Abhängigkeitskette; innerhalb der Kalibrierungs-Recherche sind
 die fünf Pakete parallelisierbar, ebenso später AP-6/AP-7.
 
-### 10.1 Kalibrierungs-Recherche — Epic `synthea-eu-cancer-4w3`
+### 10.1 Kalibrierungs-Recherche — Epic `synthea-eu-cancer-4w3` ✅ **abgeschlossen (2026-08-31)**
 
-Ergebnis des Epics ist **eine** Datei: `epidemiology/breast_calibration.md` im Format von
-`prostate_calibration.md` (jeder Arrow mit Quelle + Confidence-Flag). Die fünf Kinder decken die Kapitel
-dieses Konzepts ab. **Querschnittsauflage für alle fünf:** jede übernommene Zahl bekommt den Vermerk, ob sie
-für **50–60** gilt oder aus einer 50–69-Quelle stammt (dann „Quelle 50–69" + abgesenkte Confidence, §1.2).
+Ergebnis: **`epidemiology/breast_calibration.md`**, 3.081 Zeilen, Teile A/B/C im Format von
+`prostate_calibration.md` (jeder Arrow mit Quelle + Confidence-Flag). Die Querschnittsauflage — jede Zahl mit
+Vermerk „[50–60]" / „[Quelle 50–69]" / „[alle Alter]" und entsprechend abgesenkter Confidence — ist umgesetzt.
 
-| Bead | Inhalt | deckt ab | Aufwand |
+| Bead | Inhalt | deckt ab | Status |
 |---|---|---|---|
-| **`synthea-eu-cancer-51w`** | **Eintritt & Detektion** — Screening-Markov-Kette (45,9/86,3/15,3), Detektionsmodus-Split 45/11/44 inkl. Altersband-Prüfung, Erst-vs-Folgerunden-Kennzahlen (50–54/55–59), BI-RADS-Entscheidung (Option 1 vs. 2), PPV-Konsistenzprüfung, Hochrisiko-/IFNP-Arm **nur in der Minimalvariante** (§1.4.1 — Anteil, Bildgebungsfrequenz, TNBC-Umgewichtung; keine Vollvariante) | §1, §2 | **1,5 PT** |
-| **`synthea-eu-cancer-0m8`** | **Subtypen & Stadien bei Diagnose** — Ki-67-Cutoff-Entscheidung + Dokumentation der S3-Weigerung, 5-Wege-Subtypverteilung inkl. 50–60-Drift, kohärente ER/PR/HER2/Ki-67-Sets, HER2-IHC-/HER2-low-Priors, cTNM nach Detektionsmodus, UICC-Gegenprobe, Grading, Histologie-Mix, DCIS-Ast | §3, §4, §5.1, §5.5 | **2 PT** |
-| **`synthea-eu-cancer-98b`** | **pTNM / Sentinel / pCR** — SLNB-vs-ALND-Allokation, pTNM-Übergangsmatrix (Analogon zur Partin-Matrix), Staging-Guardrails, `yp`-Kategorien und pCR-Definition (ypT0 ypN0 streng) | §5.2, §5.3, §5.4 | **1,5 PT** |
-| **`synthea-eu-cancer-t3f`** | **Therapie-Allokation** — BET/Mastektomie nach Stadium, RT nach BET, Neoadjuvanz-Anteile inkl. Ära-Reskalierung (der wichtigste 🔴-Arrow), pCR-Raten je Subtyp, endokrine Therapie inkl. AI/TAM-Split für 50–60 und Persistenz, Chemo/Anti-HER2/CDK4/6, Genexpressionstest | §6 | **2 PT** |
-| **`synthea-eu-cancer-6r8`** | **Verlauf & Outcomes** — subtypabhängige Rezidiv-Hazards (Höhe *und* Form), Fernmetastasierung, Überleben nach Metastasierung, Validierungsanker inkl. der 50–59-Werte (5-J-RS 92 %, 15-J-RS 80,7 %), Dokumentation der Fenster-Trunkierung (§1.2d) | §7 | **1,5 PT** |
+| **`synthea-eu-cancer-51w`** | **Eintritt & Detektion** — Screening-Markov-Kette, Detektionsmodus-Split, Erst-vs-Folgerunden-Kennzahlen, BI-RADS-Frage, PPV-Konsistenzkette, Hochrisiko-Arm (Minimalvariante) | §1, §2 | ✅ Teil A |
+| **`synthea-eu-cancer-0m8`** | **Subtypen & Stadien bei Diagnose** — Ki-67-Cutoff, 5-Wege-Subtypverteilung, kohärente Marker-Sets, HER2-IHC/HER2-low, cTNM nach Detektionsmodus, Grading, Histologie, DCIS | §3, §4, §5.1, §5.5 | ✅ Teil B |
+| **`synthea-eu-cancer-98b`** | **pTNM / Sentinel / pCR** — SLNB-vs-ALND, **cN0→pN+-Matrix (Partin-Analogon)**, cT→pT-Upstaging, Staging-Guardrails, `yp`-Kategorien, pCR-Definition | §5.2, §5.3, §5.4 | ✅ Teil B |
+| **`synthea-eu-cancer-t3f`** | **Therapie-Allokation** — BET/Mastektomie, RT, Neoadjuvanz inkl. hergeleiteter Ära-Reskalierung, pCR je Subtyp, endokrine Therapie, Chemo/Anti-HER2/CDK4/6, Genexpressionstest | §6 | ✅ Teil C |
+| **`synthea-eu-cancer-6r8`** | **Verlauf & Outcomes** — **gemessene TRM-Jahres-Hazards**, Fernmetastasierung, Überleben nach Metastasierung, altersband-spezifische Validierungsanker, Fenster-Trunkierung | §7 | ✅ Teil C |
 
-**Summe Epic 4w3: ~8,5 PT.**
+**Ertrag über die reine Bestätigung hinaus:** 19 Korrekturen an diesem Konzept (Kopf des Dokuments), **vier
+neu erschlossene Tabellenblöcke**, die hier gar nicht vorgesehen waren (pT/pN je Subtyp, cN0→pN+-Matrix,
+cT→pT-Upstaging, gemessene Rezidiv-Hazards), und **sechs geschlossene 🔴-Lücken** (§11). Von den nachgeprüften
+Konzeptwerten waren die große Mehrheit exakt bestätigt — die Korrekturen konzentrieren sich auf Stellen, an
+denen das Konzept aus Mangel an deutschen Daten geschätzt hatte und inzwischen eine Primärquelle vorliegt.
 
 ### 10.2 Umsetzung
 
@@ -831,7 +1020,7 @@ Beads-Issues angelegt (2026-08-31), Abhängigkeiten verdrahtet: Recherche-Beads 
 | **AP-M2** (`synthea-eu-cancer-qoc`) | Modulbau: Subtyp-Branch + kohärente Biomarker-Emission inkl. Konsistenz-Guard | v0.2 | **2 PT** | 0m8, AP-M1 |
 | **AP-M3** (`synthea-eu-cancer-1s7`) | Modulbau: cTNM / pTNM / ypTNM inkl. SLNB-vs-ALND-Logik und DCIS-Sonderregeln | v0.3 | **2 PT** | 98b, AP-M2 |
 | **AP-M4** (`synthea-eu-cancer-io5`) | Modulbau: Therapiepfade je Subtyp inkl. Neoadjuvanz + pCR-Branch + post-neoadjuvanter Eskalation | v0.4 | **3 PT** | t3f, AP-M3 |
-| **AP-M5** (`synthea-eu-cancer-dba`) | Modulbau: Rezidiv-/Metastasierungs-Pfad mit stückweise konstanten Hazards + endokrine Persistenz-Abbrüche | v1.0 | **2 PT** | 6r8, AP-M3 |
+| **AP-M5** (`synthea-eu-cancer-dba`) | Modulbau: Rezidiv-/Metastasierungs-Pfad mit den **gemessenen TRM-Jahres-Hazards** (§7) + endokrine Persistenz-Abbrüche | v1.0 | **2 PT** | 6r8, AP-M3 |
 | **AP-P** (`synthea-eu-cancer-0wh`) | `postprocess_ccdm.py` auf Entitäts-Registry umbauen, `yp`-Staging, Biomarker-Passthrough (§8.3) | erweiterter Postprocessor, Prostata-Regression grün | **3 PT** | AP-M4, AP-M5 |
 | **AP-V** (`synthea-eu-cancer-aij`) | Validierung: `validate_ccdm.sh` auf Mamma-Bundles; Kohorten-Gegenprobe gegen die Anker (Subtypmarginale, BET-Raten, M1 6,2 %, **5-J-RS 92 %**); Process-Mining-DFG über `fhir_to_eventlog.py`; Fenster-Einschränkungen (§1.2d) in `README.md` dokumentieren | Validierungsreport, Kohorte n=1000 | **2 PT** | AP-P |
 | **AP-F** (`synthea-eu-cancer-dbq`) | ECCDM-Feedback zu den Biomarker-Lücken (§8.2) in `docs/eccdm_draft_feedback.md` ergänzen; Vorschlag `observation-tumor-biomarker-eu-ccm` skizzieren | Feedback-Abschnitt + ggf. Issue im `hl7-eu/cancer-common`-Tracker | **1 PT** | AP-M2 |
@@ -873,22 +1062,35 @@ Moderate-Risk-Gene, eigenes Alters-Guard ab 35 J.) und die **Profilierung der Bi
    an die Regensburger Marginalen und den TRM-36/64-Split angepasst, aber nicht direkt belegt.
 2. **HER2-IHC-Score-Verteilung für Deutschland** 🔴 — nur die dänische Nationalregister-Verteilung existiert.
    Interlabor-Varianz (46,3–71,8 % HER2-low) ist größer als der Modellierungsfehler.
-3. **BI-RADS-Stufenverteilung im deutschen Abklärungskollektiv** 🔴 — kein Analogon zu Oerther 2021 (PI-RADS).
-   Deshalb die Entscheidung für Option 1 in §2.
-4. **Neoadjuvanz-Anteil je Subtyp für 2023** 🔴 — Ortmann 2022 endet 2018, die Gesamtrate hat sich seither
-   verdoppelt. Der wichtigste rote Arrow im Therapieteil.
+3. **BI-RADS-Stufenverteilung im deutschen Screening** — ✅ **aufgelöst, aber anders als gedacht:** es ist keine
+   Publikationslücke, sondern **strukturell nicht erhebbar**, weil das MSP binär befundet (§2). Die Lücke
+   verschwindet damit als Lücke und wird zur Designvorgabe.
+4. **Neoadjuvanz-Anteil je Subtyp für 2023** 🟡 — die Ära-Reskalierung ist in der Kalibrierungsdatei
+   (Teil C §3.3) **hergeleitet** statt geschätzt, inklusive Alters-Multiplikator 1,28 für 50–60. Von
+   „wichtigster roter Arrow" auf einen belegten Zwischenschritt herabgestuft.
 5. **UICC-Vierwege-Split für screen-detektierte Karzinome** 🔴 — KoopMammo berichtet nur „0+I" vs. „II+".
-6. **N1/N2/N3-Split nach Detektionsmodus** 🔴 — Braun 2018 gibt nur N0/N+.
+6. **N1/N2/N3-Split nach Detektionsmodus** 🔴 — Braun 2018 gibt nur N0/N+. *(Die unkonditionierte
+   Feinverteilung ist dagegen jetzt belegt, §5.1.)*
 7. **Metastasenlokalisation für Deutschland/Europa** 🔴 — es existiert keine Tabelle; nur SEER.
 8. **Genexpressionstest-Nutzungsrate** 🔴 — nur eine Kongress-Experteneinschätzung (~20 %), keine Registerzahl;
-   der Test ist kein DKG-Qualitätsindikator, also gibt es keinen Nenner.
-9. **monarchE-Anteil und Pertuzumab-/Bisphosphonat-Uptake in Deutschland** 🔴 — nicht publiziert.
+   der Test ist kein DKG-Qualitätsindikator, also gibt es keinen Nenner. *(Die Erstattungslage ist dagegen
+   geklärt und seit 2025 menopausenstatusabhängig, §6.3.)*
+9. **monarchE-Anteil und Pertuzumab-/Bisphosphonat-Uptake in Deutschland** 🔴 — nicht publiziert. Ebenso der
+   **Pembrolizumab-Uptake**: PubMed-Suche ergab null Treffer, OnkoZert führt keine Immuncheckpoint-Kennzahl
+   (belegter Negativbefund) ⇒ freier Parameter.
 10. **Erweiterte endokrine Therapie (>5 J.) Uptake** 🔴 — nicht publiziert.
-11. **Detektionsmix nach Altersband** 🔴 — Braun 2018 publiziert den 45/11/44-Split nicht nach Alter, obwohl
-    Hintergrundinzidenz und Mammadichte im Fenster 50–60 klar gegen den 50–69-Mittelwert sprechen (§1.1).
-    (Die Screening-Erweiterung auf 70–75 ist für dieses Kohortenfenster gegenstandslos, für spätere
-    Fensterweitungen aber weiterhin ohne Evaluationsdaten.)
+11. **Detektionsmix nach Altersband** 🔴 — auch Buschmann 2024 publiziert den 44/18/38-Split nicht nach Alter,
+    obwohl Hintergrundinzidenz und Programmsensitivität im Fenster 50–60 klar gegen den 50–69-Mittelwert
+    sprechen (§1.1). (Die Screening-Erweiterung auf 70–75 ist für dieses Kohortenfenster gegenstandslos, für
+    spätere Fensterweitungen aber weiterhin ohne Evaluationsdaten.)
 12. **Populationsbezogene deutsche PAM50-Verteilung** 🔴 — existiert nicht; alle Subtypzahlen sind Surrogat-IHC.
+13. **gBRCA-Prävalenz nach Altersband** 🔴 — keine der vier Großkohorten (CARRIERS, BRIDGES, LIBRO-1, GC-HBOC)
+    publiziert eine altersstratifizierte Prävalenztabelle. Belegt ist nur die Richtung; interpolierte Spanne
+    für 50–59 unter BC-Patientinnen: 1,5–2,2 %.
+
+**Durch die Evidenzrunde geschlossen** (standen hier noch als 🔴 und sind jetzt belegt): der
+N1/N2/N3-Prior (§5.1), die Rezidiv-Hazard-Formen (§7), die cN0→pN+-Matrix und das cT→pT-Upstaging (§5.2),
+der endokrine Wirkstoffsplit für 50–60 (§6.3) und die PPV-Kette (§2).
 
 Eine zirkulierende Angabe „Lum B HER2− 55,4 % / Lum A 22,0 %" mit TRM-Zuschreibung ließ sich **nicht** auf eine
 Primärquelle zurückführen — **nicht verwenden**. Ebenso „Deutschland 15,9 % HER2-ultralow" (keine Zitatkette).
