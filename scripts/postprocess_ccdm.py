@@ -22,7 +22,9 @@ Per cancer bundle:
 
 Profile base URL is configurable (--base) because the draft's canonical may still change
 (sushi-config.yaml carries a '# check if this may create issues' comment on it).
-Draft pin: ValhallasCat/cancer-common @ 75ad6ed (2026-08-26), vendored in profiles/eccdm/.
+Draft pin: ValhallasCat/cancer-common @ c020f19 (2026-08-28), vendored in profiles/eccdm/.
+(c020f19 split the stage EvidenceReference into cancer-stage-evidence-reference-imaging /
+-surgery and added the optional cancer-histology-behaviour-reference on the Condition.)
 Calibration & code provenance: epidemiology/prostate_calibration.md §11.
 """
 import argparse
@@ -217,6 +219,11 @@ def process_bundle(path, base, stats):
         if value and not first_coding(value, 'icd-o'):
             value['coding'].append({'system': ICDO3, 'code': '8140/3', 'display': 'Adenocarcinoma, NOS'})
         histology.setdefault('focus', [condition_ref])
+        # c020f19: optional back-reference Condition -> HistologyBehaviour observation
+        cond_exts = condition.setdefault('extension', [])
+        if not any(e.get('url') == ext('cancer-histology-behaviour-reference') for e in cond_exts):
+            cond_exts.append({'url': ext('cancer-histology-behaviour-reference'),
+                              'valueReference': ctx.ref(histology)})
 
     # --- Surgery (RP incl. salvage RP) ---
     rp_procedures = procedures_with_code(ctx, {RP_CODE})
@@ -244,7 +251,7 @@ def process_bundle(path, base, stats):
              'M1' in (first_coding(o.get('valueCodeableConcept'), SCT).get('display') or '')
              for o in tnm[CM_OBS])
 
-    def stage_obs(kind, members, comp_codes, staging_qualifier, evidence):
+    def stage_obs(kind, members, comp_codes, staging_qualifier, evidence, evidence_ext):
         components = []
         for member, comp_code in zip(members, comp_codes):
             value_coding = first_coding(member.get('valueCodeableConcept'), SCT)
@@ -267,7 +274,7 @@ def process_bundle(path, base, stats):
         if when:
             stage['effectiveDateTime'] = when
         if evidence is not None:
-            stage['extension'].append({'url': ext('cancer-stage-evidence-reference'),
+            stage['extension'].append({'url': ext(evidence_ext),
                                        'valueReference': ctx.ref(evidence)})
         ctx.append(stage, kind)
         stats[kind] += 1
@@ -298,13 +305,14 @@ def process_bundle(path, base, stats):
                   [tnm[CT_OBS][0]] + tnm[CN_OBS][:1] + tnm[CM_OBS][:1],
                   [COMP_T, COMP_N, COMP_M],
                   CLINICAL_STAGING,
-                  imaging_obs)
+                  imaging_obs, 'cancer-stage-evidence-reference-imaging')
     if tnm[PT_OBS]:
         stage_obs('stage-pathological',
                   [tnm[PT_OBS][0]] + tnm[PN_OBS][:1],
                   [COMP_T, COMP_N],
                   PATHOLOGICAL_STAGING,
-                  rp_procedures[0] if rp_procedures else None)
+                  rp_procedures[0] if rp_procedures else None,
+                  'cancer-stage-evidence-reference-surgery')
 
     # --- EpisodeOfCare: active surveillance ---
     for careplan in ctx.by_type.get('CarePlan', []):

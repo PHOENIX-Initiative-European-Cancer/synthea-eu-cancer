@@ -12,7 +12,7 @@ set -euo pipefail
 SAMPLE="${1:-3}"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 FHIR_DIR="${2:-$REPO/synthea/output/fhir}"
-PKG="$REPO/profiles/eccdm/hl7.fhir.eu.cancer-common-75ad6ed.tgz"
+PKG="$REPO/profiles/eccdm/hl7.fhir.eu.cancer-common-c020f19.tgz"
 VALIDATOR="${VALIDATOR_JAR:-$HOME/.fhir/validator_cli.jar}"
 OUT_DIR="$REPO/synthea/output/validation_ccdm"
 mkdir -p "$OUT_DIR"
