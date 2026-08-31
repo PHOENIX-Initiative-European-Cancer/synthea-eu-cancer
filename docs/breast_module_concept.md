@@ -820,7 +820,7 @@ für **50–60** gilt oder aus einer 50–69-Quelle stammt (dann „Quelle 50–
 
 **Summe Epic 4w3: ~8,5 PT.**
 
-### 10.2 Umsetzung — noch ohne Issue
+### 10.2 Umsetzung
 
 Beads-Issues angelegt (2026-08-31), Abhängigkeiten verdrahtet: Recherche-Beads + AP-T entsperren AP-M1; Kette M1→M2→M3→{M4,M5}→AP-P→AP-V; AP-F hängt an M2, AP-C an M5.
 
