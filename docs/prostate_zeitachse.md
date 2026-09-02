@@ -18,7 +18,7 @@ Confidence-Flag 🟢 (belastbar) / 🟡 (indikativ, Transfer nötig) / 🔴 (Pri
 | **Z1** | **GENIE BPC ist für Prostata nicht mehr blockierend.** Die Frankfurter Kohorte (n=1.098, deutsch, publiziert) liefert genau die Linien-PFS/OS, die `bp2` erzeugen sollte. | `bp2` von *blockierend* auf *optionale Verfeinerung* herabstufen; Synapse-Registrierung ist kein Pfadhindernis mehr → §8 |
 | **Z2** | **`mCRPC_Delay` (heute uniform 1–3 J) ist falsch parametrisiert.** mHSPC→mCRPC median **21 Monate** (95 % KI 19–23), nicht 24 Mo uniform — und die Verteilung ist rechtsschief, nicht flach. | §6.1 |
 | **Z3** | **BCR-Prior 0,40 / 0,20 ist zu niedrig für Hochrisiko und zu hoch für Niedrigrisiko.** Gemessen (post-2010, 8 J): niedrig 21 %, günstig-intermediär 25 %, ungünstig-intermediär 41 %, hoch 60 %. | ersetzt die 🔴-Priors in `prostate_calibration.md` §10 → §4.2 |
-| **Z4** | **Zeit bis BCR ist analytisch fassbar**: median 2,5 J (IQR 0,9–5,5) → Lognormal μ=0,916 σ=1,342. Damit lässt sich die BCR-Hazardform *unabhängig* kreuzvalidieren (→ Weibull k≈0,55). | §4.1, §4.3 |
+| **Z4** | **Zeit bis BCR ist analytisch fassbar**: median 2,5 J (IQR 0,9–5,5) → Lognormal μ=0,916 σ=1,342. Die Hazardform ist inzwischen **gemessen** (Walz 2009, Volltext, zwei Kohorten): **k hängt von der Risikogruppe ab** — 0,85 intermediär, 0,55 hoch. | §4.1, **§4.3 (2. Runde)** |
 | **Z5** | **Salvage ist PSA-getriggert, nicht zeit-getriggert.** 79,4 % der deutschen Zentrumspatienten starten die SRT bei PSA < 0,5 ng/ml. Der Delay BCR→Salvage ist damit kurz und aus der Nachsorge-Taktung emergent. | §5.1 |
 | **Z6** | **Die S3 2025 hat den Früherkennungs-Takt neu definiert** (PSA-Basiswert ab 45; <1,5 → ≥5 J, 1,5–3,0 → 2 J, ≥3,0 → Abklärung mit Bestätigung binnen 3 Monaten). Das ist eine *Zeitschicht*, die das Modul heute gar nicht hat. | §1.1 |
 | **Z7** | **Für Deutschland gibt es keine Wartezeit-Kennzahl.** Der DKG/OnkoZert-Kennzahlenbogen Prostata (Kennzahlen 1a–22) enthält **keine einzige Zeitgröße** — verifiziert durch Volltextlesung des Jahresberichts 2024. | echte Datenlücke → §2.3 |
@@ -269,40 +269,129 @@ Historischer Quervergleich (D'Amico, ältere Kohorte, 15 J): niedrig 16 %, inter
 > größte Einzelunterschied in der ganzen Tabelle. **Die Aufteilung des intermediären Arms in
 > günstig/ungünstig ist damit keine Kosmetik, sondern der Haupthebel.**
 
-## 4.3 Die Hazardform — und wie sie kreuzvalidiert wurde
+## 4.3 Die Hazardform — jetzt gemessen statt geschätzt
 
-Qualitative Evidenz: die jährliche BCR-Hazard ist **in den ersten 2 Jahren am höchsten** und fällt
-danach ab (Freedland/Walz, risikoadjustierte Hazardraten nach RP, n = 2.911 + 2.875 Validierung). 🟢
-Konditionales 5-Jahres-BCR-freies Überleben steigt mit rezidivfreier Zeit:
-**74,8 % → 83,2 % → 89,1 % → 93,6 % → 98,5 %** (bei 0/1/2/3/4 rezidivfreien Jahren). 🟢
+**Nachtrag 2026-09-02 (zweite Runde, Volltext beschafft).** Walz J., Chun F.K.H., Klein E.A.,
+Reuther A., Graefen M., Huland H., Karakiewicz P.I., *Eur Urol* 2009;55:412–421,
+DOI 10.1016/j.eururo.2008.11.005 — **Volltext gelesen.** Damit ist Lücke L2 geschlossen: die
+jährlichen Hazardraten liegen jetzt Jahr für Jahr und für **zwei unabhängige Kohorten** vor.
 
-Eigene Rechnung, zwei Wege zum Formparameter k einer Weibull-Hazard:
+### 4.3.1 Die Originaldaten
 
-1. **Direkter Fit** an die Gesamtkurve post-2010 (F(3)=0,28; F(5)=0,33; F(8)=0,40):
-   λ = 35,68 J, **k = 0,455** (Residuen ≤ 0,006).
-2. **Kreuzvalidierung** gegen die *unabhängige* Lognormal-Verteilung aus §4.1, über die Verhältnisse
-   F(2)/F(10) und F(5)/F(10):
+Zwei Kohorten: **Hamburg (n = 2.911, 1992–2005)** und **Cleveland Clinic (n = 2.875, 1987–2005)**.
+Kein Patient erhielt adjuvante Therapie vor BCR. Nachsorge: q3 Mo im ersten Jahr, halbjährlich
+Jahr 2–5, danach jährlich.
 
-| Modell | F(2)/F(10) | F(5)/F(10) |
+Die drei Risikogruppen sind **Walz-eigene, kombiniert klinisch-pathologische** Gruppen — *nicht*
+NCCN und *nicht* D'Amico: 🟢
+
+| Gruppe | Definition | Anteil |
 |---|---|---|
-| Lognormal (§4.1) | 0,511 | 0,821 |
-| Weibull k = 0,455 | 0,606 | 0,820 |
-| Weibull k = 0,55 | ≈ 0,55 | ≈ 0,79 |
-| Weibull k = 0,60 | 0,507 | 0,769 |
-| Weibull k = 0,75 | 0,418 | 0,718 |
+| **niedrig** | PSA < 11 ng/ml **und** cT1c **und** pathologischer Gleason < 6 **und** negative Schnittränder **und** organbegrenzt | 23,7 % |
+| **hoch** | PSA > 22 ng/ml **oder** Samenblaseninfiltration **oder** pathologischer Gleason > 8 **oder** Lymphknotenbefall **oder** cT3 | 18,9 % |
+| **intermediär** | alle übrigen | 57,4 % |
 
-**Empfehlung: k = 0,55** (Sensitivitätsbereich 0,45–0,60). Der reine Fit an die Kumulativkurve
-(k = 0,455) überzeichnet die Frühlast, weil das mediane Follow-up post-2010 nur 3,5 Jahre beträgt
-und der 8-Jahres-Wert dort schon extrapoliert ist. 🟡
+**Annual hazard rate (anHR, % pro Jahr), Tabellen 3 und 4:** 🟢
 
-λ je Risikogruppe, verankert am 8-Jahres-Wert bei k = 0,55:
+| Jahr nach RP | HH niedrig | HH intermediär | HH hoch | CC niedrig | CC intermediär | CC hoch |
+|---|---|---|---|---|---|---|
+| 0–1 | 2,6 | 6,0 | **31,8** | 0,6 | 3,7 | **30,0** |
+| 1–2 | 1,5 | 6,2 | 22,3 | 0,3 | 4,0 | 13,2 |
+| 2–3 | 0,3 | 4,8 | 27,0 | 0,7 | 3,2 | 15,0 |
+| 3–4 | 0,5 | 4,2 | 22,7 | 1,3 | 2,9 | 10,7 |
+| 4–5 | 1,6 | 2,8 | 19,2 | 0,6 | 3,0 | 7,2 |
+| 5–6 | 0 | 7,2 | 13,1 | 0,7 | 3,0 | 9,1 |
+| 6–7 | 0 | 5,1 | 13,3 | 0 | 2,1 | 7,5 |
+| 7–8 | 0 | 1,3 | 6,3 | 0 | 1,8 | 11,5 |
+| 8–9 | 0 | 6,3 | 0 | 0 | 2,5 | 4,7 |
+| 9–10 | 0 | 0 | 0 | 0 | 2,0 | 8,6 |
+| **BCR-frei @10 J** | **93,7 %** | **64,5 %** | **20,9 %** | **96,0 %** | **75,5 %** | **30,8 %** |
 
-| Risikogruppe | λ (Jahre) | F(1) | F(2) | F(3) | F(5) | F(10) | F(15) |
-|---|---|---|---|---|---|---|---|
-| niedrig | 110,71 | 0,072 | 0,104 | 0,128 | 0,166 | 0,234 | 0,283 |
-| günstig intermediär | 77,07 | 0,088 | 0,126 | 0,154 | 0,199 | 0,278 | 0,334 |
-| ungünstig intermediär | 25,58 | 0,155 | 0,218 | 0,265 | 0,335 | 0,449 | 0,526 |
-| hoch | 9,38 | 0,253 | 0,348 | 0,414 | 0,507 | 0,645 | 0,726 |
+> Die Nullen ab Jahr 6–8 in der Hamburger Kohorte sind **Kleinzahl-Artefakte** (bei Jahr 9–10 sind
+> nur noch 1 bzw. 5 Patienten under risk). Für die Langzeitform ist die Cleveland-Kohorte
+> maßgeblich, die bis Jahr 10 noch 37–249 Patienten hält.
+
+### 4.3.2 Eigener Weibull-Fit an diese Daten
+
+Fit von h(t) = (k/λ)(t/λ)^(k−1) an die anHR-Reihen, gewichtet mit √(Patienten at risk), nur Jahre
+mit ≥ 30 Patienten at risk:
+
+| Kohorte | Gruppe | λ (Jahre) | **k** |
+|---|---|---|---|
+| Hamburg | niedrig | 500 (Rand) | 0,554 |
+| Cleveland | niedrig | 214,1 | **0,946** |
+| Hamburg | intermediär | 23,07 | **0,871** |
+| Cleveland | intermediär | 42,10 | **0,845** |
+| Hamburg | hoch | 3,85 | 0,785 |
+| Cleveland | hoch | 5,90 | **0,460** |
+
+**Das zentrale Ergebnis: k ist keine Konstante, sondern hängt von der Risikogruppe ab.** 🟢
+
+- **Intermediär: k ≈ 0,85** — und zwar in *beiden* Kohorten unabhängig (0,871 / 0,845). Die
+  Hazard ist dort fast flach, nicht front-loaded.
+- **Hoch: k ≈ 0,46–0,79** — steil abfallend, wie erwartet.
+- **Niedrig:** Hazard so nahe an null, dass k schlecht identifiziert ist; die Kohorten
+  widersprechen sich (0,55 vs. 0,95). Praktisch irrelevant, weil die absolute Rate < 1,5 %/Jahr liegt.
+
+### 4.3.3 Validierung des bisherigen Modellwerts
+
+Die erste Runde hatte **k = 0,55** über alle Gruppen gesetzt, kreuzvalidiert über die
+Lognormal-Verteilung der Zeit-bis-BCR. Der Vergleich mit den echten Daten:
+
+| Jahr | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Modell k = 0,55 (hoch)** | 29,2 | 13,5 | 10,7 | 9,2 | 8,2 | 7,5 | 6,9 | 6,5 | 6,1 | 5,8 |
+| Walz Cleveland hoch | 30,0 | 13,2 | 15,0 | 10,7 | 7,2 | 9,1 | 7,5 | 11,5 | 4,7 | 8,6 |
+| Walz Hamburg hoch | 31,8 | 22,3 | 27,0 | 22,7 | 19,2 | 13,1 | 13,3 | 6,3 | 0 | 0 |
+
+**Für die Hochrisikogruppe trifft k = 0,55 die Cleveland-Kohorte fast punktgenau** (Jahr 1: 29,2
+vs. 30,0; Jahr 2: 13,5 vs. 13,2) und liegt zwischen den beiden Kohorten. Das war Glück, aber es ist
+belegtes Glück: 10-Jahres-BCR-freies Überleben Modell 35,5 % gegen Cleveland 30,8 %. ✅
+
+**Für die intermediären Gruppen war k = 0,55 dagegen falsch** — beide Kohorten sagen ≈ 0,85. 🔴→🟢
+
+### 4.3.4 Korrigierte Parametrisierung
+
+Die Walz-Gruppen sind nicht NCCN-Gruppen, ihre λ sind also nicht übertragbar. Übertragbar ist die
+**Form (k)**. Zuordnung über die Ereignisrate: Walz-„intermediär" (F(10) = 0,25–0,36) entspricht
+etwa NCCN-niedrig/günstig-intermediär; Walz-„hoch" (F(10) = 0,69–0,79) entspricht NCCN-hoch.
+Walz-„niedrig" (F(10) ≈ 0,05) ist eine pathologisch bestätigte Bestfall-Gruppe ohne NCCN-Pendant.
+
+| Risikogruppe (NCCN) | F(8 J) | **k** | λ (Jahre) | F(1) | F(2) | F(3) | F(5) | F(10) | BCR-frei @10 J |
+|---|---|---|---|---|---|---|---|---|---|
+| niedrig | 0,21 | **0,85** | 43,80 | 0,039 | 0,070 | 0,097 | 0,146 | 0,248 | 75,2 % |
+| günstig intermediär | 0,25 | **0,85** | 34,65 | 0,048 | 0,085 | 0,117 | 0,175 | 0,294 | 70,6 % |
+| ungünstig intermediär | 0,41 | **0,70** | 19,94 | 0,116 | 0,181 | 0,233 | 0,316 | 0,460 | 54,0 % |
+| hoch | 0,60 | **0,55** | 9,38 | 0,253 | 0,348 | 0,414 | 0,507 | 0,645 | 35,5 % |
+
+Jährliche Hazard h(j) in % pro Jahr:
+
+| Gruppe | J1 | J2 | J3 | J4 | J5 | J6 | J7 | J8 | J9 | J10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| niedrig | 4,0 | 3,2 | 3,0 | 2,8 | 2,7 | 2,6 | 2,6 | 2,5 | 2,5 | 2,4 |
+| günstig intermediär | 4,9 | 3,9 | 3,6 | 3,5 | 3,3 | 3,2 | 3,2 | 3,1 | 3,0 | 3,0 |
+| ungünstig intermediär | 12,3 | 7,7 | 6,6 | 5,9 | 5,5 | 5,2 | 4,9 | 4,7 | 4,5 | 4,4 |
+| hoch | 29,2 | 13,5 | 10,7 | 9,2 | 8,2 | 7,5 | 6,9 | 6,5 | 6,1 | 5,8 |
+
+> Plausibilitätsprüfung gegen Walz: die günstig-intermediäre Zeile (4,9 → 3,0 %/Jahr) liegt
+> zwischen Walz-Cleveland-intermediär (3,7 → 2,0) und Walz-Hamburg-intermediär (6,0 → 6,3);
+> die Hochrisiko-Zeile liegt zwischen den beiden Hochrisiko-Kohorten. ✅
+
+### 4.3.5 Nebenbefund: Walz' eigener Nachsorge-Vorschlag
+
+Tabelle 5 der Arbeit schlägt eine risikoadjustierte Nachsorge vor, die vom Leitlinien-Takt deutlich
+abweicht: 🟢
+
+| Jahr nach RP | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Leitlinie (Visiten/Jahr) | 3 | 2 | 2 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+| **hoch** | **6** | 4 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 |
+| intermediär | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+| **niedrig** | **0** | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
+
+Für das Modul relevant, weil es zeigt, dass der **Nachsorgetakt selbst risikoabhängig sein könnte**.
+Der S3-Takt (§4.4) bleibt aber die Referenz für den deutschen Kontext — der Walz-Vorschlag ist
+ein Vorschlag geblieben, keine Leitlinienempfehlung.
 
 ## 4.4 Der S3-Nachsorgetakt und die daraus folgenden per-Visit-Wahrscheinlichkeiten
 
@@ -316,24 +405,27 @@ eingetreten ist — die Zeit-bis-BCR wird damit **emergent**:
 
 | Visite (Ende, Jahre) | Intervall | niedrig | günstig int. | ungünstig int. | hoch |
 |---|---|---|---|---|---|
-| 0,25 | 3 Mo | 0,0344 | 0,0419 | 0,0754 | 0,1273 |
-| 0,50 | 3 Mo | 0,0161 | 0,0197 | 0,0357 | 0,0613 |
-| 0,75 | 3 Mo | 0,0127 | 0,0155 | 0,0283 | 0,0486 |
-| 1,00 | 3 Mo | 0,0109 | 0,0133 | 0,0243 | 0,0418 |
-| 1,25 | 3 Mo | 0,0098 | 0,0119 | 0,0217 | 0,0374 |
-| 1,50 | 3 Mo | 0,0089 | 0,0109 | 0,0198 | 0,0342 |
-| 1,75 | 3 Mo | 0,0083 | 0,0101 | 0,0184 | 0,0318 |
-| 2,00 | 3 Mo | 0,0078 | 0,0095 | 0,0173 | 0,0298 |
-| 2,50 | 6 Mo | 0,0143 | 0,0174 | 0,0316 | 0,0543 |
-| 3,00 | 6 Mo | 0,0130 | 0,0159 | 0,0289 | 0,0497 |
-| 3,50 | 6 Mo | 0,0121 | 0,0147 | 0,0269 | 0,0462 |
-| 4,00 | 6 Mo | 0,0113 | 0,0138 | 0,0252 | 0,0433 |
-| 5,00 | 12 Mo | 0,0208 | 0,0253 | 0,0460 | 0,0785 |
-| 6,00 | 12 Mo | 0,0190 | 0,0232 | 0,0421 | 0,0719 |
-| 7,00 | 12 Mo | 0,0176 | 0,0215 | 0,0391 | 0,0669 |
-| 8,00 | 12 Mo | 0,0166 | 0,0202 | 0,0367 | 0,0628 |
-| 9,00 | 12 Mo | 0,0157 | 0,0191 | 0,0347 | 0,0595 |
-| 10,00 | 12 Mo | 0,0149 | 0,0181 | 0,0330 | 0,0567 |
+| 0,25 | 3 Mo | 0,0123 | 0,0150 | 0,0456 | 0,1273 |
+| 0,50 | 3 Mo | 0,0099 | 0,0121 | 0,0287 | 0,0613 |
+| 0,75 | 3 Mo | 0,0091 | 0,0112 | 0,0246 | 0,0486 |
+| 1,00 | 3 Mo | 0,0087 | 0,0106 | 0,0222 | 0,0418 |
+| 1,25 | 3 Mo | 0,0084 | 0,0102 | 0,0206 | 0,0374 |
+| 1,50 | 3 Mo | 0,0081 | 0,0099 | 0,0194 | 0,0342 |
+| 1,75 | 3 Mo | 0,0079 | 0,0097 | 0,0185 | 0,0318 |
+| 2,00 | 3 Mo | 0,0078 | 0,0095 | 0,0177 | 0,0298 |
+| 2,50 | 6 Mo | 0,0150 | 0,0183 | 0,0332 | 0,0543 |
+| 3,00 | 6 Mo | 0,0146 | 0,0178 | 0,0313 | 0,0497 |
+| 3,50 | 6 Mo | 0,0142 | 0,0173 | 0,0298 | 0,0462 |
+| 4,00 | 6 Mo | 0,0139 | 0,0170 | 0,0286 | 0,0433 |
+| 5,00 | 12 Mo | 0,0269 | 0,0328 | 0,0534 | 0,0785 |
+| 6,00 | 12 Mo | 0,0262 | 0,0318 | 0,0504 | 0,0719 |
+| 7,00 | 12 Mo | 0,0255 | 0,0310 | 0,0480 | 0,0669 |
+| 8,00 | 12 Mo | 0,0250 | 0,0304 | 0,0460 | 0,0628 |
+| 9,00 | 12 Mo | 0,0245 | 0,0298 | 0,0443 | 0,0595 |
+| 10,00 | 12 Mo | 0,0241 | 0,0294 | 0,0429 | 0,0567 |
+
+*(Werte mit den gruppenspezifischen k aus §4.3.4; die erste Fassung dieses Dokuments hatte
+k = 0,55 durchgängig und überzeichnete damit die Frühlast der intermediären Gruppen.)*
 
 > **Der erste Balken ist der wichtigste.** Bei Hochrisiko fällt 12,7 % der gesamten
 > BCR-Wahrscheinlichkeit auf die *erste* Nachsorgevisite nach 3 Monaten. Das ist kein Artefakt der
@@ -584,8 +676,8 @@ Aus dem Analytic Data Guide (Volltext gelesen):
 | Workup-Delays | fix/uniform | Lognormal je Segment, Ziel-Anker Biopsie→RP median 77 d (IQR 55–107) | §2.2/2.4 | 🟡 |
 | `AS_Progression_Branch` | 0,50 pauschal @5 J | Weibull λ = 11,14 J, k = 0,867; Ereignis nur an der Re-Biopsie (12–18 Mo, dann q2–3 J) | JHU-Fit §3.2/3.3 | 🟢 |
 | AS-Monitoring | — | PSA q6 Mo (GG 1) / q3 Mo (GG 2); Abbruch nur bei histologischer Progression | S3 2025 §3.3 | 🟢 |
-| `BCR_Check` (high) | 0,40 | Weibull λ = 9,38 J, k = 0,55 → F(8) = 0,60 | §4.2/4.3 | 🟢 |
-| `BCR_Check` (low/int) | 0,20 | niedrig λ = 110,7 / günstig int. λ = 77,1 / **ungünstig int. λ = 25,6**, k = 0,55 | §4.2/4.3 | 🟢 |
+| `BCR_Check` (high) | 0,40 | Weibull **k = 0,55**, λ = 9,38 J → F(8) = 0,60; gegen Walz-Cleveland validiert | §4.2/4.3 | 🟢 |
+| `BCR_Check` (low/int) | 0,20 | niedrig **k = 0,85** λ = 43,8 / günstig int. **k = 0,85** λ = 34,7 / **ungünstig int. k = 0,70** λ = 19,9 | §4.3.4 | 🟢 |
 | BCR-Manifestation | Uniform-Draw | per-Visit-Hazard an der S3-Nachsorgekette (Tabelle §4.4) | §4.4 | 🟢 |
 | Post-RT-BCR | wie post-RP | Weibull mit 12-Mo-Verschiebung, λ × 1,25 | §4.5 | 🔴 |
 | BCR → Salvage | impliziter Delay | nächster Termin +4–8 Wo; 79,4 % bei PSA < 0,5, 20,6 % verspätet | DKG KZ 16 §5.1 | 🟢 |
@@ -604,12 +696,13 @@ Aus dem Analytic Data Guide (Volltext gelesen):
 | # | Lücke | Auswirkung | Nächster Schritt |
 |---|---|---|---|
 | L1 | **Keine deutschen Wartezeitdaten** (Diagnose→Therapie). DKG-Kennzahlenbogen enthält keine Zeitgröße. | Prozesszeiten bleiben PL/US-Transfer 🟡 | Klinische Krebsregister (LKR-Auswertung) anfragen oder als bewusste Setzung dokumentieren |
-| L2 | **Freedland/Walz-Volltext nicht zugänglich** (Paywall; PubMed/ScienceDirect/EuropePMC blockiert). Die exakten jährlichen Hazardraten je Risikostratum fehlen. | k = 0,55 ist kreuzvalidiert, aber nicht direkt gemessen 🟡 | Volltext über Bibliothekszugang; dann k neu fitten |
+| ~~L2~~ | ~~Walz-Volltext nicht zugänglich~~ — **GESCHLOSSEN 2026-09-02** (Volltext über Charité-Zugang beschafft, §4.3). k ist jetzt gemessen und **gruppenspezifisch**: 0,85 (intermediär, beide Kohorten übereinstimmend), 0,55 (hoch, gegen Cleveland validiert). | k = 0,55 durchgängig war für die intermediären Gruppen zu niedrig → korrigiert 🟢 | erledigt |
 | L3 | **Post-RT-BCR-Zeitverteilung** faktisch unpubliziert (zu wenige Ereignisse in modernen Serien) | RT-Arm bleibt 🔴 | Näherung dokumentieren; ggf. aus einer Brachytherapie-Serie mit langem Follow-up ableiten |
 | L4 | **PSA-Persistenz nach RP** (nie unter 0,1 gefallen) ist im BCR-Hazard mitverbacken und erzeugt den auffälligen Erst-Visiten-Balken | verzerrt die frühe Zeitachse | eigenes Issue: separater Zustand *PSA-Persistenz* mit eigener Rate |
 | L5 | **PSADT-Verteilung** nur als Anteil < 9 Mo (23,3 %) bekannt, keine volle Verteilung | Modifikator BCR→Metastase bleibt grob 🟡 | gezielte Suche nach einer Registerkohorte mit PSADT-Quantilen |
 | L6 | **`countries.yaml` hat noch keine Zeitparameter** | Prozesszeiten sind derzeit hart | Feld `process_delays` je Land ergänzen (NL 137 d, PL ≈ 80 d, US 71 d als Startpunkte) |
 | L7 | **Mamma-Teil von `bp2`** ist durch den Early-Onset-Zuschnitt der GENIE-BrCa-Kohorte fraglich | betrifft AP-M5/dba | eigene Bewertung, wenn das Mamma-Modul dran ist |
+| L8 | **Kohorten-Heterogenität im Hochrisiko-Arm**: Walz-Hamburg und -Cleveland liefern bei identischer Gruppendefinition 10-Jahres-BCR-freies Überleben von 20,9 % vs. 30,8 % (k = 0,79 vs. 0,46). | die Hochrisiko-Form ist eine Bandbreite, kein Punkt 🟡 | als Sensitivitätsparameter führen (k ∈ [0,46; 0,79]), nicht als Fehler behandeln |
 
 ---
 
@@ -644,7 +737,7 @@ Aus dem Analytic Data Guide (Volltext gelesen):
 **BCR, Salvage, Metastasierung**
 
 - „Contemporary Risk of Biochemical Recurrence after Radical Prostatectomy in the Active Surveillance Era" — PMC11370885 / PMID 38490923 — BCR nach Risikogruppe, post-2010
-- Walz J., Chun F.K.H., Klein E.A., Graefen M. et al., „Risk-adjusted hazard rates of biochemical recurrence for prostate cancer patients after radical prostatectomy", *Eur Urol* 2009 — PMID 19027223 *(nur Abstract-Ebene zugänglich)*
+- **Walz J., Chun F.K.H., Klein E.A., Reuther A., Graefen M., Huland H., Karakiewicz P.I., „Risk-adjusted hazard rates of biochemical recurrence for prostate cancer patients after radical prostatectomy", *Eur Urol* 2009;55:412–421 — PMID 19027223, DOI 10.1016/j.eururo.2008.11.005 — Volltext, Tabellen 3/4/5. Hauptquelle für die Hazardform in §4.3**
 - „Understanding the Impact of Salvage Radiation on the Long-Term Natural History of Biochemically Recurrent Prostate Cancer After Radical Prostatectomy" — PMC12198693 — Zeit RP→BCR 2,5 J (IQR 0,9–5,5); Metastasen/PCSM mit und ohne SRT
 - Pound C.R. et al., „Natural history of progression after PSA elevation following radical prostatectomy", *JAMA* 1999 — PMID 10235151
 - „Risk-based Prostate-specific Antigen Monitoring Reduces Follow-up Burden After Radical Prostatectomy", 2025 — PMID 40328569
@@ -663,6 +756,8 @@ Aus dem Analytic Data Guide (Volltext gelesen):
 - Lavery J.A. et al., `{genieBPC}` R-Paket, *Bioinformatics* 2023;39:btac796
 
 ---
+
+*Stand: 2026-09-02, zweite Runde (Walz-Volltext eingearbeitet, §4.3 neu, §4.4 neu gerechnet, L2 geschlossen).*
 
 *Rechnungen (Weibull-/Lognormal-Fits, per-Visit-Tabellen) wurden für dieses Dokument selbst
 durchgeführt (SciPy least_squares auf S(t) bzw. analytisch aus Median/IQR) und sind an den
