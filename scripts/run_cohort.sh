@@ -23,6 +23,19 @@ STATE="${4:-Massachusetts}"
 SEED="${SEED:-42}"
 CLINICIAN_SEED="${CLINICIAN_SEED:-42}"
 REFERENCE_DATE="${REFERENCE_DATE:-}"
+# NOTE (prostate module, 2026-09-03): the module's Year_Lottery pins each
+# patient's presentation date to 2018-2022 (matching the hospital dataset in
+# Table 3 / epidemiology/prostate_calibration.md). That mechanism only works
+# losslessly if REFERENCE_DATE <= 20221231 - see docs/time_variance.md §3.2.
+# Unset (= today) will strand some patients in the window guard, wasting
+# population budget. Recommended: REFERENCE_DATE=20221231
+
+# On Windows/Git-Bash, java (via gradlew) and the python3 launcher mangle
+# POSIX-style paths (e.g. /c/Users/..) passed as arguments into "C:\c\Users\.."
+# instead of "C:\Users\..". Convert to forward-slash Windows paths before
+# handing them to those non-bash executables (falls back to the original path
+# where cygpath is unavailable, e.g. macOS/Linux).
+winpath() { cygpath -m "$1" 2>/dev/null || printf '%s' "$1"; }
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 SYNTHEA="$REPO/synthea"
@@ -50,7 +63,7 @@ echo "Reproducibility: seed=$SEED clinicianSeed=$CLINICIAN_SEED referenceDate=${
 cd "$SYNTHEA"
 # --exporter.fhir.use_us_core_ig=false: EU dataset - do not stamp US-Core meta.profile
 # claims on every resource (they drag US-Core conformance checks into ECCDM validation).
-./run_synthea "${SEED_FLAGS[@]}" -p "$POP" -a "$AGE" -g "$GENDER" -d "$MODULES" \
+./run_synthea "${SEED_FLAGS[@]}" -p "$POP" -a "$AGE" -g "$GENDER" -d "$(winpath "$MODULES")" \
   --exporter.fhir.use_us_core_ig=false "$STATE"
 echo "Done. Bundles in $SYNTHEA/output/fhir/"
 
@@ -58,11 +71,11 @@ echo "Done. Bundles in $SYNTHEA/output/fhir/"
 # Synthea keeps only the FIRST coding per medication, so the module's German
 # BfArM/ATC-DE coding is lost on export. Re-add it so the data is truly dual-ATC.
 echo "Post-processing: dual ATC (WHO + BfArM/ATC-DE)"
-python3 "$REPO/scripts/postprocess_atc_de.py" "$SYNTHEA/output/fhir"
+python3 "$(winpath "$REPO/scripts/postprocess_atc_de.py")" "$(winpath "$SYNTHEA/output/fhir")"
 echo "Post-processing: synthetic-data tag (SYNDERAI convention) on every resource"
-python3 "$REPO/scripts/postprocess_synthetic_tag.py" "$SYNTHEA/output/fhir"
+python3 "$(winpath "$REPO/scripts/postprocess_synthetic_tag.py")" "$(winpath "$SYNTHEA/output/fhir")"
 echo "Post-processing: ECCDM layer (HL7-EU Cancer Common draft profiles)"
-python3 "$REPO/scripts/postprocess_ccdm.py" "$SYNTHEA/output/fhir"
+python3 "$(winpath "$REPO/scripts/postprocess_ccdm.py")" "$(winpath "$SYNTHEA/output/fhir")"
 
 # --- provenance: document exactly how this cohort was produced -------------
 FHIR_DIR="$SYNTHEA/output/fhir"
@@ -89,7 +102,7 @@ BUNDLES_PCA="$(grep -rlE '399068003|266569009' "$FHIR_DIR" 2>/dev/null | wc -l |
 export RUN_ID RUN_TS POP AGE GENDER STATE SEED CLINICIAN_SEED REFERENCE_DATE \
   SYNTHEA_VER SYNTHEA_COMMIT REPO_COMMIT REPO_DIRTY MODULE_FILE MODULE_SHA JAVA_VER \
   FHIR_DIR BUNDLES_TOTAL BUNDLES_PCA
-python3 - "$PROV_DIR/$RUN_ID.json" <<'PY'
+python3 - "$(winpath "$PROV_DIR/$RUN_ID.json")" <<'PY'
 import os, sys, json, platform
 o = os.environ.get
 doc = {
@@ -128,4 +141,4 @@ print("Provenance:", sys.argv[1])
 PY
 
 # FHIR-native provenance: Provenance -> Group (+ Device/Organization/DocumentReference)
-python3 "$REPO/scripts/make_provenance_fhir.py" "$PROV_DIR/$RUN_ID.provenance.fhir.json"
+python3 "$(winpath "$REPO/scripts/make_provenance_fhir.py")" "$(winpath "$PROV_DIR/$RUN_ID.provenance.fhir.json")"
