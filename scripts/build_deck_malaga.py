@@ -168,6 +168,14 @@ if 1 in ph:
     for r in p.runs:
         r.font.size = Pt(16)
 
+# ── 1b · Agenda ──────────────────────────────────────────────────────────────
+substantive("The route",
+    None,
+    [("Part I — The rails", "EHDS, EEHRxF and the HL7 Europe specification stack"),
+     ("Part II — The model", "the European Common Cancer Model up close — and its OMOP leg"),
+     ("Part III — The test", "a calibrated synthetic prostate cohort, validated against the draft profiles")],
+    y0=3.2, step=1.05)
+
 # ── 2 · Why ──────────────────────────────────────────────────────────────────
 substantive("Why synthetic cancer cohorts",
     "Real cancer-registry data is privacy-locked, slow to share, and offers no ground truth to validate against.",
@@ -230,9 +238,10 @@ substantive("EEHRxF — the format the law prescribes",
 substantive("Who writes the stack — from guidelines to FHIR",
     "Three layers feed the implementing acts — and HL7 Europe writes the FHIR layer.",
     [("eHN guidelines", "the clinical content agreements per priority category"),
-     ("Xt-EHR Joint Action", "EHDS Logical Information Models v1.0.0 — the semantic backbone (2023–2026)"),
+     ("Xt-EHR Joint Action (2023–26)", "EHDS Logical Information Models v1.0.0 — the semantic backbone"),
      ("HL7 Europe implementation guides", "FHIR profiles turning the logical models into wire format")],
-    "Note the pattern — logical model first, serializations second. The Common Cancer Model works the same way.")
+    "Note the pattern — logical model first, serializations second. The Common Cancer Model works the same way.",
+    y0=3.75)
 
 # ── EHDS · HL7 Europe IG landscape ───────────────────────────────────────────
 table_slide("The HL7 Europe specification landscape",
@@ -416,7 +425,7 @@ image_slide("The cohort at a glance — 115 synthetic cancer journeys",
     cap="Nodes = calibrated branch points · colours = EAU risk group · a visual cross-check against the calibration targets")
 
 # ── 8 · Pipeline ─────────────────────────────────────────────────────────────
-substantive("From Synthea output to CCDM draft profiles",
+substantive("From Synthea output to the ECCM draft profiles",
     "A post-processing pipeline reshapes every journey onto the 13 draft profiles — with a validator gate to keep it honest.",
     [("Derives what the model asks for", "clinical + pathological TNM, histology, episodes of care, progression, last follow-up"),
      ("Validator gate: 0 errors", "HL7 Java validator against the pinned draft build"),
@@ -471,14 +480,14 @@ substantive("Outlook — regimens: HemOnc's OMOP groundwork, served as FHIR",
 # ── 12 · Closing ─────────────────────────────────────────────────────────────
 substantive("The point",
     "A model becomes real the moment someone can test it.",
-    [("The model", "CCDM draft profiles, in active development"),
+    [("The model", "ECCM draft profiles, in active development"),
      ("The test bed", "shareable, PII-free synthetic journeys — conformant today, 0 validation errors"),
      ("The loop", "implement → feed back → iterate — that is what we bring to Málaga"),
      ("The invitation", "take the cohort, run your FHIR→OMOP ETL against it, tell both communities what breaks")])
 
 # ── 13 · Appendix · CCDM mapping ─────────────────────────────────────────────
-table_slide("Appendix · every CCDM entity is already covered",
-    [("CCDM draft profiles", "Prostate pipeline produces"),
+table_slide("Appendix · every ECCM entity is already covered",
+    [("ECCM draft profiles", "Prostate pipeline produces"),
      ("Cancer Patient · Condition at Diagnosis", "Patient · prostate-cancer diagnosis"),
      ("Cancer Stage (clinical / pathological TNM)", "Gleason / ISUP · cTNM + pTNM (Partin)"),
      ("Clinical Cancer Progression", "biochemical recurrence · metastasis"),
