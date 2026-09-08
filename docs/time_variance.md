@@ -1,5 +1,14 @@
 # Time variance in the prostate module
 
+> **Status (2026-09-08):** Das 2018–2022-Jahresfenster (§5, `Cohort_Year_Branch`/`Year_Lottery`)
+> ist derzeit **deaktiviert** — Team-Entscheid: das Fenster enthält den COVID-Effekt und pinnt
+> den Datensatz auf 2022. `Age_50_Guard` überspringt die Lotterie; alle Patienten nutzen die
+> `_Other`-Varianten (5-Jahres-Durchschnitte) und behalten ihr natürliches Kalenderdatum.
+> Reaktivierung: `Age_50_Guard.direct_transition` zurück auf `Cohort_Year_Branch` +
+> `REFERENCE_DATE=20221231`. Zusätzlich wurde die Abklärungs-Wartezeit aus dem offenen
+> Urologie-Encounter herausgelöst (eigener `Abklaerung_Encounter` nach dem Delay — sonst
+> spannte ein ambulanter Encounter einen Monat auf).
+
 This explains, in plain terms, how `modules/adult/prostate.json` now models
 **realistic waiting times** between steps of the prostate-cancer pathway,
 based on a real hospital study, instead of everything happening instantly.

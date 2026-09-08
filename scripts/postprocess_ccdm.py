@@ -23,6 +23,8 @@ Per cancer bundle:
 Profile base URL is configurable (--base) because the draft's canonical may still change
 (sushi-config.yaml carries a '# check if this may create issues' comment on it).
 Draft pin: ValhallasCat/cancer-common @ c020f19 (2026-08-28), vendored in profiles/eccdm/.
+(c020f19 split the stage EvidenceReference into cancer-stage-evidence-reference-imaging /
+-surgery and added the optional cancer-histology-behaviour-reference on the Condition.)
 Calibration & code provenance: epidemiology/prostate_calibration.md §11.
 """
 import argparse

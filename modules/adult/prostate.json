@@ -42,7 +42,8 @@
     "Age_50_Guard": {
       "type": "Guard",
       "remarks": [
-        "Cohort = symptomatic men 50-60 presenting to urology. Every male reaching 50 presents with LUTS (100% presentation) - a deliberately SELECTED population for a high-yield test corpus, NOT an epidemiologically representative presentation rate."
+        "Cohort = symptomatic men 50-60 presenting to urology. Every male reaching 50 presents with LUTS (100% presentation) - a deliberately SELECTED population for a high-yield test corpus, NOT an epidemiologically representative presentation rate.",
+        "YEAR WINDOW DISABLED (2026-09-08, team decision): bypasses Cohort_Year_Branch so all patients use the generic 5-yr-average (_Other) waiting-time variants and keep their natural calendar dates - the 2018-2022 window includes the COVID slowdown and pins the dataset to 2022. To re-enable, point this direct_transition back to Cohort_Year_Branch (see docs/time_variance.md)."
       ],
       "allow": {
         "condition_type": "Age",
@@ -50,11 +51,12 @@
         "quantity": 50,
         "unit": "years"
       },
-      "direct_transition": "Cohort_Year_Branch"
+      "direct_transition": "Set_Diagnosis_Year_Other"
     },
     "Cohort_Year_Branch": {
       "type": "Simple",
       "remarks": [
+        "CURRENTLY DISABLED - Age_50_Guard bypasses this state straight to Set_Diagnosis_Year_Other (2026-09-08).",
         "Most, but not all, of the cohort is pinned to the 2018-2022 hospital-data window (see Year_Lottery).",
         "0.85/0.15 split is a placeholder (🔴) - tune to reflect how much of your real population the Table 3",
         "extract actually covers. The 0.15 'outside window' branch keeps the patient's own natural age-50",
@@ -285,23 +287,48 @@
       ],
       "complex_transition": [
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2018},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2018
+          },
           "transition": "Initial_Diagnosis_Wait_2018"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2019},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2019
+          },
           "transition": "Initial_Diagnosis_Wait_2019"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2020},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2020
+          },
           "transition": "Initial_Diagnosis_Wait_2020"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2021},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2021
+          },
           "transition": "Initial_Diagnosis_Wait_2021"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2022},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2022
+          },
           "transition": "Initial_Diagnosis_Wait_2022"
         },
         {
@@ -312,13 +339,27 @@
     "Initial_Diagnosis_Wait_2018": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 3, "mode": 12.8, "max": 35}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 3,
+          "mode": 12.8,
+          "max": 35
+        }
+      },
       "direct_transition": "Urology_Encounter"
     },
     "Initial_Diagnosis_Wait_2019": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 4, "mode": 17.6, "max": 48}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 4,
+          "mode": 17.6,
+          "max": 48
+        }
+      },
       "direct_transition": "Urology_Encounter"
     },
     "Initial_Diagnosis_Wait_2020": {
@@ -327,19 +368,40 @@
         "2020 has the longest wait of the 5 years in the source data - plausibly a COVID-era system-strain effect."
       ],
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 21.3, "max": 59}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 21.3,
+          "max": 59
+        }
+      },
       "direct_transition": "Urology_Encounter"
     },
     "Initial_Diagnosis_Wait_2021": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 21.0, "max": 58}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 21.0,
+          "max": 58
+        }
+      },
       "direct_transition": "Urology_Encounter"
     },
     "Initial_Diagnosis_Wait_2022": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 6, "mode": 24.4, "max": 67}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 6,
+          "mode": 24.4,
+          "max": 67
+        }
+      },
       "direct_transition": "Urology_Encounter"
     },
     "Initial_Diagnosis_Wait_Other": {
@@ -349,7 +411,14 @@
         "Table 3 5-year average since no year-specific data applies."
       ],
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 20, "max": 55}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 20,
+          "max": 55
+        }
+      },
       "direct_transition": "Urology_Encounter"
     },
     "Urology_Encounter": {
@@ -458,7 +527,7 @@
         "low": 4.0,
         "high": 12.0
       },
-      "direct_transition": "Comprehensive_Diagnostics_Wait_Router"
+      "direct_transition": "Urology_Encounter_End_Referral"
     },
     "Comprehensive_Diagnostics_Wait_Router": {
       "type": "Simple",
@@ -469,23 +538,48 @@
       ],
       "complex_transition": [
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2018},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2018
+          },
           "transition": "Comprehensive_Diagnostics_Wait_2018"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2019},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2019
+          },
           "transition": "Comprehensive_Diagnostics_Wait_2019"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2020},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2020
+          },
           "transition": "Comprehensive_Diagnostics_Wait_2020"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2021},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2021
+          },
           "transition": "Comprehensive_Diagnostics_Wait_2021"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2022},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2022
+          },
           "transition": "Comprehensive_Diagnostics_Wait_2022"
         },
         {
@@ -496,14 +590,28 @@
     "Comprehensive_Diagnostics_Wait_2018": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 19.1, "max": 54}},
-      "direct_transition": "TRUS_Suspicious"
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 19.1,
+          "max": 54
+        }
+      },
+      "direct_transition": "Abklaerung_Encounter"
     },
     "Comprehensive_Diagnostics_Wait_2019": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 7, "mode": 26.9, "max": 77}},
-      "direct_transition": "TRUS_Suspicious"
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 7,
+          "mode": 26.9,
+          "max": 77
+        }
+      },
+      "direct_transition": "Abklaerung_Encounter"
     },
     "Comprehensive_Diagnostics_Wait_2020": {
       "type": "Delay",
@@ -511,20 +619,41 @@
         "2020 has the longest wait of the 5 years in the source data - plausibly a COVID-era system-strain effect."
       ],
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 8, "mode": 33.5, "max": 95}},
-      "direct_transition": "TRUS_Suspicious"
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 8,
+          "mode": 33.5,
+          "max": 95
+        }
+      },
+      "direct_transition": "Abklaerung_Encounter"
     },
     "Comprehensive_Diagnostics_Wait_2021": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 7, "mode": 28.5, "max": 81}},
-      "direct_transition": "TRUS_Suspicious"
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 7,
+          "mode": 28.5,
+          "max": 81
+        }
+      },
+      "direct_transition": "Abklaerung_Encounter"
     },
     "Comprehensive_Diagnostics_Wait_2022": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 8, "mode": 31.5, "max": 90}},
-      "direct_transition": "TRUS_Suspicious"
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 8,
+          "mode": 31.5,
+          "max": 90
+        }
+      },
+      "direct_transition": "Abklaerung_Encounter"
     },
     "Comprehensive_Diagnostics_Wait_Other": {
       "type": "Delay",
@@ -533,8 +662,15 @@
         "Table 3 5-year average since no year-specific data applies."
       ],
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 7, "mode": 28, "max": 80}},
-      "direct_transition": "TRUS_Suspicious"
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 7,
+          "mode": 28,
+          "max": 80
+        }
+      },
+      "direct_transition": "Abklaerung_Encounter"
     },
     "TRUS_Suspicious": {
       "type": "Procedure",
@@ -619,7 +755,7 @@
     },
     "No_Biopsy_Benign": {
       "type": "Simple",
-      "direct_transition": "BPH_Onset"
+      "direct_transition": "BPH_Onset_PostImaging"
     },
     "PIRADS_3": {
       "type": "Observation",
@@ -759,7 +895,7 @@
       "remarks": [
         "Negative biopsy in a symptomatic man with elevated PSA -> managed as BPH."
       ],
-      "direct_transition": "BPH_Onset"
+      "direct_transition": "BPH_Onset_PostImaging"
     },
     "BPH_Onset": {
       "type": "ConditionOnset",
@@ -987,7 +1123,7 @@
           "display": "Malignant tumor of prostate"
         }
       ],
-      "target_encounter": "Urology_Encounter",
+      "target_encounter": "Abklaerung_Encounter",
       "assign_to_attribute": "prostate_cancer",
       "direct_transition": "Set_Risk_Low"
     },
@@ -1122,7 +1258,7 @@
           "display": "Malignant tumor of prostate"
         }
       ],
-      "target_encounter": "Urology_Encounter",
+      "target_encounter": "Abklaerung_Encounter",
       "assign_to_attribute": "prostate_cancer",
       "direct_transition": "Set_Risk_Intermediate"
     },
@@ -1285,7 +1421,7 @@
           "display": "Malignant tumor of prostate"
         }
       ],
-      "target_encounter": "Urology_Encounter",
+      "target_encounter": "Abklaerung_Encounter",
       "assign_to_attribute": "prostate_cancer",
       "direct_transition": "Set_Risk_High"
     },
@@ -1344,7 +1480,7 @@
           "display": "Malignant tumor of prostate"
         }
       ],
-      "target_encounter": "Urology_Encounter",
+      "target_encounter": "Abklaerung_Encounter",
       "assign_to_attribute": "prostate_cancer",
       "direct_transition": "Set_Risk_LocAdv"
     },
@@ -1507,7 +1643,7 @@
           "display": "Malignant tumor of prostate"
         }
       ],
-      "target_encounter": "Urology_Encounter",
+      "target_encounter": "Abklaerung_Encounter",
       "assign_to_attribute": "prostate_cancer",
       "direct_transition": "Set_Risk_Metastatic"
     },
@@ -1564,23 +1700,48 @@
       ],
       "complex_transition": [
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2018},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2018
+          },
           "transition": "Treatment_Scheduling_Delay_2018"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2019},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2019
+          },
           "transition": "Treatment_Scheduling_Delay_2019"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2020},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2020
+          },
           "transition": "Treatment_Scheduling_Delay_2020"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2021},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2021
+          },
           "transition": "Treatment_Scheduling_Delay_2021"
         },
         {
-          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2022},
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "diagnosis_year",
+            "operator": "==",
+            "value": 2022
+          },
           "transition": "Treatment_Scheduling_Delay_2022"
         },
         {
@@ -1591,31 +1752,66 @@
     "Treatment_Scheduling_Delay_2018": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18.6, "max": 47}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 18.6,
+          "max": 47
+        }
+      },
       "direct_transition": "Treatment_Risk_Group_Router"
     },
     "Treatment_Scheduling_Delay_2019": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18.4, "max": 46}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 18.4,
+          "max": 46
+        }
+      },
       "direct_transition": "Treatment_Risk_Group_Router"
     },
     "Treatment_Scheduling_Delay_2020": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 17.9, "max": 45}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 17.9,
+          "max": 45
+        }
+      },
       "direct_transition": "Treatment_Risk_Group_Router"
     },
     "Treatment_Scheduling_Delay_2021": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18.0, "max": 45}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 18.0,
+          "max": 45
+        }
+      },
       "direct_transition": "Treatment_Risk_Group_Router"
     },
     "Treatment_Scheduling_Delay_2022": {
       "type": "Delay",
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18.7, "max": 47}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 18.7,
+          "max": 47
+        }
+      },
       "direct_transition": "Treatment_Risk_Group_Router"
     },
     "Treatment_Scheduling_Delay_Other": {
@@ -1625,7 +1821,14 @@
         "Table 3 5-year average since no year-specific data applies."
       ],
       "unit": "days",
-      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18, "max": 45}},
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 18,
+          "max": 45
+        }
+      },
       "direct_transition": "Treatment_Risk_Group_Router"
     },
     "Treatment_Risk_Group_Router": {
@@ -3195,6 +3398,49 @@
       "target_encounter": "Incidental_FollowUp_Encounter",
       "assign_to_attribute": "prostate_cancer",
       "direct_transition": "Set_Risk_Low"
+    },
+    "Urology_Encounter_End_Referral": {
+      "type": "EncounterEnd",
+      "remarks": [
+        "Encounter-boundary fix (2026-09-08): the comprehensive-diagnostics waiting time must not run",
+        "inside the open urology encounter. The visit ends with the elevated-PSA finding and a referral;",
+        "imaging/biopsy happen in a separate Abklaerung encounter after the wait."
+      ],
+      "direct_transition": "Comprehensive_Diagnostics_Wait_Router"
+    },
+    "Abklaerung_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185347001",
+          "display": "Encounter for problem"
+        }
+      ],
+      "remarks": [
+        "Second visit of the diagnostic pathway (TRUS/mpMRI/biopsy work-up after the elevated-PSA referral).",
+        "Cancer/BPH diagnoses on this path target THIS encounter (target_encounter) - not Urology_Encounter,",
+        "which never recurs (same deferred-ConditionOnset pitfall as the TURP-incidental fix)."
+      ],
+      "direct_transition": "TRUS_Suspicious"
+    },
+    "BPH_Onset_PostImaging": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "266569009",
+          "display": "Hyperplasia of prostate"
+        }
+      ],
+      "target_encounter": "Abklaerung_Encounter",
+      "assign_to_attribute": "bph",
+      "direct_transition": "Diagnostic_Encounter_End_BPH",
+      "remarks": [
+        "Benign outcome on the post-referral imaging/biopsy path; separate state because BPH_Onset",
+        "targets Urology_Encounter, which is already closed here."
+      ]
     }
   }
 }

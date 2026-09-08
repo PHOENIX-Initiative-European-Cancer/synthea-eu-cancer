@@ -23,12 +23,12 @@ STATE="${4:-Massachusetts}"
 SEED="${SEED:-42}"
 CLINICIAN_SEED="${CLINICIAN_SEED:-42}"
 REFERENCE_DATE="${REFERENCE_DATE:-}"
-# NOTE (prostate module, 2026-09-03): the module's Year_Lottery pins each
-# patient's presentation date to 2018-2022 (matching the hospital dataset in
-# Table 3 / epidemiology/prostate_calibration.md). That mechanism only works
-# losslessly if REFERENCE_DATE <= 20221231 - see docs/time_variance.md §3.2.
-# Unset (= today) will strand some patients in the window guard, wasting
-# population budget. Recommended: REFERENCE_DATE=20221231
+# NOTE (2026-09-08): the module's 2018-2022 year window (Year_Lottery) is
+# currently DISABLED (Age_50_Guard bypasses it; team decision - the window
+# includes the COVID slowdown and pins the dataset to 2022). All patients use
+# the 5-yr-average waiting times; REFERENCE_DATE has no special constraint.
+# If the window is re-enabled in prostate.json, set REFERENCE_DATE=20221231
+# (see docs/time_variance.md).
 
 # On Windows/Git-Bash, java (via gradlew) and the python3 launcher mangle
 # POSIX-style paths (e.g. /c/Users/..) passed as arguments into "C:\c\Users\.."

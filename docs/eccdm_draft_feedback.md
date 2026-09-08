@@ -1,5 +1,13 @@
 # ECCDM draft profiles — implementer feedback from the synthea-eu-cancer pipeline
 
+> **Status-Update (repin auf `c020f19`, 2026-08-28/31):** Teilweise adressiert — die
+> Evidence-Reference wurde in `-imaging`/`-surgery` gesplittet (+ Invariante gegen c/p),
+> `stage-value-or-component` erlaubt jetzt Single-Value-Systeme (FIGO-Beispiel neu),
+> `focus 1..1`, optionale `cancer-histology-behaviour-reference` an der Condition, viele
+> Beschreibungs-Typos gefixt. **Noch offen:** `HitsologyBehaviour` (Profilname),
+> `CinicalOrPathological` (immer noch "Cinical"), `systematic-treatemmt-intent/-ongoing`
+> (Extension-URLs! Breaking, wenn später gefixt), deprecated PhenX-Codes im TNM-Beispiel.
+
 Reviewed/implemented against: fork `ValhallasCat/cancer-common` @ `c020f19` (2026-08-28),
 built with SUSHI 3.20.0 (0 errors), used to profile a 1000-patient synthetic prostate cohort
 (114 cancer journeys) and validated with the HL7 Java validator. Findings from actually
