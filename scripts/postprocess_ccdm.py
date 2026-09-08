@@ -22,7 +22,7 @@ Per cancer bundle:
 
 Profile base URL is configurable (--base) because the draft's canonical may still change
 (sushi-config.yaml carries a '# check if this may create issues' comment on it).
-Draft pin: ValhallasCat/cancer-common @ 75ad6ed (2026-08-26), vendored in profiles/eccdm/.
+Draft pin: ValhallasCat/cancer-common @ c020f19 (2026-08-28), vendored in profiles/eccdm/.
 Calibration & code provenance: epidemiology/prostate_calibration.md §11.
 """
 import argparse

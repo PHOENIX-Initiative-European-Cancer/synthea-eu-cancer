@@ -50,6 +50,207 @@
         "quantity": 50,
         "unit": "years"
       },
+      "direct_transition": "Cohort_Year_Branch"
+    },
+    "Cohort_Year_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Most, but not all, of the cohort is pinned to the 2018-2022 hospital-data window (see Year_Lottery).",
+        "0.85/0.15 split is a placeholder (🔴) - tune to reflect how much of your real population the Table 3",
+        "extract actually covers. The 0.15 'outside window' branch keeps the patient's own natural age-50",
+        "calendar date (whatever -a/-r produced) with no forcing - other years CAN occur. Those patients use",
+        "the generic (non-year-specific) 'Other' delay variants at each waiting-time step. See docs/time_variance.md §3."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Enter_Diagnosis_Window",
+          "distribution": 0.85
+        },
+        {
+          "transition": "Set_Diagnosis_Year_Other",
+          "distribution": 0.15
+        }
+      ]
+    },
+    "Set_Diagnosis_Year_Other": {
+      "type": "SetAttribute",
+      "remarks": [
+        "0 is a sentinel (not a real year) meaning 'outside the 2018-2022 window'. Kept numeric, not a string,",
+        "so Attribute==<year> comparisons in the *_Wait_Router states never compare a String to a Number",
+        "(Synthea's Attribute condition throws a RuntimeException on a type mismatch instead of returning false)."
+      ],
+      "attribute": "diagnosis_year",
+      "value": 0,
+      "direct_transition": "Nocturia_Symptom"
+    },
+    "Enter_Diagnosis_Window": {
+      "type": "Guard",
+      "remarks": [
+        "TEMPORAL CALIBRATION (2026-09-03 addition): the reference hospital dataset (own hospital data, C61,",
+        "Table 3) covers 2018-2022. This guard + Year_Lottery below pin the cohort's presentation date to that",
+        "window, independent of the -a/-r CLI flags used to generate the population. A patient who reaches age",
+        "50 before 2018 simply waits here (forward-only) until the window opens. REQUIRES REFERENCE_DATE <=",
+        "20221231 for every patient's age-50 date to be reachable within the window - see docs/time_variance.md."
+      ],
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2018
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Year_Lottery": {
+      "type": "Simple",
+      "remarks": [
+        "Non-uniform per-year weighting of the diagnosis/presentation year, mirroring real hospital registry",
+        "volume 2018-2022 (placeholder weights below - 🔴 REPLACE with your own per-year patient counts once",
+        "available; Table 3 only gives the 5-year aggregate, not a per-year split). Modelled as a sequential",
+        "lottery: at whichever year we actually arrive (>=2018, see Enter_Diagnosis_Window), 'settle' locks in",
+        "that year; 'defer' waits for the next year and re-enters this same lottery. This guarantees every",
+        "patient eventually settles (2022 is a forced catch-all) - no patient is ever stuck. Settle",
+        "probabilities are the target year-weight renormalised over the years still remaining:",
+        "  target weights   2018=0.21  2019=0.22  2020=0.15  2021=0.20  2022=0.22",
+        "  settle-if-here   2018=0.21  2019=0.2785  2020=0.2632  2021=0.4762  2022=1.0 (forced)",
+        "See docs/time_variance.md for the full derivation and how to plug in your real annual counts."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Date",
+            "operator": "==",
+            "year": 2018
+          },
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2018",
+              "distribution": 0.21
+            },
+            {
+              "transition": "Wait_Until_2019",
+              "distribution": 0.79
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Date",
+            "operator": "==",
+            "year": 2019
+          },
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2019",
+              "distribution": 0.2785
+            },
+            {
+              "transition": "Wait_Until_2020",
+              "distribution": 0.7215
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Date",
+            "operator": "==",
+            "year": 2020
+          },
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2020",
+              "distribution": 0.2632
+            },
+            {
+              "transition": "Wait_Until_2021",
+              "distribution": 0.7368
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Date",
+            "operator": "==",
+            "year": 2021
+          },
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2021",
+              "distribution": 0.4762
+            },
+            {
+              "transition": "Wait_Until_2022",
+              "distribution": 0.5238
+            }
+          ]
+        },
+        {
+          "transition": "Set_Diagnosis_Year_2022"
+        }
+      ]
+    },
+    "Wait_Until_2019": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2019
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Wait_Until_2020": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2020
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Wait_Until_2021": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2021
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Wait_Until_2022": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2022
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Set_Diagnosis_Year_2018": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2018,
+      "direct_transition": "Nocturia_Symptom"
+    },
+    "Set_Diagnosis_Year_2019": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2019,
+      "direct_transition": "Nocturia_Symptom"
+    },
+    "Set_Diagnosis_Year_2020": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2020,
+      "direct_transition": "Nocturia_Symptom"
+    },
+    "Set_Diagnosis_Year_2021": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2021,
+      "direct_transition": "Nocturia_Symptom"
+    },
+    "Set_Diagnosis_Year_2022": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2022,
       "direct_transition": "Nocturia_Symptom"
     },
     "Nocturia_Symptom": {
@@ -72,6 +273,83 @@
         "low": 40,
         "high": 85
       },
+      "direct_transition": "Initial_Diagnosis_Wait_Router"
+    },
+    "Initial_Diagnosis_Wait_Router": {
+      "type": "Simple",
+      "remarks": [
+        "Dispatches to a year-specific waiting-time distribution using the 'diagnosis_year' attribute set by",
+        "Year_Lottery / Set_Diagnosis_Year_Other. 'Initial diagnosis' per-year waiting time/appointment (own",
+        "hospital data, C61, 2018-2022): 2018=12.8d 2019=17.6d 2020=21.3d 2021=21.0d 2022=24.4d (5-yr avg 19.6d).",
+        "Patients outside the window (no matching year) get the generic 5-yr-average variant. See docs/time_variance.md §3."
+      ],
+      "complex_transition": [
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2018},
+          "transition": "Initial_Diagnosis_Wait_2018"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2019},
+          "transition": "Initial_Diagnosis_Wait_2019"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2020},
+          "transition": "Initial_Diagnosis_Wait_2020"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2021},
+          "transition": "Initial_Diagnosis_Wait_2021"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2022},
+          "transition": "Initial_Diagnosis_Wait_2022"
+        },
+        {
+          "transition": "Initial_Diagnosis_Wait_Other"
+        }
+      ]
+    },
+    "Initial_Diagnosis_Wait_2018": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 3, "mode": 12.8, "max": 35}},
+      "direct_transition": "Urology_Encounter"
+    },
+    "Initial_Diagnosis_Wait_2019": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 4, "mode": 17.6, "max": 48}},
+      "direct_transition": "Urology_Encounter"
+    },
+    "Initial_Diagnosis_Wait_2020": {
+      "type": "Delay",
+      "remarks": [
+        "2020 has the longest wait of the 5 years in the source data - plausibly a COVID-era system-strain effect."
+      ],
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 21.3, "max": 59}},
+      "direct_transition": "Urology_Encounter"
+    },
+    "Initial_Diagnosis_Wait_2021": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 21.0, "max": 58}},
+      "direct_transition": "Urology_Encounter"
+    },
+    "Initial_Diagnosis_Wait_2022": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 6, "mode": 24.4, "max": 67}},
+      "direct_transition": "Urology_Encounter"
+    },
+    "Initial_Diagnosis_Wait_Other": {
+      "type": "Delay",
+      "remarks": [
+        "Generic fallback for patients outside the 2018-2022 window (see Cohort_Year_Branch) - uses the",
+        "Table 3 5-year average since no year-specific data applies."
+      ],
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 20, "max": 55}},
       "direct_transition": "Urology_Encounter"
     },
     "Urology_Encounter": {
@@ -180,6 +458,82 @@
         "low": 4.0,
         "high": 12.0
       },
+      "direct_transition": "Comprehensive_Diagnostics_Wait_Router"
+    },
+    "Comprehensive_Diagnostics_Wait_Router": {
+      "type": "Simple",
+      "remarks": [
+        "Dispatches by 'diagnosis_year' (see Initial_Diagnosis_Wait_Router). 'Comprehensive diagnostics'",
+        "per-year waiting time/appointment (own hospital data, C61, 2018-2022): 2018=19.1d 2019=26.9d",
+        "2020=33.5d 2021=28.5d 2022=31.5d (5-yr avg 27.7d). See docs/time_variance.md §3."
+      ],
+      "complex_transition": [
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2018},
+          "transition": "Comprehensive_Diagnostics_Wait_2018"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2019},
+          "transition": "Comprehensive_Diagnostics_Wait_2019"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2020},
+          "transition": "Comprehensive_Diagnostics_Wait_2020"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2021},
+          "transition": "Comprehensive_Diagnostics_Wait_2021"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2022},
+          "transition": "Comprehensive_Diagnostics_Wait_2022"
+        },
+        {
+          "transition": "Comprehensive_Diagnostics_Wait_Other"
+        }
+      ]
+    },
+    "Comprehensive_Diagnostics_Wait_2018": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 19.1, "max": 54}},
+      "direct_transition": "TRUS_Suspicious"
+    },
+    "Comprehensive_Diagnostics_Wait_2019": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 7, "mode": 26.9, "max": 77}},
+      "direct_transition": "TRUS_Suspicious"
+    },
+    "Comprehensive_Diagnostics_Wait_2020": {
+      "type": "Delay",
+      "remarks": [
+        "2020 has the longest wait of the 5 years in the source data - plausibly a COVID-era system-strain effect."
+      ],
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 8, "mode": 33.5, "max": 95}},
+      "direct_transition": "TRUS_Suspicious"
+    },
+    "Comprehensive_Diagnostics_Wait_2021": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 7, "mode": 28.5, "max": 81}},
+      "direct_transition": "TRUS_Suspicious"
+    },
+    "Comprehensive_Diagnostics_Wait_2022": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 8, "mode": 31.5, "max": 90}},
+      "direct_transition": "TRUS_Suspicious"
+    },
+    "Comprehensive_Diagnostics_Wait_Other": {
+      "type": "Delay",
+      "remarks": [
+        "Generic fallback for patients outside the 2018-2022 window (see Cohort_Year_Branch) - uses the",
+        "Table 3 5-year average since no year-specific data applies."
+      ],
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 7, "mode": 28, "max": 80}},
       "direct_transition": "TRUS_Suspicious"
     },
     "TRUS_Suspicious": {
@@ -678,7 +1032,7 @@
     },
     "Diagnostic_Encounter_End_Cancer_Low": {
       "type": "EncounterEnd",
-      "direct_transition": "Active_Surveillance"
+      "direct_transition": "Treatment_Scheduling_Delay"
     },
     "Active_Surveillance": {
       "type": "CarePlanStart",
@@ -698,10 +1052,20 @@
     },
     "AS_Followup_Delay": {
       "type": "Delay",
-      "range": {
-        "low": 1,
-        "high": 5,
-        "unit": "years"
+      "remarks": [
+        "Time-to-treatment-decision on active surveillance, GMF2 Triangular (non-uniform, patient variance instead",
+        "of a flat range): most conversions cluster around 2.5-3 yr (HAROW median time-to-treatment 33 mo RP /",
+        "38.5 mo RT, PMC8332563), long tail out to 5 yr matching 10-yr intervention-free survival ~34%.",
+        "See docs/time_variance.md and epidemiology/prostate_calibration.md §10/12."
+      ],
+      "unit": "years",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 1,
+          "mode": 3,
+          "max": 5
+        }
       },
       "direct_transition": "AS_Progression_Branch"
     },
@@ -803,7 +1167,7 @@
     },
     "Diagnostic_Encounter_End_Cancer_Int": {
       "type": "EncounterEnd",
-      "direct_transition": "Intermediate_Treatment_Branch"
+      "direct_transition": "Treatment_Scheduling_Delay"
     },
     "Intermediate_Treatment_Branch": {
       "type": "Simple",
@@ -966,7 +1330,7 @@
     },
     "Diagnostic_Encounter_End_Cancer_High": {
       "type": "EncounterEnd",
-      "direct_transition": "HighRisk_Treatment_Branch"
+      "direct_transition": "Treatment_Scheduling_Delay"
     },
     "Cancer_LocAdv": {
       "type": "ConditionOnset",
@@ -1025,7 +1389,7 @@
     },
     "Diagnostic_Encounter_End_Cancer_LocAdv": {
       "type": "EncounterEnd",
-      "direct_transition": "HighRisk_Treatment_Branch"
+      "direct_transition": "Treatment_Scheduling_Delay"
     },
     "HighRisk_Treatment_Branch": {
       "type": "Simple",
@@ -1188,7 +1552,121 @@
     },
     "Diagnostic_Encounter_End_Cancer_Met": {
       "type": "EncounterEnd",
-      "direct_transition": "ADT_Encounter"
+      "direct_transition": "Treatment_Scheduling_Delay"
+    },
+    "Treatment_Scheduling_Delay": {
+      "type": "Simple",
+      "remarks": [
+        "Dispatches by 'diagnosis_year' (see Initial_Diagnosis_Wait_Router). 'Treatment' per-year waiting",
+        "time/appointment (own hospital data, C61, 2018-2022): 2018=18.6d 2019=18.4d 2020=17.9d 2021=18.0d",
+        "2022=18.7d (5-yr avg 18.3d) - this step is notably flatter across years than the diagnostic steps.",
+        "See docs/time_variance.md §3."
+      ],
+      "complex_transition": [
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2018},
+          "transition": "Treatment_Scheduling_Delay_2018"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2019},
+          "transition": "Treatment_Scheduling_Delay_2019"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2020},
+          "transition": "Treatment_Scheduling_Delay_2020"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2021},
+          "transition": "Treatment_Scheduling_Delay_2021"
+        },
+        {
+          "condition": {"condition_type": "Attribute", "attribute": "diagnosis_year", "operator": "==", "value": 2022},
+          "transition": "Treatment_Scheduling_Delay_2022"
+        },
+        {
+          "transition": "Treatment_Scheduling_Delay_Other"
+        }
+      ]
+    },
+    "Treatment_Scheduling_Delay_2018": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18.6, "max": 47}},
+      "direct_transition": "Treatment_Risk_Group_Router"
+    },
+    "Treatment_Scheduling_Delay_2019": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18.4, "max": 46}},
+      "direct_transition": "Treatment_Risk_Group_Router"
+    },
+    "Treatment_Scheduling_Delay_2020": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 17.9, "max": 45}},
+      "direct_transition": "Treatment_Risk_Group_Router"
+    },
+    "Treatment_Scheduling_Delay_2021": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18.0, "max": 45}},
+      "direct_transition": "Treatment_Risk_Group_Router"
+    },
+    "Treatment_Scheduling_Delay_2022": {
+      "type": "Delay",
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18.7, "max": 47}},
+      "direct_transition": "Treatment_Risk_Group_Router"
+    },
+    "Treatment_Scheduling_Delay_Other": {
+      "type": "Delay",
+      "remarks": [
+        "Generic fallback for patients outside the 2018-2022 window (see Cohort_Year_Branch) - uses the",
+        "Table 3 5-year average since no year-specific data applies."
+      ],
+      "unit": "days",
+      "distribution": {"kind": "TRIANGULAR", "parameters": {"min": 5, "mode": 18, "max": 45}},
+      "direct_transition": "Treatment_Risk_Group_Router"
+    },
+    "Treatment_Risk_Group_Router": {
+      "type": "Simple",
+      "remarks": [
+        "Dispatches to the correct treatment pathway by pca_risk_group, once the year-specific scheduling",
+        "delay above has elapsed. Split out from Treatment_Scheduling_Delay so the WHEN (year-specific wait)",
+        "and the WHERE (risk-group routing) are independent - see docs/time_variance.md §2.3."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "pca_risk_group",
+            "operator": "==",
+            "value": "low"
+          },
+          "transition": "Active_Surveillance"
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "pca_risk_group",
+            "operator": "==",
+            "value": "intermediate"
+          },
+          "transition": "Intermediate_Treatment_Branch"
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "pca_risk_group",
+            "operator": "==",
+            "value": "metastatic"
+          },
+          "transition": "ADT_Encounter"
+        },
+        {
+          "transition": "HighRisk_Treatment_Branch"
+        }
+      ]
     },
     "ADT_Encounter": {
       "type": "Encounter",
@@ -1282,12 +1760,18 @@
     "mCRPC_Delay": {
       "type": "Delay",
       "remarks": [
-        "Time on first-line systemic therapy before castration resistance."
+        "Time on first-line systemic therapy before castration resistance. GMF2 Triangular (non-uniform):",
+        "median time-to-CRPC on ADT+ARPI/docetaxel is commonly ~1.5-2 yr in trial cohorts, with a tail to 3 yr",
+        "for slower progressors. See docs/time_variance.md."
       ],
-      "range": {
-        "low": 1,
-        "high": 3,
-        "unit": "years"
+      "unit": "years",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 1,
+          "mode": 1.5,
+          "max": 3
+        }
       },
       "direct_transition": "mCRPC_Branch"
     },
@@ -1395,12 +1879,18 @@
     "PSA_Followup": {
       "type": "Delay",
       "remarks": [
-        "Post-curative PSA surveillance window before biochemical recurrence (BCR) may surface."
+        "Post-curative PSA surveillance window before biochemical recurrence (BCR) may surface. GMF2 Triangular",
+        "(non-uniform): most BCR that occurs surfaces within the first 2 yr of surveillance (S3 Ch. 7 early-",
+        "detection intent of quarterly-then-annual PSA), long tail out to 4 yr. See docs/time_variance.md."
       ],
-      "range": {
-        "low": 1,
-        "high": 4,
-        "unit": "years"
+      "unit": "years",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 1,
+          "mode": 2,
+          "max": 4
+        }
       },
       "direct_transition": "BCR_Check"
     },
@@ -2660,14 +3150,19 @@
     },
     "Incidental_FollowUp_Delay": {
       "type": "Delay",
-      "range": {
-        "low": 2,
-        "high": 4,
-        "unit": "weeks"
-      },
       "remarks": [
-        "Histology review of the TURP/HoLEP specimen -> urology follow-up to discuss incidental PCa."
+        "Histology review of the TURP/HoLEP specimen -> urology follow-up to discuss incidental PCa.",
+        "GMF2 Triangular (non-uniform): typical pathology turnaround clusters around ~3 weeks. See docs/time_variance.md."
       ],
+      "unit": "weeks",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 2,
+          "mode": 3,
+          "max": 4
+        }
+      },
       "direct_transition": "Incidental_FollowUp_Encounter"
     },
     "Incidental_FollowUp_Encounter": {

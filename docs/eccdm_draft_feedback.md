@@ -1,6 +1,6 @@
 # ECCDM draft profiles — implementer feedback from the synthea-eu-cancer pipeline
 
-Reviewed/implemented against: fork `ValhallasCat/cancer-common` @ `75ad6ed` (2026-08-26),
+Reviewed/implemented against: fork `ValhallasCat/cancer-common` @ `c020f19` (2026-08-28),
 built with SUSHI 3.20.0 (0 errors), used to profile a 1000-patient synthetic prostate cohort
 (114 cancer journeys) and validated with the HL7 Java validator. Findings from actually
 *implementing* the drafts, ordered by impact.
