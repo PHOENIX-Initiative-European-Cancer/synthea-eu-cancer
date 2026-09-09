@@ -289,7 +289,7 @@ substantive("Secondary use — where this room comes in",
 
 # ── EHDS · FHIR for both pillars ─────────────────────────────────────────────
 substantive("One structured format for both use cases",
-    "FHIR is where the two pillars meet: data structured once, at the point of care, serves care and research alike.",
+    "What we want: FHIR as the de facto output of clinical software — for primary and secondary use alike.",
     [("Primary use is FHIR", "the EEHRxF specifications are FHIR IGs — structured at the source, not scanned PDFs"),
      ("Bindings add what the format lacks", "profiles bind SNOMED CT, LOINC, ATC, UCUM — semantics the bare syntax does not mandate"),
      ("Secondary use inherits both", "structure and coded meaning — access bodies can only serve what care recorded"),
@@ -332,6 +332,19 @@ table_slide("The starting point — no existing model carries Europe",
      ("OSIRIS (INCa, France)", "yes", "a specification without available data")],
     (3.9, 1.3, 6.2), fs=14, vbold=True,
     cap="The gap: minimal, cancer-agnostic, European, on FHIR — with data to test it. That pairing is the ECCM + synthetic cohorts.")
+
+# ── ECCM · parallel initiatives ──────────────────────────────────────────────
+substantive("Parallel initiatives — and the integration gap",
+    "Other European initiatives are strong in their domain — but not founded on EHR data-sharing protocols.",
+    [("CanDLE · European Genomic Data Infrastructure", "impressive scale in their own domains"),
+     ("Built beside the rails, not on them", "no EHR-standards foundation — integration becomes a second project, later"),
+     ("Project funding, project horizons", "grants end — an integrated solution needs infrastructure that persists")],
+    "Standards outlive projects — that is why we anchor cancer data on the EEHRxF rails.")
+
+# ── ECCM · MII counter-example ───────────────────────────────────────────────
+image_slide("How it can work — the MII's standing module process",
+    base + "mii_kds_update_process.png", box_h=4.55,
+    cap="Germany's Medical Informatics Initiative: FHIR core-dataset modules with a governed release loop — module team → community commenting → national approval. Infrastructure, not a project.")
 
 # ── 4 · ECCM status + timeline ───────────────────────────────────────────────
 sl = substantive("The Common Cancer Model — from ballot to draft profiles",
