@@ -248,7 +248,7 @@ substantive("FHIR — more than a wire format",
 image2_slide("This is what they actually look like",
     base + "ig_laboratory.png", "Laboratory Report · STU 2.0 · published",
     base + "ig_eps.png", "European Patient Summary · STU1 ballot",
-    cap="One family at hl7.eu/fhir — Base & Core (patient-eu), Extensions, Lab, MPD published · EPS, Imaging, Discharge, Health Data API and Cancer Common in ballot.")
+    cap="One family at hl7.eu/fhir — four IGs published, five in ballot · the full landscape table is in the appendix.")
 
 # ── 8 · One format, both use cases ───────────────────────────────────────────
 substantive("One structured format for both use cases",
@@ -370,6 +370,41 @@ substantive("Medication coding — where EU reality meets OMOP",
      ("IDMP is the bridge being built", "EMA SPOR live · PMS product API in beta 2026 · PhPID assignment not yet operational")],
     "Thesis: OMOP need not adopt IDMP — one global PhPID → RxNorm(+Extension) adapter would do. Who builds it?",
     y0=3.7, step=0.8)
+
+# ── 16b · Medication: plan vs. reality, class vs. product ────────────────────
+sl = new(); header(sl, "Planned is not given — and recommended is a class")
+run(box(sl, 1.0, 1.95, 11.4, 0.6).paragraphs[0],
+    "Recommendations speak in drug classes, care happens in products — and reality deviates from the plan.", 17, W)
+cols = [
+    ("RECOMMENDED", "“an ARPI”", "drug-class level", "guideline · ATC class / ValueSet"),
+    ("PLANNED", "enzalutamide", "160 mg / day", "PlanDefinition → CarePlan"),
+    ("ORDERED · DISPENSED", "product & pack", "the concrete drug", "MedicationRequest · Dispense"),
+    ("GIVEN", "what actually happened", "reduced · switched · stopped", "Administration / Statement"),
+]
+for i, (kick, l1, l2, res) in enumerate(cols):
+    x = 0.8 + i * 2.98
+    pn = sl.shapes.add_shape(5, Inches(x), Inches(2.85), Inches(2.75), Inches(2.35))
+    pn.fill.solid(); pn.fill.fore_color.rgb = PANEL; pn.line.color.rgb = M; pn.line.width = Pt(0.75)
+    from pptx.enum.text import PP_ALIGN
+    tf = box(sl, x + 0.1, 3.0, 2.55, 0.4); p = tf.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+    run(p, kick, 11, LK, b=True)
+    tf = box(sl, x + 0.1, 3.55, 2.55, 1.0)
+    p = tf.paragraphs[0]; p.alignment = PP_ALIGN.CENTER; run(p, l1, 15, W, b=True)
+    p = tf.add_paragraph(); p.alignment = PP_ALIGN.CENTER; run(p, l2, 13, W)
+    tf = box(sl, x + 0.1, 4.65, 2.55, 0.5); p = tf.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+    run(p, res, 10.5, M)
+    if i < 3:
+        from pptx.enum.shapes import MSO_SHAPE
+        ar = sl.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(x + 2.76), Inches(3.88), Inches(0.24), Inches(0.22))
+        ar.fill.solid(); ar.fill.fore_color.rgb = R; ar.line.fill.background()
+brk = sl.shapes.add_shape(1, Inches(3.85), Inches(5.35), Inches(8.7), Inches(0.03))
+brk.fill.solid(); brk.fill.fore_color.rgb = R; brk.line.fill.background()
+run(box(sl, 3.85, 5.45, 8.7, 0.4).paragraphs[0],
+    "plan → given: the deviation is the adherence signal — analysable only if both sides are recorded", 12, R)
+points(sl, [
+    ("OMOP's DRUG_EXPOSURE sees only the last column", "plan, intent and deviation live upstream — in FHIR"),
+    ("Class-level recommendations need class-aware terminology", "bind ATC classes / ValueSets, resolve at order time")],
+    y0=6.1, step=0.62, w=11.0)
 
 # ── 17 · Prostate test bed + pipeline ────────────────────────────────────────
 substantive("The test bed — a synthetic prostate cohort on the draft profiles",
