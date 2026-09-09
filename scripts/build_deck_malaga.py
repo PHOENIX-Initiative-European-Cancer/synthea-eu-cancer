@@ -346,6 +346,26 @@ for dx, lab in [(1.1, "Feb 2025 · Phoenix"), (3.9, "Jun 2026 · build"),
     d.fill.solid(); d.fill.fore_color.rgb = R; d.line.fill.background()
     run(box(sl, dx - 0.1, y + 0.34, 2.9, 0.5).paragraphs[0], lab, 11, W)
 
+# ── ECCM · how the work happens ──────────────────────────────────────────────
+substantive("Two years in — where feedback actually comes from",
+    "Two years of Phoenix: one model, conceptual and logical, and a first ballot just behind us.",
+    [("Open working group", "HL7 Europe / Phoenix — model first, serializations second"),
+     ("The ballot delivered little", "few community comments — why? a conceptual / logical model is hard to test"),
+     ("Nothing to run, nothing to find", "no profiles, no data, no validator — reading a spec surfaces few defects"),
+     ("Implementation delivered a lot", "profiles + synthetic data + validator → a full findings list within weeks")],
+    "The lesson for both communities: hand people something to run, not only something to read.",
+    y0=3.5, step=0.78)
+
+# ── ECCM · value streams from now on ─────────────────────────────────────────
+substantive("So this is what we do from now on — our value streams",
+    "Every iteration of the model ships with something you can run.",
+    [("Iterate the model", "profiles + comment resolution — implementation-driven, every draft testable"),
+     ("Synthetic cohorts", "CC0, SYNDERAI-tagged — the preview of what European cancer data will look like"),
+     ("Medication & regimen definitions", "dual-coded ATC · the HemOnc catalog as PlanDefinition / CarePlan"),
+     ("Mapping support", "terminology and ConceptMap work across SNOMED · LOINC · ATC · ICD")],
+    "Take them as the reference: a pipeline that handles the preview will handle the real thing.",
+    y0=3.5, step=0.78)
+
 # ── ECCM explainer A · anatomy ───────────────────────────────────────────────
 from pptx.enum.shapes import MSO_CONNECTOR
 PANEL = RGBColor(0x14, 0x4a, 0x6b)
