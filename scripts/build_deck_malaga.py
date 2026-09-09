@@ -320,6 +320,17 @@ substantive("Top-down alone will not produce quality data",
 
 divider("PART II", "The European Common Cancer Model — a closer look")
 
+# ── ECCM · why a new model ───────────────────────────────────────────────────
+table_slide("The starting point — no existing model carries Europe",
+    [("Cancer data model", "FHIR?", "Why it does not generalise"),
+     ("mCODE / CodeX (US)", "yes", "US Core baseline — US context, terminologies, identifiers"),
+     ("IDEA4RC (EU)", "yes", "rare cancers & sarcomas — not representative"),
+     ("PanCareSurPass (EU)", "yes", "paediatric cancer survivorship — a niche"),
+     ("oBDS (German cancer registries)", "not yet", "strong national dataset — no FHIR layer"),
+     ("OSIRIS (INCa, France)", "yes", "a specification without available data")],
+    (3.9, 1.3, 6.2), fs=14, vbold=True,
+    cap="The gap: minimal, cancer-agnostic, European, on FHIR — with data to test it. That pairing is the ECCM + synthetic cohorts.")
+
 # ── 4 · ECCM status + timeline ───────────────────────────────────────────────
 sl = substantive("The Common Cancer Model — from ballot to draft profiles",
     "A minimal, cancer-agnostic model by HL7 Europe under the Phoenix working group — now growing its FHIR layer.",
