@@ -236,6 +236,16 @@ substantive("EEHRxF — the format the law prescribes",
     "Syntax alone does not analyse — filling in the semantics is the work of the specification stack on the next slides.",
     y0=3.7, step=0.8)
 
+# ── EHDS · what FHIR is ──────────────────────────────────────────────────────
+substantive("FHIR — more than a wire format",
+    "For this room: FHIR is an exchange language, and it is four things at once.",
+    [("A data model", "resources — Patient, Condition, Observation — constrained by profiles"),
+     ("An exchange format", "JSON / XML over a REST API — the wire syntax the EEHRxF rides on"),
+     ("A technical ecosystem", "servers, validators, SDKs, terminology services — open source, off the shelf"),
+     ("A community", "connectathons, working groups, ballots — specifications are grown, not decreed")],
+    "The last one is the point this talk relies on: the feedback loop is a community feature.",
+    y0=3.7, step=0.8)
+
 # ── EHDS · who writes the stack ──────────────────────────────────────────────
 substantive("Who writes the stack — from guidelines to FHIR",
     "Three layers feed the implementing acts — and HL7 Europe writes the FHIR layer.",
