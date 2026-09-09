@@ -144,6 +144,18 @@ def chip(sl, x, y, w, txt, col=NV, tcol=None, h=0.52, fs=13, bold=True):
     return s
 
 
+def image2_slide(title, img1, lab1, img2, lab2, cap=None):
+    sl = new(); header(sl, title, tsize=25)
+    for img, lab, x in [(img1, lab1, 0.75), (img2, lab2, 6.85)]:
+        iw, ih = Image.open(img).size; ar = iw / ih; bw, bh = 5.75, 3.95
+        (w, h) = (bw, bw / ar) if bw / ar <= bh else (bh * ar, bh)
+        sl.shapes.add_picture(img, Inches(x + (bw - w) / 2), Inches(2.35 + (bh - h) / 2), Inches(w), Inches(h))
+        run(box(sl, x, 2.35 + bh + 0.12, bw, 0.45).paragraphs[0], lab, 13, W, b=True)
+    if cap:
+        run(box(sl, 1.0, 7.0, 11.4, 0.5).paragraphs[0], cap, 13, M)
+    return sl
+
+
 def image_slide(title, img, cap=None, box_h=4.9):
     sl = new(); header(sl, title, tsize=25)
     iw, ih = Image.open(img).size; ar = iw / ih; bw, bh = 11.4, box_h
@@ -200,7 +212,7 @@ substantive("The EHDS in one slide",
 # ── EHDS · timeline ──────────────────────────────────────────────────────────
 sl = new(); header(sl, "The EHDS clock")
 run(box(sl, 1.0, 2.3, 11.2, 0.8).paragraphs[0],
-    "Staged application (Art. 105) — the dates that structure everyone's roadmap.", 19, W)
+    "Staged application (Art. 105) — the six priority categories (Art. 14) arrive in two waves.", 19, W)
 y = 4.1
 l = sl.shapes.add_shape(1, Inches(1.1), Inches(y + 0.16), Inches(11.0), Inches(0.03))
 l.fill.solid(); l.fill.fore_color.rgb = M; l.line.fill.background()
@@ -219,14 +231,6 @@ for dx, date, lab in [
         run(p, line, 11, M)
 run(box(sl, 1.0, 6.8, 11.4, 0.5).paragraphs[0],
     "The Art. 15 implementing acts (EEHRxF technical specifications) are the big open item — due 26 March 2027.", 13, M)
-
-# ── EHDS · priority categories ───────────────────────────────────────────────
-substantive("Six priority categories (Art. 14)",
-    "The primary-use core: six categories of electronic health data every member state must make exchangeable.",
-    [("Wave 1 · 2029", "patient summaries · ePrescriptions · eDispensations"),
-     ("Wave 2 · 2031", "imaging studies & reports · test / lab results & reports · discharge reports"),
-     ("Extensible", "the Commission can add categories by delegated act")],
-    "Cancer data is not a category of its own — it has to travel inside these generic ones.")
 
 # ── EHDS · EEHRxF ────────────────────────────────────────────────────────────
 substantive("EEHRxF — the format the law prescribes",
@@ -271,6 +275,12 @@ table_slide("The HL7 Europe specification landscape",
     (6.0, 5.5), fs=13.5, vbold=False,
     cap="hl7.eu/fhir — one family. The Common Cancer Model reuses its base profiles (patient-eu).")
 
+# ── EHDS · IGs in practice ───────────────────────────────────────────────────
+image2_slide("This is what they actually look like",
+    base + "ig_laboratory.png", "Laboratory Report · STU 2.0 · published",
+    base + "ig_eps.png", "European Patient Summary · STU1 ballot",
+    cap="Live at hl7.eu/fhir — note the Xt-EHR acknowledgement box: the specification stack is visible in the artefacts themselves.")
+
 # ── EHDS · MyHealth@EU ───────────────────────────────────────────────────────
 substantive("MyHealth@EU — the network that already runs",
     "Cross-border exchange is not hypothetical — services have been live since 2019.",
@@ -301,9 +311,8 @@ substantive("Synthetic data for the format — SYNDERAI & xShare",
     "You cannot test an exchange format without data that is legal to share. That is SYNDERAI's job.",
     [("SYNDERAI", "1,000+ synthetic EU lab reports · ~1,000 patient summaries · conformant to the HL7 Europe IGs"),
      ("Built for testing", "connectathons, vendor implementation, education — no ethics gates"),
-     ("xShare Yellow Button", "citizen one-click sharing in EEHRxF — its adopters need test data too"),
-     ("The cancer flavour", "our synthetic cancer cohorts are SYNDERAI's Phoenix arm — the rest of this talk")],
-    y0=3.7, step=0.8)
+     ("xShare Yellow Button", "citizen one-click sharing in EEHRxF — its adopters need test data too")],
+    "And there is a cancer arm — hold that thought for Part II.")
 
 # ── 3 · EHDS gap (bridge) ────────────────────────────────────────────────────
 substantive("EHDS moves the data — but not the disease content",
@@ -341,6 +350,11 @@ substantive("Parallel initiatives — and the integration gap",
      ("Project funding, project horizons", "grants end — an integrated solution needs infrastructure that persists")],
     "Standards outlive projects — that is why we anchor cancer data on the EEHRxF rails.")
 
+# ── ECCM · CANDLE view (drop the shared slide as output/candle_achievement.png) ──
+if os.path.exists(base + "candle_achievement.png"):
+    image_slide("The same landscape, seen from CANDLE", base + "candle_achievement.png", box_h=4.55,
+        cap="CANDLE 'Achievement Year 1': the NCDN network around UNCAN.eu — HL7 Europe's cancer data model is one of its working groups. Slide kindly provided by the CANDLE project.")
+
 # ── 4 · ECCM status + timeline ───────────────────────────────────────────────
 sl = substantive("The Common Cancer Model — from ballot to draft profiles",
     "A minimal, cancer-agnostic model by HL7 Europe under the Phoenix working group — now growing its FHIR layer.",
@@ -356,6 +370,10 @@ for dx, lab in [(1.1, "Feb 2025 · Phoenix"), (3.9, "Jun 2026 · build"),
     d.fill.solid(); d.fill.fore_color.rgb = R; d.line.fill.background()
     run(box(sl, dx - 0.1, y + 0.34, 2.9, 0.5).paragraphs[0], lab, 11, W)
 
+# ── ECCM · IG screenshot ─────────────────────────────────────────────────────
+image_slide("The ECCM guide — live in the FHIR CI build", base + "ig_cancer_common.png", box_h=4.55,
+    cap="build.fhir.org/ig/hl7-eu/cancer-common · 1.0.0-ballot — the scope names both mappings: HL7 FHIR and OMOP.")
+
 # ── ECCM · how the work happens ──────────────────────────────────────────────
 substantive("Two years in — where feedback actually comes from",
     "Two years of Phoenix: one model, conceptual and logical, and a first ballot just behind us.",
@@ -370,7 +388,7 @@ substantive("Two years in — where feedback actually comes from",
 substantive("So this is what we do from now on — our value streams",
     "Every iteration of the model ships with something you can run.",
     [("Iterate the model", "profiles + comment resolution — implementation-driven, every draft testable"),
-     ("Synthetic cohorts", "CC0, SYNDERAI-tagged — the preview of what European cancer data will look like"),
+     ("SYNDERAI-Cancer", "the Phoenix arm: synthetic journeys, CC0 — the preview of what European cancer data will look like"),
      ("Medication & regimen definitions", "dual-coded ATC · the HemOnc catalog as PlanDefinition / CarePlan"),
      ("Mapping support", "terminology and ConceptMap work across SNOMED · LOINC · ATC · ICD")],
     "Take them as the reference: a pipeline that handles the preview will handle the real thing.",
