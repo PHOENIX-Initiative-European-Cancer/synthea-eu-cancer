@@ -554,11 +554,13 @@ substantive("Outlook — regimens: HemOnc's OMOP groundwork, served as FHIR",
 
 # ── 12 · Closing ─────────────────────────────────────────────────────────────
 substantive("The point",
-    "Top-down sets the rails; quality grows bottom-up — a model becomes real the moment someone can test it.",
+    "The European Health Data Space does not happen to us — we have to form it.",
     [("The model", "ECCM draft profiles, in active development"),
      ("The test bed", "shareable, PII-free synthetic journeys — conformant today, 0 validation errors"),
      ("The loop", "implement → feed back → iterate — that is what we bring to Málaga"),
-     ("The invitation", "take the cohort, run your FHIR→OMOP ETL against it, tell both communities what breaks")])
+     ("The invitation", "take the cohort, run your FHIR→OMOP ETL against it, tell both communities what breaks")],
+    "Top-down sets the rails; quality grows bottom-up — and a model becomes real the moment someone can test it.",
+    y0=3.7, step=0.78)
 
 # ── 13 · Appendix · CCDM mapping ─────────────────────────────────────────────
 table_slide("Appendix · every ECCM entity is already covered",
