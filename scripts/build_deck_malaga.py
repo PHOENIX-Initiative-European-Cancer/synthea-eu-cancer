@@ -300,6 +300,14 @@ substantive("EHDS moves the data — but not the disease content",
      ("No cancer-specific data points", "staging, treatment response, progression absent"),
      ("Disease content needs a disease model", "exactly the gap the Common Cancer Model fills")])
 
+# ── EHDS · the thesis: top-down needs bottom-up ──────────────────────────────
+substantive("Top-down alone will not produce quality data",
+    "You can mandate a format and a deadline. You cannot mandate that the data inside is right.",
+    [("Top-down", "regulation → format → dates — necessary, but it standardises containers, not content"),
+     ("Bottom-up, complementary", "build the disease model, implement it, generate data, validate, feed back"),
+     ("Where they meet", "the ECCM runs exactly this loop: model → profiles → test data → feedback")],
+    "The rest of this talk is the bottom-up loop in action.")
+
 divider("PART II", "The European Common Cancer Model — a closer look")
 
 # ── 4 · ECCM status + timeline ───────────────────────────────────────────────
@@ -490,7 +498,7 @@ substantive("Outlook — regimens: HemOnc's OMOP groundwork, served as FHIR",
 
 # ── 12 · Closing ─────────────────────────────────────────────────────────────
 substantive("The point",
-    "A model becomes real the moment someone can test it.",
+    "Top-down sets the rails; quality grows bottom-up — a model becomes real the moment someone can test it.",
     [("The model", "ECCM draft profiles, in active development"),
      ("The test bed", "shareable, PII-free synthetic journeys — conformant today, 0 validation errors"),
      ("The loop", "implement → feed back → iterate — that is what we bring to Málaga"),
