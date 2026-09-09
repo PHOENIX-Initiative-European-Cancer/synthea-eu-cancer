@@ -414,6 +414,19 @@ substantive("Two legs of one model — where FHIR meets OMOP",
      ("Known ground truth", "synthetic cohorts let you validate the ETL — the true counts are known by construction")],
     y0=3.75, step=0.8)
 
+# ── ECCM explainer E2 · different strengths ──────────────────────────────────
+two_col("Different strengths — deliberately so",
+    "Not competitors: one is built for analysis, the other for care — and care includes the future tense.",
+    "OMOP CDM — built for analysis",
+    [("Retrospective by design", "records what happened"),
+     ("Harmonised concept space", "one vocabulary, clean cohorts"),
+     ("Population-scale evidence", "the analytics home turf")],
+    "FHIR — built for care, incl. planning",
+    [("The future tense", "request vs. event — orders, plans, schedules"),
+     ("Workflow components", "CarePlan · ServiceRequest · Task"),
+     ("Executable knowledge", "PlanDefinition/$apply — see the outlook")],
+    left_glyph="▪", right_glyph="▪", left_col=LK, right_col=R)
+
 # ── ECCM explainer F · medication coding ─────────────────────────────────────
 substantive("Medication coding — where EU reality meets OMOP",
     "Drugs are the hardest crosswalk in the room: Europe classifies, OMOP standardises on products.",
