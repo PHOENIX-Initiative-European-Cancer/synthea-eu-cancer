@@ -179,10 +179,12 @@ substantive("The route",
 # ── 2 · Why ──────────────────────────────────────────────────────────────────
 substantive("Why synthetic cancer cohorts",
     "Real cancer-registry data is privacy-locked, slow to share, and offers no ground truth to validate against.",
-    [("Shareable & PII-free", "no data-access agreements, no ethics gates"),
+    [("We cannot wait", "another round of consortial data-sharing agreements, DPIAs and ethics votes takes years"),
+     ("Shareable & PII-free", "no agreements, no gates — send it to anyone, today"),
      ("EU-conformant", "SNOMED CT · LOINC · dual ATC"),
      ("Known ground truth", "the care process is designed, not inferred")],
-    "SYNDERAI delivers this for the European Health Data Space; the Phoenix Initiative is the cancer flavour.")
+    "SYNDERAI delivers this for the European Health Data Space; the Phoenix Initiative is the cancer flavour.",
+    y0=3.7, step=0.8)
 
 divider("PART I", "The rails: EHDS, EEHRxF & the HL7 Europe specifications")
 
