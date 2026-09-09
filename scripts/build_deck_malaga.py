@@ -341,11 +341,6 @@ substantive("Parallel initiatives — and the integration gap",
      ("Project funding, project horizons", "grants end — an integrated solution needs infrastructure that persists")],
     "Standards outlive projects — that is why we anchor cancer data on the EEHRxF rails.")
 
-# ── ECCM · MII counter-example ───────────────────────────────────────────────
-image_slide("How it can work — the MII's standing module process",
-    base + "mii_kds_update_process.png", box_h=4.55,
-    cap="Germany's Medical Informatics Initiative: FHIR core-dataset modules with a governed release loop — module team → community commenting → national approval. Infrastructure, not a project.")
-
 # ── 4 · ECCM status + timeline ───────────────────────────────────────────────
 sl = substantive("The Common Cancer Model — from ballot to draft profiles",
     "A minimal, cancer-agnostic model by HL7 Europe under the Phoenix working group — now growing its FHIR layer.",
