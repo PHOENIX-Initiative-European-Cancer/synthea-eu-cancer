@@ -273,6 +273,15 @@ substantive("Secondary use — where this room comes in",
      ("The analytics gap", "the law mandates access — turning exchange data into analysis-ready OMOP is our shared job")],
     y0=3.7, step=0.8)
 
+# ── EHDS · FHIR for both pillars ─────────────────────────────────────────────
+substantive("One structured format for both use cases",
+    "FHIR is where the two pillars meet: data structured once, at the point of care, serves care and research alike.",
+    [("Primary use is FHIR", "the EEHRxF specifications are FHIR IGs — structured at the source, not scanned PDFs"),
+     ("Bindings enforce terminology", "profiles require SNOMED CT, LOINC, ATC, UCUM — the semantics arrive with the data"),
+     ("Secondary use inherits both", "structure and coded meaning — access bodies can only serve what care recorded"),
+     ("The payoff for this room", "SNOMED and LOINC in FHIR are already OMOP standard concepts — the ETL shrinks")],
+    y0=3.7, step=0.8)
+
 # ── EHDS · SYNDERAI & xShare ─────────────────────────────────────────────────
 substantive("Synthetic data for the format — SYNDERAI & xShare",
     "You cannot test an exchange format without data that is legal to share. That is SYNDERAI's job.",
