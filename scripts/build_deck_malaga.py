@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Build the ECCM/Málaga-prep deck — synthetic data for the European Common Cancer Model.
 Run: python3 scripts/build_deck_malaga.py  ->  output/ECCM_Malaga_prep.pptx
-Style: same as SYNDERAI decks — plain navy content layout, red accent bar + white
-descriptive title, one lead sentence, single-line statement points (bold head - tail).
+21 talk slides + appendix backup. Audience: OHDSI Europe, FHIR-community view.
+Style: plain navy content layout, red accent bar + white descriptive title,
+one lead sentence, single-line statement points (bold head - tail).
 """
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.oxml.ns import qn
+from pptx.enum.shapes import MSO_CONNECTOR
 from PIL import Image
 import os
 
@@ -24,7 +26,7 @@ TITLE = L["Titelfolie"]; PLAIN = L["Text einspaltig 02"]
 
 W = RGBColor(0xFF, 0xFF, 0xFF); R = RGBColor(0xE6, 0x00, 0x2d); M = RGBColor(0xC3, 0xCE, 0xD8)
 NV = RGBColor(0x0b, 0x3d, 0x5c); DK = RGBColor(0x22, 0x22, 0x22); LK = RGBColor(0x8f, 0xc1, 0xe3)
-GR = RGBColor(0x3f, 0xb9, 0x50)
+GR = RGBColor(0x3f, 0xb9, 0x50); PANEL = RGBColor(0x14, 0x4a, 0x6b)
 
 
 def new():
@@ -137,9 +139,8 @@ def chip(sl, x, y, w, txt, col=NV, tcol=None, h=0.52, fs=13, bold=True):
     s.fill.solid(); s.fill.fore_color.rgb = col; s.line.fill.background()
     tf = s.text_frame; tf.word_wrap = True
     tf.margin_left = tf.margin_right = Inches(0.06); tf.margin_top = tf.margin_bottom = Inches(0.03)
-    p = tf.paragraphs[0]; p.alignment = 2  # will be reset below; 2=right — set center
     from pptx.enum.text import PP_ALIGN
-    p.alignment = PP_ALIGN.CENTER
+    p = tf.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
     run(p, txt, fs, tcol or W, b=bold)
     return s
 
@@ -160,12 +161,14 @@ def image_slide(title, img, cap=None, box_h=4.9):
     sl = new(); header(sl, title, tsize=25)
     iw, ih = Image.open(img).size; ar = iw / ih; bw, bh = 11.4, box_h
     (w, h) = (bw, bw / ar) if bw / ar <= bh else (bh * ar, bh)
-    pic = sl.shapes.add_picture(img, Inches(0.95 + (bw - w) / 2),
-                                Inches(2.25 + (bh - h) / 2), Inches(w), Inches(h))
+    sl.shapes.add_picture(img, Inches(0.95 + (bw - w) / 2),
+                          Inches(2.25 + (bh - h) / 2), Inches(w), Inches(h))
     if cap:
         run(box(sl, 1.0, 2.25 + box_h + 0.1, 11.4, 0.6).paragraphs[0], cap, 13, M)
     return sl
 
+
+# ═════════════════════════════ TALK — 21 slides ══════════════════════════════
 
 # ── 1 · Title ────────────────────────────────────────────────────────────────
 sl = prs.slides.add_slide(TITLE); ph = {s.placeholder_format.idx: s for s in sl.shapes if s.is_placeholder}
@@ -180,7 +183,7 @@ if 1 in ph:
     for r in p.runs:
         r.font.size = Pt(16)
 
-# ── 1b · Agenda ──────────────────────────────────────────────────────────────
+# ── 2 · Agenda ───────────────────────────────────────────────────────────────
 substantive("The route",
     None,
     [("Part I — The rails", "EHDS, EEHRxF and the HL7 Europe specification stack"),
@@ -188,7 +191,7 @@ substantive("The route",
      ("Part III — The test", "a calibrated synthetic prostate cohort, validated against the draft profiles")],
     y0=3.2, step=1.05)
 
-# ── 2 · Why ──────────────────────────────────────────────────────────────────
+# ── 3 · Why synthetic ────────────────────────────────────────────────────────
 substantive("Why synthetic cancer cohorts",
     "Real cancer-registry data is privacy-locked, slow to share, and offers no ground truth to validate against.",
     [("We cannot wait", "another round of consortial data-sharing agreements, DPIAs and ethics votes takes years"),
@@ -198,22 +201,13 @@ substantive("Why synthetic cancer cohorts",
     "SYNDERAI delivers this for the European Health Data Space; the Phoenix Initiative is the cancer flavour.",
     y0=3.7, step=0.8)
 
-divider("PART I", "The rails: EHDS, EEHRxF & the HL7 Europe specifications")
-
-# ── EHDS · overview ──────────────────────────────────────────────────────────
-substantive("The EHDS in one slide",
-    "Regulation (EU) 2025/327 — in force since 26 March 2025, applying in stages from 2027.",
-    [("One law, two pillars", "primary use (care, Chapter II) and secondary use (research & policy, Chapter IV)"),
-     ("Primary use", "citizens access & share their EHR data · MyHealth@EU participation becomes mandatory"),
-     ("Secondary use", "health data access bodies · HealthData@EU · permits instead of per-project contracts"),
-     ("Why this room cares", "the pipeline from care data to research data becomes law")],
-    y0=3.7, step=0.8)
-
-# ── EHDS · timeline ──────────────────────────────────────────────────────────
-sl = new(); header(sl, "The EHDS clock")
-run(box(sl, 1.0, 2.3, 11.2, 0.8).paragraphs[0],
-    "Staged application (Art. 105) — the six priority categories (Art. 14) arrive in two waves.", 19, W)
-y = 4.1
+# ── 4 · EHDS: law + clock ────────────────────────────────────────────────────
+sl = new(); header(sl, "The EHDS — one law, two pillars, one clock")
+run(box(sl, 1.0, 2.2, 11.2, 0.9).paragraphs[0],
+    "Regulation (EU) 2025/327, in force since March 2025 — primary use (care, Ch. II) and secondary use (research, Ch. IV).", 19, W)
+run(box(sl, 1.0, 3.1, 11.2, 0.6).paragraphs[0],
+    "The six priority categories (Art. 14) arrive in two waves:", 17, M)
+y = 4.3
 l = sl.shapes.add_shape(1, Inches(1.1), Inches(y + 0.16), Inches(11.0), Inches(0.03))
 l.fill.solid(); l.fill.fore_color.rgb = M; l.line.fill.background()
 for dx, date, lab in [
@@ -229,20 +223,18 @@ for dx, date, lab in [
     for i, line in enumerate(lab.split("\n")):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         run(p, line, 11, M)
-run(box(sl, 1.0, 6.8, 11.4, 0.5).paragraphs[0],
+run(box(sl, 1.0, 6.85, 11.4, 0.5).paragraphs[0],
     "The Art. 15 implementing acts (EEHRxF technical specifications) are the big open item — due 26 March 2027.", 13, M)
 
-# ── EHDS · EEHRxF ────────────────────────────────────────────────────────────
-substantive("EEHRxF — the format the law prescribes",
-    "The European EHR Exchange Format is what Article 15 tells the Commission to lay down in implementing acts.",
-    [("Technical specs for all six categories", "one exchange format, uniform across the EU"),
-     ("Mainly syntax, little semantics", "it standardises structure and format — terminology bindings and clinical depth stay thin"),
-     ("Not yet adopted", "the Art. 15 implementing acts are due by 26 March 2027 — the big open item"),
-     ("Not from scratch", "builds on the 2019 EEHRxF recommendation and the eHN guidelines")],
-    "Syntax alone does not analyse — filling in the semantics is the work of the specification stack on the next slides.",
-    y0=3.7, step=0.8)
+# ── 5 · EEHRxF: syntax by law, semantics by the stack ────────────────────────
+substantive("EEHRxF — syntax by law, semantics by the stack",
+    "The exchange format is what Article 15 tells the Commission to lay down — one format for all six categories.",
+    [("Mainly syntax, little semantics", "it standardises structure and format — terminology and clinical depth stay thin"),
+     ("The stack fills the semantics", "eHN guidelines → Xt-EHR logical models v1.0.0 → HL7 Europe FHIR IGs"),
+     ("Note the pattern", "logical model first, serializations second — the Common Cancer Model works the same way")],
+    "Syntax alone does not analyse — the FHIR layer is where meaning gets bound.")
 
-# ── EHDS · what FHIR is ──────────────────────────────────────────────────────
+# ── 6 · What FHIR is ─────────────────────────────────────────────────────────
 substantive("FHIR — more than a wire format",
     "For this room: FHIR is an exchange language, and it is four things at once.",
     [("A data model", "resources — Patient, Condition, Observation — constrained by profiles"),
@@ -252,52 +244,13 @@ substantive("FHIR — more than a wire format",
     "The last one is the point this talk relies on: the feedback loop is a community feature.",
     y0=3.7, step=0.8)
 
-# ── EHDS · who writes the stack ──────────────────────────────────────────────
-substantive("Who writes the stack — from guidelines to FHIR",
-    "Three layers feed the implementing acts — and HL7 Europe writes the FHIR layer.",
-    [("eHN guidelines", "the clinical content agreements per priority category"),
-     ("Xt-EHR Joint Action (2023–26)", "EHDS Logical Information Models v1.0.0 — the semantic backbone"),
-     ("HL7 Europe implementation guides", "FHIR profiles turning the logical models into wire format")],
-    "Note the pattern — logical model first, serializations second. The Common Cancer Model works the same way.",
-    y0=3.75)
-
-# ── EHDS · HL7 Europe IG landscape ───────────────────────────────────────────
-table_slide("The HL7 Europe specification landscape",
-    [("Implementation guide", "Status (Sept 2026)"),
-     ("Base & Core Profiles — incl. patient-eu", "published · STU 2.0"),
-     ("Extensions", "published · STU 1.3"),
-     ("Laboratory Report", "published · STU 2.0"),
-     ("Medication Prescription & Dispense", "published · STU 1.0 (R4 + R5)"),
-     ("European Patient Summary (EPS)", "STU1 ballot · IPS-aligned · Xt-EHR-supported"),
-     ("Imaging Report · Hospital Discharge Report", "ballot (v1.0.0 · v0.1.0)"),
-     ("EU Health Data API", "ballot v1.0.0"),
-     ("Common Cancer Model", "ballot v1.0.0 — Part II of this talk")],
-    (6.0, 5.5), fs=13.5, vbold=False,
-    cap="hl7.eu/fhir — one family. The Common Cancer Model reuses its base profiles (patient-eu).")
-
-# ── EHDS · IGs in practice ───────────────────────────────────────────────────
+# ── 7 · IGs in practice ──────────────────────────────────────────────────────
 image2_slide("This is what they actually look like",
     base + "ig_laboratory.png", "Laboratory Report · STU 2.0 · published",
     base + "ig_eps.png", "European Patient Summary · STU1 ballot",
-    cap="Live at hl7.eu/fhir — note the Xt-EHR acknowledgement box: the specification stack is visible in the artefacts themselves.")
+    cap="One family at hl7.eu/fhir — Base & Core (patient-eu), Extensions, Lab, MPD published · EPS, Imaging, Discharge, Health Data API and Cancer Common in ballot.")
 
-# ── EHDS · MyHealth@EU ───────────────────────────────────────────────────────
-substantive("MyHealth@EU — the network that already runs",
-    "Cross-border exchange is not hypothetical — services have been live since 2019.",
-    [("Live today", "ePrescription / eDispensation and patient summaries · over a dozen member states"),
-     ("In the pipeline", "lab results piloting · imaging & discharge reports planned"),
-     ("EHDS raises the bar", "participation becomes mandatory — all 27 member states by March 2029")])
-
-# ── EHDS · secondary use ─────────────────────────────────────────────────────
-substantive("Secondary use — where this room comes in",
-    "Chapter IV builds a research access layer over the same data, applying from March 2029.",
-    [("Health data access bodies", "one per member state · permits replace per-project negotiations"),
-     ("HealthData@EU", "cross-border requests through one infrastructure · pilot ran 2022–2024"),
-     ("Cancer was already a use case", "the pilot tested genomic signatures in colorectal cancer"),
-     ("The analytics gap", "the law mandates access — turning exchange data into analysis-ready OMOP is our shared job")],
-    y0=3.7, step=0.8)
-
-# ── EHDS · FHIR for both pillars ─────────────────────────────────────────────
+# ── 8 · One format, both use cases ───────────────────────────────────────────
 substantive("One structured format for both use cases",
     "What we want: FHIR as the de facto output of clinical software — for primary and secondary use alike.",
     [("Primary use is FHIR", "the EEHRxF specifications are FHIR IGs — structured at the source, not scanned PDFs"),
@@ -306,22 +259,16 @@ substantive("One structured format for both use cases",
      ("The payoff for this room", "SNOMED and LOINC in FHIR are already OMOP standard concepts — the ETL shrinks")],
     y0=3.7, step=0.8)
 
-# ── EHDS · SYNDERAI & xShare ─────────────────────────────────────────────────
-substantive("Synthetic data for the format — SYNDERAI & xShare",
-    "You cannot test an exchange format without data that is legal to share. That is SYNDERAI's job.",
-    [("SYNDERAI", "1,000+ synthetic EU lab reports · ~1,000 patient summaries · conformant to the HL7 Europe IGs"),
-     ("Built for testing", "connectathons, vendor implementation, education — no ethics gates"),
-     ("xShare Yellow Button", "citizen one-click sharing in EEHRxF — its adopters need test data too")],
-    "And there is a cancer arm — hold that thought for Part II.")
+# ── 9 · Secondary use + SYNDERAI teaser ──────────────────────────────────────
+substantive("Secondary use — where this room comes in",
+    "Chapter IV builds a research access layer over the same data, applying from March 2029.",
+    [("Access bodies + HealthData@EU", "permits replace per-project negotiations · pilot ran 2022–2024"),
+     ("Cancer was already a use case", "the pilot tested genomic signatures in colorectal cancer"),
+     ("The analytics gap", "turning exchange data into analysis-ready OMOP is our shared job"),
+     ("SYNDERAI — data to practise on", "1,000+ synthetic lab reports · ~1,000 patient summaries · and a cancer arm: Part II")],
+    y0=3.7, step=0.8)
 
-# ── 3 · EHDS gap (bridge) ────────────────────────────────────────────────────
-substantive("EHDS moves the data — but not the disease content",
-    "The European Health Data Space defines the exchange infrastructure and generic priority categories.",
-    [("Priority categories are generic", "summaries, ePrescription / eDispensation, imaging, labs, discharge"),
-     ("No cancer-specific data points", "staging, treatment response, progression absent"),
-     ("Disease content needs a disease model", "exactly the gap the Common Cancer Model fills")])
-
-# ── EHDS · the thesis: top-down needs bottom-up ──────────────────────────────
+# ── 10 · Thesis ──────────────────────────────────────────────────────────────
 substantive("Top-down alone will not produce quality data",
     "You can mandate a format and a deadline. You cannot mandate that the data inside is right.",
     [("Top-down", "regulation → format → dates — necessary, but it standardises containers, not content"),
@@ -329,33 +276,19 @@ substantive("Top-down alone will not produce quality data",
      ("Where they meet", "the ECCM runs exactly this loop: model → profiles → test data → feedback")],
     "The rest of this talk is the bottom-up loop in action.")
 
-divider("PART II", "The European Common Cancer Model — a closer look")
-
-# ── ECCM · why a new model ───────────────────────────────────────────────────
+# ── 11 · Model landscape ─────────────────────────────────────────────────────
 table_slide("The starting point — no existing model carries Europe",
-    [("Cancer data model", "FHIR?", "Why it does not generalise"),
+    [("Cancer data model / initiative", "FHIR?", "Why it does not generalise"),
      ("mCODE / CodeX (US)", "yes", "US Core baseline — US context, terminologies, identifiers"),
      ("IDEA4RC (EU)", "yes", "rare cancers & sarcomas — not representative"),
      ("PanCareSurPass (EU)", "yes", "paediatric cancer survivorship — a niche"),
      ("oBDS (German cancer registries)", "not yet", "strong national dataset — no FHIR layer"),
-     ("OSIRIS (INCa, France)", "yes", "a specification without available data")],
-    (3.9, 1.3, 6.2), fs=14, vbold=True,
-    cap="The gap: minimal, cancer-agnostic, European, on FHIR — with data to test it. That pairing is the ECCM + synthetic cohorts.")
+     ("OSIRIS (INCa, France)", "yes", "a specification without available data"),
+     ("CanDLE · Genomic Data Infrastructure", "no", "strong domains — project-funded, built beside the EHR rails")],
+    (3.9, 1.3, 6.2), fs=13.5, vbold=True,
+    cap="The gap: minimal, cancer-agnostic, European, on FHIR — with data to test it. Standards outlive projects.")
 
-# ── ECCM · parallel initiatives ──────────────────────────────────────────────
-substantive("Parallel initiatives — and the integration gap",
-    "Other European initiatives are strong in their domain — but not founded on EHR data-sharing protocols.",
-    [("CanDLE · European Genomic Data Infrastructure", "impressive scale in their own domains"),
-     ("Built beside the rails, not on them", "no EHR-standards foundation — integration becomes a second project, later"),
-     ("Project funding, project horizons", "grants end — an integrated solution needs infrastructure that persists")],
-    "Standards outlive projects — that is why we anchor cancer data on the EEHRxF rails.")
-
-# ── ECCM · CANDLE view (drop the shared slide as output/candle_achievement.png) ──
-if os.path.exists(base + "candle_achievement.png"):
-    image_slide("The same landscape, seen from CANDLE", base + "candle_achievement.png", box_h=4.55,
-        cap="CANDLE 'Achievement Year 1': the NCDN network around UNCAN.eu — HL7 Europe's cancer data model is one of its working groups. Slide kindly provided by the CANDLE project.")
-
-# ── 4 · ECCM status + timeline ───────────────────────────────────────────────
+# ── 12 · ECCM status + timeline ──────────────────────────────────────────────
 sl = substantive("The Common Cancer Model — from ballot to draft profiles",
     "A minimal, cancer-agnostic model by HL7 Europe under the Phoenix working group — now growing its FHIR layer.",
     [("Logical model balloted", "STU1 · Jul–Aug 2026 · comment resolution under way"),
@@ -370,33 +303,17 @@ for dx, lab in [(1.1, "Feb 2025 · Phoenix"), (3.9, "Jun 2026 · build"),
     d.fill.solid(); d.fill.fore_color.rgb = R; d.line.fill.background()
     run(box(sl, dx - 0.1, y + 0.34, 2.9, 0.5).paragraphs[0], lab, 11, W)
 
-# ── ECCM · IG screenshot ─────────────────────────────────────────────────────
-image_slide("The ECCM guide — live in the FHIR CI build", base + "ig_cancer_common.png", box_h=4.55,
-    cap="build.fhir.org/ig/hl7-eu/cancer-common · 1.0.0-ballot — the scope names both mappings: HL7 FHIR and OMOP.")
-
-# ── ECCM · how the work happens ──────────────────────────────────────────────
-substantive("Two years in — where feedback actually comes from",
-    "Two years of Phoenix: one model, conceptual and logical, and a first ballot just behind us.",
-    [("Open working group", "HL7 Europe / Phoenix — model first, serializations second"),
-     ("The ballot delivered little", "few community comments — why? a conceptual / logical model is hard to test"),
-     ("Nothing to run, nothing to find", "no profiles, no data, no validator — reading a spec surfaces few defects"),
-     ("Implementation delivered a lot", "profiles + synthetic data + validator → a full findings list within weeks")],
-    "The lesson for both communities: hand people something to run, not only something to read.",
+# ── 13 · Two years in + value streams ────────────────────────────────────────
+substantive("Two years in — and what we do from now on",
+    "The first ballot delivered little community feedback. Why? A conceptual / logical model is hard to test.",
+    [("Nothing to run, nothing to find", "no profiles, no data, no validator — reading a spec surfaces few defects"),
+     ("Implementation delivered a lot", "profiles + synthetic data + validator → a full findings list within weeks"),
+     ("So every iteration now ships runnable", "SYNDERAI-Cancer cohorts, CC0 — the preview of European cancer data"),
+     ("Plus the useful extras", "medication & regimen definitions · terminology and mapping support")],
+    "Hand people something to run, not only something to read.",
     y0=3.5, step=0.78)
 
-# ── ECCM · value streams from now on ─────────────────────────────────────────
-substantive("So this is what we do from now on — our value streams",
-    "Every iteration of the model ships with something you can run.",
-    [("Iterate the model", "profiles + comment resolution — implementation-driven, every draft testable"),
-     ("SYNDERAI-Cancer", "the Phoenix arm: synthetic journeys, CC0 — the preview of what European cancer data will look like"),
-     ("Medication & regimen definitions", "dual-coded ATC · the HemOnc catalog as PlanDefinition / CarePlan"),
-     ("Mapping support", "terminology and ConceptMap work across SNOMED · LOINC · ATC · ICD")],
-    "Take them as the reference: a pipeline that handles the preview will handle the real thing.",
-    y0=3.5, step=0.78)
-
-# ── ECCM explainer A · anatomy ───────────────────────────────────────────────
-from pptx.enum.shapes import MSO_CONNECTOR
-PANEL = RGBColor(0x14, 0x4a, 0x6b)
+# ── 14 · Anatomy ─────────────────────────────────────────────────────────────
 sl = new(); header(sl, "Anatomy of the model — eleven entities, one journey")
 run(box(sl, 1.0, 2.0, 11.4, 0.5).paragraphs[0],
     "Everything hangs off the condition at diagnosis — the model describes a cancer journey, not a document.", 17, W)
@@ -413,67 +330,25 @@ def panel(x, y, w, h, label, chips, ccol=NV):
     return pn
 
 
-pat = chip(sl, 0.7, 3.35, 2.5, "Cancer Patient", col=NV, fs=14, h=0.55)
-con = chip(sl, 0.7, 4.35, 2.5, "Condition at Diagnosis", col=R, fs=14, h=0.75)
+chip(sl, 0.7, 3.35, 2.5, "Cancer Patient", col=NV, fs=14, h=0.55)
+chip(sl, 0.7, 4.35, 2.5, "Condition at Diagnosis", col=R, fs=14, h=0.75)
 ln = sl.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(1.95), Inches(3.9), Inches(1.95), Inches(4.35))
 ln.line.color.rgb = M; ln.line.width = Pt(1.5)
-p1 = panel(3.9, 2.75, 4.25, 1.85, "DISEASE & EXTENT",
-           ["Cancer Stage", "Histology / Behaviour", "Clinical Progression"])
-p2 = panel(8.35, 2.75, 4.25, 1.85, "TREATMENT",
-           ["Surgery", "Radiotherapy", "Systemic Treatment", "Active Surveillance"])
-p3 = panel(3.9, 4.8, 4.25, 1.25, "OUTCOME",
-           ["Treatment Response", "Last Follow-Up"])
-p4 = panel(8.35, 4.8, 4.25, 1.25, "CONTEXT",
-           ["Imaging", "Comorbidities"])
+panel(3.9, 2.75, 4.25, 1.85, "DISEASE & EXTENT",
+      ["Cancer Stage", "Histology / Behaviour", "Clinical Progression"])
+panel(8.35, 2.75, 4.25, 1.85, "TREATMENT",
+      ["Surgery", "Radiotherapy", "Systemic Treatment", "Active Surveillance"])
+panel(3.9, 4.8, 4.25, 1.25, "OUTCOME",
+      ["Treatment Response", "Last Follow-Up"])
+panel(8.35, 4.8, 4.25, 1.25, "CONTEXT",
+      ["Imaging", "Comorbidities"])
 for tx, ty in [(3.9, 3.65), (3.9, 5.4)]:
     ln = sl.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(3.2), Inches(4.7), Inches(tx), Inches(ty))
     ln.line.color.rgb = M; ln.line.width = Pt(1.5)
 run(box(sl, 1.0, 6.55, 11.4, 0.5).paragraphs[0],
     "11 logical entities · every one carries a reference back to the condition at diagnosis (and, where relevant, to a progression).", 13, M)
 
-# ── ECCM explainer B · what it captures ──────────────────────────────────────
-table_slide("What the model captures — the element level",
-    [("Entity", "Key elements (from the logical models)"),
-     ("Patient", "birth date · sex at birth · gender · comorbidities at diagnosis"),
-     ("Condition at Diagnosis", "topography · histology & behaviour · grade · visit / biopsy / imaging / lab dates"),
-     ("Cancer Stage", "staging system + stage code/value · clinical vs pathological · evidence reference"),
-     ("Clinical Progression", "disease status · extent · loco-regional + metastatic sites · asserted date"),
-     ("Surgery · RT · Systemic", "intent · setting · start / end date · body site · ongoing flag"),
-     ("Response · Last Follow-Up", "response type · vital status · evidence of disease · cause / date of death")],
-    (3.6, 8.4), fs=13.5, vbold=False,
-    cap="Minimal by design: the common denominator registries and studies actually share — not an mCODE-scale maximal model.")
-
-# ── ECCM explainer C · logical → FHIR ────────────────────────────────────────
-table_slide("From logical model to FHIR — deliberately conventional",
-    [("ECCM logical entity", "FHIR R4 profile"),
-     ("Cancer Patient", "Patient — built on the HL7 Europe base (patient-eu)"),
-     ("Condition at Diagnosis", "Condition"),
-     ("Stage · Histology · Progression · Imaging", "Observation — one profile each"),
-     ("Response · Follow-Up · Comorbidities", "Observation — one profile each"),
-     ("Surgery", "Procedure"),
-     ("Radiotherapy · Systemic · Active Surveillance", "EpisodeOfCare — period, not point event")],
-    (5.6, 6.0), fs=14, vbold=False,
-    cap="13 profiles + 21 extensions (intent, setting, sites, stage evidence, vital status) · mapped to OMOP in parallel · SUSHI build: 0 errors")
-
-# ── ECCM explainer D · design choices ────────────────────────────────────────
-substantive("Four design choices worth knowing",
-    "Reading the drafts as an implementer, these are the decisions that shape everything downstream.",
-    [("One spine", "every entity references the condition at diagnosis — queries follow the journey, not documents"),
-     ("Treatments are episodes", "EpisodeOfCare with period, intent, setting — the same shape as OMOP's EPISODE table"),
-     ("Cancer semantics live in extensions", "21 extensions carry intent, setting, metastatic sites, stage evidence, vital status"),
-     ("Stage is evidence-linked", "clinical stage references imaging, pathological stage references the surgery")],
-    y0=3.75, step=0.8)
-
-# ── ECCM explainer E · FHIR ↔ OMOP ───────────────────────────────────────────
-substantive("Two legs of one model — where FHIR meets OMOP",
-    "The communities meet in the middle: exchange happens in FHIR, analysis happens in OMOP — the ECCM is designed for both.",
-    [("FHIR leg", "13 profiles for primary-use exchange — EEHRxF-style, built on the HL7 Europe base"),
-     ("OMOP leg", "the same logical entities map onto the CDM — episodes, measurements, conditions"),
-     ("The bridge in practice", "FHIR-native cancer journeys are exactly what a FHIR→OMOP ETL needs as input"),
-     ("Known ground truth", "synthetic cohorts let you validate the ETL — the true counts are known by construction")],
-    y0=3.75, step=0.8)
-
-# ── ECCM explainer E2 · different strengths ──────────────────────────────────
+# ── 15 · OMOP vs FHIR strengths ──────────────────────────────────────────────
 two_col("Different strengths — deliberately so",
     "Not competitors: one is built for analysis, the other for care — and care includes the future tense.",
     "OMOP CDM — built for analysis",
@@ -486,7 +361,7 @@ two_col("Different strengths — deliberately so",
      ("Executable knowledge", "PlanDefinition/$apply — see the outlook")],
     left_glyph="▪", right_glyph="▪", left_col=LK, right_col=R)
 
-# ── ECCM explainer F · medication coding ─────────────────────────────────────
+# ── 16 · Medication coding ───────────────────────────────────────────────────
 substantive("Medication coding — where EU reality meets OMOP",
     "Drugs are the hardest crosswalk in the room: Europe classifies, OMOP standardises on products.",
     [("ATC", "what EU source data carries — substance-level classification with DDDs · our cohort: dual WHO + ATC-DE"),
@@ -496,19 +371,113 @@ substantive("Medication coding — where EU reality meets OMOP",
     "Thesis: OMOP need not adopt IDMP — one global PhPID → RxNorm(+Extension) adapter would do. Who builds it?",
     y0=3.7, step=0.8)
 
-divider("PART III", "Testing the model — a synthetic prostate cohort")
+# ── 17 · Prostate test bed + pipeline ────────────────────────────────────────
+substantive("The test bed — a synthetic prostate cohort on the draft profiles",
+    "Built on open-source Synthea for males aged 50–60, from first symptoms to metastatic disease.",
+    [("Symptom-triggered, full journey", "LUTS → work-up → diagnosis → treatment → recurrence → metastatic"),
+     ("Reproducible scale", "1,000-patient cohort per run · 115 cancer journeys · FHIR R4, EU terminology"),
+     ("Evidence-calibrated", "~40 transitions traced to 25 primary sources — table in the appendix"),
+     ("Post-processed onto the 13 draft profiles", "derives cTNM / pTNM, histology, episodes, progression, follow-up"),
+     ("Validator gate: 0 errors", "HL7 Java validator against the pinned draft build")],
+    "To our knowledge the first end-to-end implementation of the drafts — that is where the feedback comes from.",
+    y0=3.45, step=0.68)
 
-# ── 5 · Prototype ────────────────────────────────────────────────────────────
-substantive("A prostate-cancer pathway model as the test bed",
-    "Built on the open-source Synthea simulator for males aged 50–60, from first symptoms to metastatic disease.",
-    [("Symptom-triggered", "urinary symptoms → work-up → BPH or cancer"),
-     ("The full journey", "diagnosis → risk groups → treatment → recurrence → salvage → metastatic"),
-     ("Standards-native", "every patient a FHIR R4 bundle, EU terminology"),
-     ("Reproducible scale", "1,000-patient cohort per run · 115 cancer journeys")],
-    y0=3.8, step=0.8)
+# ── 18 · Sankey ──────────────────────────────────────────────────────────────
+image_slide("The cohort at a glance — 115 synthetic cancer journeys",
+    base + "prostate_sankey_en_crop.png", box_h=4.55,
+    cap="Nodes = calibrated branch points · colours = EAU risk group · a visual cross-check against the calibration targets")
 
-# ── 6 · Evidence ─────────────────────────────────────────────────────────────
-table_slide("Every transition is calibrated on evidence",
+# ── 19 · Feedback ────────────────────────────────────────────────────────────
+substantive("Implementing the drafts — findings & feedback",
+    "Six substantive comments filed, several already fixed — and three things that are cheap now, breaking later.",
+    [("TNM component binding", "deprecated PhenX LOINC in the example — recommend SNOMED UICC-8 qualifiers (AJCC is licensed)"),
+     ("Underspecified corners", "no pathological-stage example · mixed topography axes · no pT1 in prostate"),
+     ("Breaking-if-fixed typos", "'systematic-treatemmt-*' leaks into instance extension URLs — fix before instances exist"),
+     ("Offer: a synthetic test corpus", "journeys as IG examples / ballot test data — CC0, SYNDERAI-tagged")],
+    y0=3.7, step=0.8)
+
+# ── 20 · Outlook: foundational layer + HemOnc ────────────────────────────────
+substantive("The foundational layer — knowledge, not just data",
+    "How do we support cancer care and research below the data level? Four pillars — all FHIR-native, all reusable.",
+    [("Represent clinical knowledge", "local, national, European guidelines as computable artefacts — PlanDefinition · Library"),
+     ("Terminology guidance", "catalogues, bindings, validation support — terminology services instead of Excel lists"),
+     ("Computable, reusable CDS", "actionable logic written once, run anywhere — CQL + PlanDefinition/$apply"),
+     ("Computable eligibility", "study in-/exclusion criteria as shared expressions — the bridge to your cohort definitions")],
+    "Already running: HemOnc — OMOP's regimen vocabulary — served as PlanDefinition/$apply → CarePlan with computed doses.",
+    y0=3.5, step=0.8)
+
+# ── 21 · The point ───────────────────────────────────────────────────────────
+substantive("The point",
+    "The European Health Data Space does not happen to us — we have to form it.",
+    [("The model", "ECCM draft profiles, in active development"),
+     ("The test bed", "shareable, PII-free synthetic journeys — conformant today, 0 validation errors"),
+     ("The loop", "implement → feed back → iterate — that is what we bring to Málaga"),
+     ("The invitation", "take the cohort, run your FHIR→OMOP ETL against it, tell both communities what breaks")],
+    "Top-down sets the rails; quality grows bottom-up — and a model becomes real the moment someone can test it.",
+    y0=3.7, step=0.78)
+
+# ═════════════════════════════ APPENDIX ══════════════════════════════════════
+
+divider("APPENDIX", "Backup slides & tables")
+
+# ── A1 · HL7 Europe IG landscape ─────────────────────────────────────────────
+table_slide("Appendix · The HL7 Europe specification landscape",
+    [("Implementation guide", "Status (Sept 2026)"),
+     ("Base & Core Profiles — incl. patient-eu", "published · STU 2.0"),
+     ("Extensions", "published · STU 1.3"),
+     ("Laboratory Report", "published · STU 2.0"),
+     ("Medication Prescription & Dispense", "published · STU 1.0 (R4 + R5)"),
+     ("European Patient Summary (EPS)", "STU1 ballot · IPS-aligned · Xt-EHR-supported"),
+     ("Imaging Report · Hospital Discharge Report", "ballot (v1.0.0 · v0.1.0)"),
+     ("EU Health Data API", "ballot v1.0.0"),
+     ("Common Cancer Model", "ballot v1.0.0")],
+    (6.0, 5.5), fs=13.5, vbold=False,
+    cap="hl7.eu/fhir — one family. The Common Cancer Model reuses its base profiles (patient-eu).")
+
+# ── A2 · ECCM CI build ───────────────────────────────────────────────────────
+image_slide("Appendix · The ECCM guide — live in the FHIR CI build", base + "ig_cancer_common.png", box_h=4.55,
+    cap="build.fhir.org/ig/hl7-eu/cancer-common · 1.0.0-ballot — the scope names both mappings: HL7 FHIR and OMOP.")
+
+# ── A3 · CANDLE view (drop the shared slide as output/candle_achievement.png) ─
+if os.path.exists(base + "candle_achievement.png"):
+    image_slide("Appendix · The same landscape, seen from CANDLE", base + "candle_achievement.png", box_h=4.55,
+        cap="CANDLE 'Achievement Year 1': the NCDN network around UNCAN.eu — HL7 Europe's cancer data model is one of its working groups. Slide kindly provided by the CANDLE project.")
+
+# ── A4 · What the model captures ─────────────────────────────────────────────
+table_slide("Appendix · What the model captures — the element level",
+    [("Entity", "Key elements (from the logical models)"),
+     ("Patient", "birth date · sex at birth · gender · comorbidities at diagnosis"),
+     ("Condition at Diagnosis", "topography · histology & behaviour · grade · visit / biopsy / imaging / lab dates"),
+     ("Cancer Stage", "staging system + stage code/value · clinical vs pathological · evidence reference"),
+     ("Clinical Progression", "disease status · extent · loco-regional + metastatic sites · asserted date"),
+     ("Surgery · RT · Systemic", "intent · setting · start / end date · body site · ongoing flag"),
+     ("Response · Last Follow-Up", "response type · vital status · evidence of disease · cause / date of death")],
+    (3.6, 8.4), fs=13.5, vbold=False,
+    cap="Minimal by design: the common denominator registries and studies actually share — not an mCODE-scale maximal model.")
+
+# ── A5 · Logical → FHIR ──────────────────────────────────────────────────────
+table_slide("Appendix · From logical model to FHIR — deliberately conventional",
+    [("ECCM logical entity", "FHIR R4 profile"),
+     ("Cancer Patient", "Patient — built on the HL7 Europe base (patient-eu)"),
+     ("Condition at Diagnosis", "Condition"),
+     ("Stage · Histology · Progression · Imaging", "Observation — one profile each"),
+     ("Response · Follow-Up · Comorbidities", "Observation — one profile each"),
+     ("Surgery", "Procedure"),
+     ("Radiotherapy · Systemic · Active Surveillance", "EpisodeOfCare — period, not point event")],
+    (5.6, 6.0), fs=14, vbold=False,
+    cap="13 profiles + 21 extensions (intent, setting, sites, stage evidence, vital status) · mapped to OMOP in parallel · SUSHI build: 0 errors")
+
+# ── A6 · Design choices ──────────────────────────────────────────────────────
+substantive("Appendix · Four design choices worth knowing",
+    "Reading the drafts as an implementer, these are the decisions that shape everything downstream.",
+    [("One spine", "every entity references the condition at diagnosis — queries follow the journey, not documents"),
+     ("Treatments are episodes", "EpisodeOfCare with period, intent, setting — the same shape as OMOP's EPISODE table"),
+     ("Cancer semantics live in extensions", "21 extensions carry intent, setting, metastatic sites, stage evidence, vital status"),
+     ("Stage is evidence-linked", "clinical stage references imaging, pathological stage references the surgery")],
+    y0=3.75, step=0.8)
+
+# ── A7 · Evidence table ──────────────────────────────────────────────────────
+table_slide("Appendix · Every transition is calibrated on evidence",
     [("Effect (transition)", "Value", "Source"),
      ("PI-RADS 3 / 4 / 5 → cancer", "16 / 59 / 85 %", "Oerther 2021"),
      ("Treatment: RP / RT / AS", "57 / 16 / 16 %", "HAROW (Herden 2016)"),
@@ -520,40 +489,8 @@ table_slide("Every transition is calibrated on evidence",
     (5.1, 2.9, 3.5),
     cap="25 primary sources · full-text cross-checked (5 core arrows exact, ~19/20 confirmed) · ESMO converges")
 
-# ── 7 · Sankey ───────────────────────────────────────────────────────────────
-image_slide("The cohort at a glance — 115 synthetic cancer journeys",
-    base + "prostate_sankey_en_crop.png", box_h=4.55,
-    cap="Nodes = calibrated branch points · colours = EAU risk group · a visual cross-check against the calibration targets")
-
-# ── 8 · Pipeline ─────────────────────────────────────────────────────────────
-substantive("From Synthea output to the ECCM draft profiles",
-    "A post-processing pipeline reshapes every journey onto the 13 draft profiles — with a validator gate to keep it honest.",
-    [("Derives what the model asks for", "clinical + pathological TNM, histology, episodes of care, progression, last follow-up"),
-     ("Validator gate: 0 errors", "HL7 Java validator against the pinned draft build"),
-     ("Reproducible pin", "vendored profile build · canonical parameterized against pre-ballot drift")],
-    "To our knowledge the first end-to-end implementation of the draft profiles — and that is where the feedback comes from.")
-
-# ── 9 · Feedback (substantive) ───────────────────────────────────────────────
-substantive("Implementing the drafts — what came back",
-    "Conformance findings only surface when someone actually implements. Six substantive comments filed; several already fixed.",
-    [("TNM component binding", "example uses deprecated PhenX LOINC — recommend SNOMED UICC-8 qualifiers (AJCC is licence-encumbered)"),
-     ("Pathological stage underspecified", "no example instance · stage-code semantics ('TNM' — in which system?) unclear"),
-     ("One topography axis, please", "surgery example ICD-O-3 vs. condition ICD-10 — mixed axes fragment analytics"),
-     ("Domain edge cases", "there is no pT1 in prostate — TURP-incidental carcinoma is clinical cT1a/b")],
-    "Already fixed after re-pin: evidence reference split imaging/surgery · single-value stage systems (FIGO) · focus 1..1.",
-    y0=3.75, step=0.78)
-
-# ── 10 · To discuss in Málaga ────────────────────────────────────────────────
-substantive("What we are feeding back to the model team",
-    "Three things are cheap to fix now and breaking later — plus an offer.",
-    [("Extension URL typos", "'systematic-treatemmt-*' leaks into instance URLs — breaking once instances exist"),
-     ("Names & canonical", "'HitsologyBehaviour' · 'CinicalOrPathological' · decide the canonical before ballot"),
-     ("Deprecated codes in examples", "PhenX TNM LOINC codes are all flagged deprecated"),
-     ("Offer: a synthetic test corpus", "contribute journeys as IG examples / ballot test data — CC0, SYNDERAI-tagged")],
-    y0=3.7, step=0.8)
-
-# ── 11 · Active development ──────────────────────────────────────────────────
-two_col("Actively developing — what comes next",
+# ── A8 · Actively developing ─────────────────────────────────────────────────
+two_col("Appendix · Actively developing — what comes next",
     "The generator is the shareable artifact; each track below widens what the model can be tested against.",
     "In progress",
     [("Temporal axis (prostate v4)", "delays · follow-up chain"),
@@ -568,27 +505,7 @@ two_col("Actively developing — what comes next",
      ("Biomarker profiles", "an ECCDM gap surfaced by breast"),
      ("Pediatric oncology", "modules planned")])
 
-# ── Outlook · HemOnc regimens → CarePlan ─────────────────────────────────────
-substantive("Outlook — regimens: HemOnc's OMOP groundwork, served as FHIR",
-    "For treatment protocols, OHDSI is ahead: HemOnc is already an OMOP vocabulary. We are building the FHIR leg.",
-    [("HemOnc in OMOP", "the regimen knowledge base behind OMOP Oncology's treatment episodes"),
-     ("Projected into FHIR", "PlanDefinition · ActivityDefinition · MedicationKnowledge · CodeSystem / ConceptMap"),
-     ("Executable, not just descriptive", "PlanDefinition/$apply → a patient CarePlan with computed doses (Calvert AUC · mg/m² × BSA)"),
-     ("Closing the loop", "synthetic journeys following named regimens — the same regimen identity in EPISODE and CarePlan")],
-    "Draft IG in development with HemOnc.org, the OHDSI oncology community, HL7-EU Phoenix and MII Onkologie · CC BY 4.0.",
-    y0=3.7, step=0.8)
-
-# ── 12 · Closing ─────────────────────────────────────────────────────────────
-substantive("The point",
-    "The European Health Data Space does not happen to us — we have to form it.",
-    [("The model", "ECCM draft profiles, in active development"),
-     ("The test bed", "shareable, PII-free synthetic journeys — conformant today, 0 validation errors"),
-     ("The loop", "implement → feed back → iterate — that is what we bring to Málaga"),
-     ("The invitation", "take the cohort, run your FHIR→OMOP ETL against it, tell both communities what breaks")],
-    "Top-down sets the rails; quality grows bottom-up — and a model becomes real the moment someone can test it.",
-    y0=3.7, step=0.78)
-
-# ── 13 · Appendix · CCDM mapping ─────────────────────────────────────────────
+# ── A9 · ECCM coverage ───────────────────────────────────────────────────────
 table_slide("Appendix · every ECCM entity is already covered",
     [("ECCM draft profiles", "Prostate pipeline produces"),
      ("Cancer Patient · Condition at Diagnosis", "Patient · prostate-cancer diagnosis"),
@@ -600,7 +517,7 @@ table_slide("Appendix · every ECCM entity is already covered",
     (5.9, 5.6), fs=15, vbold=False,
     cap="Validated against the pinned draft build with the HL7 Java validator — 0 errors across the sampled bundles.")
 
-# ── 14 · Appendix · sources ──────────────────────────────────────────────────
+# ── A10 · Sources ────────────────────────────────────────────────────────────
 sl = new(); header(sl, "Appendix · sources & traceability")
 
 
