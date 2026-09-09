@@ -230,9 +230,11 @@ substantive("Six priority categories (Art. 14)",
 substantive("EEHRxF — the format the law prescribes",
     "The European EHR Exchange Format is what Article 15 tells the Commission to lay down in implementing acts.",
     [("Technical specs for all six categories", "one exchange format, uniform across the EU"),
+     ("Mainly syntax, little semantics", "it standardises structure and format — terminology bindings and clinical depth stay thin"),
      ("Not yet adopted", "the Art. 15 implementing acts are due by 26 March 2027 — the big open item"),
      ("Not from scratch", "builds on the 2019 EEHRxF recommendation and the eHN guidelines")],
-    "Until the acts land, the working material is the specification stack on the next slides.")
+    "Syntax alone does not analyse — filling in the semantics is the work of the specification stack on the next slides.",
+    y0=3.7, step=0.8)
 
 # ── EHDS · who writes the stack ──────────────────────────────────────────────
 substantive("Who writes the stack — from guidelines to FHIR",
@@ -277,7 +279,7 @@ substantive("Secondary use — where this room comes in",
 substantive("One structured format for both use cases",
     "FHIR is where the two pillars meet: data structured once, at the point of care, serves care and research alike.",
     [("Primary use is FHIR", "the EEHRxF specifications are FHIR IGs — structured at the source, not scanned PDFs"),
-     ("Bindings enforce terminology", "profiles require SNOMED CT, LOINC, ATC, UCUM — the semantics arrive with the data"),
+     ("Bindings add what the format lacks", "profiles bind SNOMED CT, LOINC, ATC, UCUM — semantics the bare syntax does not mandate"),
      ("Secondary use inherits both", "structure and coded meaning — access bodies can only serve what care recorded"),
      ("The payoff for this room", "SNOMED and LOINC in FHIR are already OMOP standard concepts — the ETL shrinks")],
     y0=3.7, step=0.8)
