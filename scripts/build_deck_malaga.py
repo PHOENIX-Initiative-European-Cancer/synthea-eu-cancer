@@ -218,13 +218,13 @@ for dx, date, lab in [
         (10.5, "26 Mar 2035", "third countries join\nHealthData@EU")]:
     d = sl.shapes.add_shape(9, Inches(dx), Inches(y), Inches(0.3), Inches(0.3))
     d.fill.solid(); d.fill.fore_color.rgb = R; d.line.fill.background()
-    run(box(sl, dx - 0.25, y + 0.5, 2.4, 0.4).paragraphs[0], date, 13, W, b=True)
-    tf = box(sl, dx - 0.25, y + 0.85, 2.4, 1.2)
+    run(box(sl, dx - 0.25, y + 0.5, 2.5, 0.45).paragraphs[0], date, 16, W, b=True)
+    tf = box(sl, dx - 0.25, y + 0.95, 2.5, 1.3)
     for i, line in enumerate(lab.split("\n")):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        run(p, line, 11, M)
+        run(p, line, 13, M)
 run(box(sl, 1.0, 6.85, 11.4, 0.5).paragraphs[0],
-    "The Art. 15 implementing acts (EEHRxF technical specifications) are the big open item — due 26 March 2027.", 13, M)
+    "The Art. 15 implementing acts (EEHRxF technical specifications) are the big open item — due 26 March 2027.", 14, M)
 
 # ── 5 · EEHRxF: syntax by law, semantics by the stack ────────────────────────
 substantive("EEHRxF — syntax by law, semantics by the stack",
@@ -440,6 +440,39 @@ substantive("The foundational layer — knowledge, not just data",
      ("Computable eligibility", "study in-/exclusion criteria as shared expressions — the bridge to your cohort definitions")],
     "Already running: HemOnc — OMOP's regimen vocabulary — served as PlanDefinition/$apply → CarePlan with computed doses.",
     y0=3.5, step=0.8)
+
+# ── 20b · The wider architecture ─────────────────────────────────────────────
+sl = new(); header(sl, "The wider architecture — one picture")
+run(box(sl, 1.0, 1.95, 11.4, 0.5).paragraphs[0],
+    "Four layers — and a synthetic test harness that runs through all of them.", 17, W)
+
+
+def layer(y, label, chips, hilite=None):
+    pn = sl.shapes.add_shape(5, Inches(0.8), Inches(y), Inches(10.3), Inches(0.98))
+    pn.fill.solid(); pn.fill.fore_color.rgb = PANEL; pn.line.color.rgb = M; pn.line.width = Pt(0.75)
+    run(box(sl, 0.95, y + 0.04, 9.9, 0.32).paragraphs[0], label, 10.5, LK, b=True)
+    n = len(chips); gap = 0.12
+    cw = (10.0 - gap * (n - 1)) / n
+    for i, c in enumerate(chips):
+        col = R if (hilite is not None and i == hilite) else NV
+        chip(sl, 0.95 + i * (cw + gap), y + 0.4, cw, c, col=col, fs=12, h=0.46)
+
+
+layer(2.55, "RAILS — THE EHDS", ["Regulation (EU) 2025/327", "EEHRxF (Art. 15)", "MyHealth@EU", "HealthData@EU"])
+layer(3.63, "SPECIFICATIONS", ["eHN guidelines", "Xt-EHR logical models", "HL7 Europe FHIR IGs", "Common Cancer Model"], hilite=3)
+layer(4.71, "KNOWLEDGE", ["Terminology — SNOMED · LOINC · ATC", "Regimens — HemOnc → PlanDefinition", "CDS & eligibility — CQL"])
+layer(5.79, "DATA & USE", ["Clinical software — FHIR out", "Primary use — exchange", "Secondary use — FHIR→OMOP → analytics"])
+harness = sl.shapes.add_shape(5, Inches(11.25), Inches(2.55), Inches(1.35), Inches(4.22))
+harness.fill.solid(); harness.fill.fore_color.rgb = NV; harness.line.color.rgb = R; harness.line.width = Pt(1.5)
+tb = sl.shapes.add_textbox(Inches(10.35), Inches(4.3), Inches(3.15), Inches(0.7))
+tb.rotation = 270; tb.text_frame.word_wrap = False
+from pptx.enum.text import PP_ALIGN
+p = tb.text_frame.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+run(p, "SYNDERAI — synthetic data", 13, W, b=True)
+p2 = tb.text_frame.add_paragraph(); p2.alignment = PP_ALIGN.CENTER
+run(p2, "tests every layer", 12, M)
+run(box(sl, 0.8, 6.95, 11.4, 0.45).paragraphs[0],
+    "Cancer is the first disease vertical on these rails — the pattern generalises to every domain.", 13, M)
 
 # ── 21 · The point ───────────────────────────────────────────────────────────
 substantive("The point",
