@@ -359,14 +359,14 @@ image_slide("The FHIR leg in the making — 13 profiles in FSH",
     cap="github.com/ValhallasCat/cancer-common — the draft profiles as FSH · our pipeline pins commit c020f19.")
 
 # ── 16 · Two years in + value streams ────────────────────────────────────────
-substantive("Two years in — and what we do from now on",
-    "The first ballot delivered little community feedback. Why? A conceptual / logical model is hard to test.",
-    [("Nothing to run, nothing to find", "no profiles, no data, no validator"),
-     ("Implementation delivered a lot", "profiles + synthetic data + validator → a findings list in weeks"),
-     ("So every iteration now ships runnable", "SYNDERAI-Cancer cohorts, CC0 — the preview of EU cancer data"),
-     ("Plus the useful extras", "medication & regimen definitions · terminology and mapping support")],
+substantive("The PHOENIX value streams — from now on",
+    "The first ballot taught us the lesson: a logical model alone is hard to test. So this is what we run now.",
+    [("The ballot lesson", "implementation found in weeks what reading did not — ship something runnable"),
+     ("Develop & maintain the profiles", "the FHIR leg, iterated with every finding · synthetic cohorts alongside"),
+     ("Maintain two-way compatibility", "track FHIR and OMOP as both evolve — one model, two moving targets"),
+     ("Specify where the need is", "cancer regimen planning & referencing · pathology reports")],
     "Hand people something to run, not only something to read.",
-    y0=3.5, step=0.78)
+    y0=3.6, step=0.8)
 
 # ── 17 · Anatomy ─────────────────────────────────────────────────────────────
 sl = new(); header(sl, "Anatomy of the model — eleven entities, one journey")
