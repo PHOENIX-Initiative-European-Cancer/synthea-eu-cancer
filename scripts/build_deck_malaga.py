@@ -299,6 +299,12 @@ points(sl, [
     ("Practise now, permit-free", "SYNDERAI synthetic data — 1,000+ lab reports, ~1,000 summaries · cancer arm: Part II")],
     y0=5.55, step=0.62, w=11.0)
 
+# ── 9b · SYNDERAI in the wild ────────────────────────────────────────────────
+image2_slide("SYNDERAI — it exists, and it is open",
+    base + "synderai_web_crop.png", "hl7europe.org — the initiative & webinar",
+    base + "synderai_gh.png", "github.com/hl7-eu/SYNDERAI — AGPL, open",
+    cap="Synthetic Data: Examples – Realistic – using AI · lead: Kai U. Heitmann · built on the EEHRxF specifications.")
+
 # ── 10 · Thesis ──────────────────────────────────────────────────────────────
 substantive("Top-down alone will not produce quality data",
     "You can mandate a format and a deadline. You cannot mandate that the data inside is right.",
