@@ -350,7 +350,11 @@ def process_bundle(path, base, stats):
             'diagnosis': [{'condition': condition_ref}],
             'period': {'start': start, 'end': end},
             'extension': [{'url': ext('radiotherapy-intent'),
-                           'valueCodeableConcept': cc(PALLIATIVE if m1 else CURATIVE)}],
+                           'valueCodeableConcept': cc(PALLIATIVE if m1 else CURATIVE)},
+                          # profile requires the body-site extension (1..1) alongside intent
+                          {'url': ext('radiotherapy-body-site'),
+                           'valueCodeableConcept': cc({'system': SCT, 'code': '41216001',
+                                                       'display': 'Prostatic structure (body structure)'})}],
         }
         ctx.append(eoc, 'eoc-radiotherapy')
         stats['eoc-radiotherapy'] += 1
