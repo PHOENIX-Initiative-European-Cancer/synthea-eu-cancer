@@ -281,7 +281,7 @@ run(box(sl, 1.0, 6.95, 11.4, 0.45).paragraphs[0],
 # ── 6 · IGs in practice ──────────────────────────────────────────────────────
 image2_slide("This is what they actually look like",
     base + "ig_laboratory.png", "Laboratory Report IG · STU 2.0 · published",
-    base + "lab_report_structure.png", "The report structure — Composition profile",
+    base + "lab_profiles_graph.png", "The profile graph — how the report hangs together",
     cap="hl7.eu/fhir/laboratory — one of four published HL7 Europe IGs; five more in ballot (full table in the appendix).")
 
 # ── 6b · Profiled resources map ──────────────────────────────────────────────
