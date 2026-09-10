@@ -306,8 +306,9 @@ resrow(2.7, "BASE & CORE — THE SHARED FLOOR",
 resrow(3.78, "LABORATORY REPORT",
        ["Composition · DiagnosticReport", "Observation — results", "Specimen (incl. animal)",
         "ServiceRequest", "Device · Quantity / Range"])
-resrow(4.86, "MEDICATION — MPD",
-       ["MedicationRequest", "MedicationDispense", "Medication", "Dosage"])
+resrow(4.86, "MEDICATION — MPD  ·  IMAGING REPORT (BALLOT)",
+       ["MedicationRequest · Dispense", "Medication · Dosage", "DiagnosticReport · Composition",
+        "Observation — findings · dose", "Procedure · ServiceRequest"])
 resrow(5.94, "CANCER — ECCM (DRAFT)",
        ["Condition — at diagnosis", "Observation ×7 — stage, histology…", "Procedure — surgery",
         "EpisodeOfCare ×3 — RT · syst. · AS"], chipcol=R)
@@ -380,6 +381,42 @@ substantive("PHOENIX — the working group behind the model",
      ("The survey becomes a paper", "the model-landscape analysis is headed for an international journal")],
     "confluence.hl7.org → HL7 Europe → Cancer Common Model Project, Edition 1",
     y0=3.7, step=0.8)
+
+# ── 12b · PHOENIX founding members ───────────────────────────────────────────
+sl = new(); header(sl, "PHOENIX — the founding members")
+run(box(sl, 1.0, 1.95, 11.4, 0.5).paragraphs[0],
+    "Eight founding organisations, one consortium agreement — governed by a steering committee.", 17, W)
+ORGS = [
+    ("logos/hl7eu.png", "HL7 Europe"),
+    ("logos/iknl.png", "IKNL"),
+    ("logos/bih_commons.jpg", "BIH @ Charité"),
+    ("logos/cal_direct.jpg", "Centre Antoine Lacassagne"),
+    ("logos/inca.png", "INCa"),
+    ("logos/aphp_direct.png", "AP-HP"),
+    (None, "Paris Saclay Cancer Cluster"),
+    ("logos/intersystems.png", "InterSystems"),
+]
+for i, (img, name) in enumerate(ORGS):
+    r_, c_ = divmod(i, 4)
+    x = 0.9 + c_ * 2.97; ycard = 2.65 + r_ * 1.95
+    card = sl.shapes.add_shape(5, Inches(x), Inches(ycard), Inches(2.75), Inches(1.3))
+    card.fill.solid(); card.fill.fore_color.rgb = W; card.line.color.rgb = M; card.line.width = Pt(0.5)
+    if img:
+        iw, ih = Image.open(base + img).size; ar = iw / ih
+        bw, bh = 2.3, 0.85
+        (w2, h2) = (bw, bw / ar) if bw / ar <= bh else (bh * ar, bh)
+        sl.shapes.add_picture(base + img, Inches(x + (2.75 - w2) / 2), Inches(ycard + (1.3 - h2) / 2),
+                              Inches(w2), Inches(h2))
+    else:
+        tf = card.text_frame; tf.word_wrap = True
+        p = tf.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+        run(p, "Paris Saclay", 16, RGBColor(0x00, 0x5a, 0x78), b=True)
+        p2 = tf.add_paragraph(); p2.alignment = PP_ALIGN.CENTER
+        run(p2, "Cancer Cluster", 16, RGBColor(0x00, 0x5a, 0x78), b=True)
+    tf = box(sl, x - 0.1, ycard + 1.33, 2.95, 0.35); p = tf.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+    run(p, name, 10.5, M)
+run(box(sl, 1.0, 6.6, 11.4, 0.5).paragraphs[0],
+    "Chair — Melle Sieswerda (IKNL) · Co-chair — Renaud Schiappa (CAL) · Technical director — Thomas Debertshäuser (BIH) · Marketing — Geoffroy Vitoux (InterSystems)", 12.5, M)
 
 # ── 13 · ECCM status + Athens timeline ───────────────────────────────────────
 sl = substantive("The Common Cancer Model — from Athens to draft profiles",
