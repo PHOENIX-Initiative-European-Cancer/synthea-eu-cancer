@@ -591,7 +591,8 @@ substantive("The point",
 
 # ═════════════════════════════ APPENDIX ══════════════════════════════════════
 
-divider("APPENDIX", "Backup slides & tables")
+APPENDIX_START = len(prs.slides)
+divider("APPENDIX", "ECCM / Málaga — backup slides & tables")
 
 # ── A1 · HL7 Europe IG landscape ─────────────────────────────────────────────
 table_slide("Appendix · The HL7 Europe specification landscape",
@@ -787,6 +788,21 @@ def colf(x, groups):
 
 colf(0.55, left); colf(6.85, right)
 
-out = os.path.join(HERE, "output", "ECCM_Malaga_prep.pptx")
-prs.save(out)
-print("saved:", len(prs.slides), "slides ->", out)
+n_total = len(prs.slides)
+tmp = os.path.join(HERE, "output", "_ECCM_full_tmp.pptx")
+prs.save(tmp)
+
+
+def subset(src, keep, out_path):
+    p = Presentation(src)
+    lst = p.slides._sldIdLst
+    for i, sid in enumerate(list(lst)):
+        if i not in keep:
+            p.part.drop_rel(sid.get(qn('r:id'))); lst.remove(sid)
+    p.save(out_path)
+    print("saved:", len(p.slides), "slides ->", out_path)
+
+
+subset(tmp, range(0, APPENDIX_START), os.path.join(HERE, "output", "ECCM_Malaga_prep.pptx"))
+subset(tmp, range(APPENDIX_START, n_total), os.path.join(HERE, "output", "ECCM_Malaga_appendix.pptx"))
+os.remove(tmp)
