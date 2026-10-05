@@ -1,0 +1,3926 @@
+{
+  "name": "Breast Cancer (invasive + DCIS, women 50-60, SenologieOnFHIR)",
+  "remarks": [
+    "Synthea GMF v2 state machine: Mammakarzinom-Kohorte, Frauen 50–60, Deutschland.",
+    "Target: SenologieOnFHIR-Profile (Charité / Mammazentrum Berlin).",
+    "Analogon zu modules/adult/prostate.json (synthea-eu-cancer).",
+    "",
+    "KLINISCHES MODELL:",
+    "  Detektionswege: Screening (MSP) 44% / Intervall 18% / Symptomatisch 38%.",
+    "  DCIS-Anteil: Screen 19% / Intervall 15% / Symptomatisch 8%.",
+    "  Subtypen (TRM München 2016): LumA 35.7% / LumBHER2- 40.8% / LumBHER2+ 10.5%",
+    "    / HER2-enriched 4.2% / TNBC 8.7%.",
+    "  Staging (RKI KID 2025, 50–69 J.): UICC I 51% / II 35% / III 7% / IV 7%.",
+    "",
+    "ZEITMODELL: Triangular distributions für alle Wartezeiten (docs/time_variance.md).",
+    "  Jahr-Fenster DEAKTIVIERT (analog prostate 2026-09-08) — alle Patienten nutzen",
+    "  _Other-Varianten. Aktivierung: Age_50_Guard → Cohort_Year_Branch umleiten.",
+    "",
+    "KALIBRIERUNGSQUELLEN: epidemiology/breast_calibration.md (3081 Zeilen, Stand 2026-08-31).",
+    "  Primärquellen: Buschmann 2024, KoopMammo 2023, TRM München 2016, Braun 2018,",
+    "  Ortmann 2023, RKI KID 2025, Pan 2017, OnkoZert-Kennzahlen 2023.",
+    "  Codes validiert gegen CEIR-OS (SNOMED INT 20250701) und LOINC 2.77.",
+    "",
+    "SCOPE: Prototype v1. Noch nicht ausgeführt.",
+    "  Fehlend für v2: subtyp-bedingte TNM-Verteilung, Quadrant-Attribut, per-Jahr-Delays,",
+    "  detaillierte NAC-Regime, mehrzeilige Rezidiv-Hazards.",
+    "",
+    "  ACHTUNG: kein BI-RADS im deutschen MSP (KoopMammo-Standard). BI-RADS nur im",
+    "  diagnostischen / symptomatischen Setting und als Artefakt-Observation im Recall.",
+    "",
+    "Medications: dual-coded WHO-ATC + BfArM/ATC-DE.",
+    "Analogon zu prostate.json; postprocess_ccdm.py muss für Brustkrebs-ECCDM-Profile erweitert werden."
+  ],
+  "gmf_version": 2,
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "direct_transition": "Female_Guard"
+    },
+    "Female_Guard": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Gender",
+        "gender": "F"
+      },
+      "direct_transition": "Age_50_Guard",
+      "remarks": [
+        "Breast module — females only."
+      ]
+    },
+    "Age_50_Guard": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Age",
+        "operator": ">=",
+        "quantity": 50,
+        "unit": "years"
+      },
+      "direct_transition": "Set_Diagnosis_Year_Other",
+      "remarks": [
+        "Cohort: ALL females reaching 50 enter the module (selected cancer cohort, 100% presentation).",
+        "Year window DISABLED (mirrors prostate 2026-09-08 decision): bypasses Cohort_Year_Branch to",
+        "Set_Diagnosis_Year_Other so all patients use the generic (_Other) delay variants.",
+        "Re-enable by pointing this direct_transition back to Cohort_Year_Branch."
+      ]
+    },
+    "Cohort_Year_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "CURRENTLY DISABLED — Age_50_Guard bypasses this state. See docs/time_variance.md.",
+        "Placeholder weights 0.85/0.15; replace with actual per-year patient counts once available."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Enter_Diagnosis_Window",
+          "distribution": 0.85
+        },
+        {
+          "transition": "Set_Diagnosis_Year_Other",
+          "distribution": 0.15
+        }
+      ]
+    },
+    "Set_Diagnosis_Year_Other": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 0,
+      "direct_transition": "Detection_Mode_Branch",
+      "remarks": [
+        "Sentinel 0 = outside year window. Numeric so Attribute comparisons never throw type mismatch."
+      ]
+    },
+    "Enter_Diagnosis_Window": {
+      "type": "Guard",
+      "remarks": [
+        "Year-window gate — disabled via Age_50_Guard bypass."
+      ],
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2018
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Year_Lottery": {
+      "type": "Simple",
+      "remarks": [
+        "Disabled — see Age_50_Guard. Placeholder settle probabilities mirror prostate module.",
+        "Replace with per-year breast patient counts once hospital data is available."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Date",
+            "operator": "<",
+            "year": 2019
+          },
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2018",
+              "distribution": 0.21
+            },
+            {
+              "transition": "Wait_Until_2019",
+              "distribution": 0.79
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Date",
+            "operator": "<",
+            "year": 2020
+          },
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2019",
+              "distribution": 0.2785
+            },
+            {
+              "transition": "Wait_Until_2020",
+              "distribution": 0.7215
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Date",
+            "operator": "<",
+            "year": 2021
+          },
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2020",
+              "distribution": 0.2632
+            },
+            {
+              "transition": "Wait_Until_2021",
+              "distribution": 0.7368
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Date",
+            "operator": "<",
+            "year": 2022
+          },
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2021",
+              "distribution": 0.4762
+            },
+            {
+              "transition": "Wait_Until_2022",
+              "distribution": 0.5238
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "Set_Diagnosis_Year_2022",
+              "distribution": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    "Wait_Until_2019": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2019
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Wait_Until_2020": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2020
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Wait_Until_2021": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2021
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Wait_Until_2022": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Date",
+        "operator": ">=",
+        "year": 2022
+      },
+      "direct_transition": "Year_Lottery"
+    },
+    "Set_Diagnosis_Year_2018": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2018,
+      "direct_transition": "Detection_Mode_Branch"
+    },
+    "Set_Diagnosis_Year_2019": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2019,
+      "direct_transition": "Detection_Mode_Branch"
+    },
+    "Set_Diagnosis_Year_2020": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2020,
+      "direct_transition": "Detection_Mode_Branch"
+    },
+    "Set_Diagnosis_Year_2021": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2021,
+      "direct_transition": "Detection_Mode_Branch"
+    },
+    "Set_Diagnosis_Year_2022": {
+      "type": "SetAttribute",
+      "attribute": "diagnosis_year",
+      "value": 2022,
+      "direct_transition": "Detection_Mode_Branch"
+    },
+    "Detection_Mode_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Detektionsweg-Verteilung: Screening (MSP) 44% / Intervall 18% / Symptomatisch 38%.",
+        "Quelle: Buschmann 2024, NRW-Screening-Einheit, n=68,230. 🟢",
+        "High-risk arm (BRCA, 0.35% population) overlaid below via Set_High_Risk_Branch."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Set_Detection_Screening",
+          "distribution": 0.44
+        },
+        {
+          "transition": "Set_Detection_Interval",
+          "distribution": 0.18
+        },
+        {
+          "transition": "Set_Detection_Symptomatic",
+          "distribution": 0.38
+        }
+      ]
+    },
+    "Set_Detection_Screening": {
+      "type": "SetAttribute",
+      "attribute": "bc_detection_mode",
+      "value": "screening",
+      "direct_transition": "High_Risk_Branch"
+    },
+    "Set_Detection_Interval": {
+      "type": "SetAttribute",
+      "attribute": "bc_detection_mode",
+      "value": "interval",
+      "direct_transition": "High_Risk_Branch_Interval"
+    },
+    "Set_Detection_Symptomatic": {
+      "type": "SetAttribute",
+      "attribute": "bc_detection_mode",
+      "value": "symptomatic",
+      "direct_transition": "High_Risk_Branch_Symp"
+    },
+    "High_Risk_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "BRCA high-risk overlay: 0.35% population-level (CARRIERS + BRIDGES), 🟢.",
+        "High-risk flag steers MRI surveillance and subtype skew (TNBC +40%) downstream."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Set_High_Risk_True",
+          "distribution": 0.0035
+        },
+        {
+          "transition": "MSP_Invitation_Wait",
+          "distribution": 0.9965
+        }
+      ]
+    },
+    "Set_High_Risk_True": {
+      "type": "SetAttribute",
+      "attribute": "bc_high_risk",
+      "value": true,
+      "direct_transition": "MSP_Invitation_Wait"
+    },
+    "High_Risk_Branch_Interval": {
+      "type": "Simple",
+      "remarks": [
+        "BRCA high-risk overlay: 0.35% population-level (CARRIERS + BRIDGES), 🟢.",
+        "High-risk flag steers MRI surveillance and subtype skew (TNBC +40%) downstream."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Set_High_Risk_True_Interval",
+          "distribution": 0.0035
+        },
+        {
+          "transition": "MSP_Interval_Wait",
+          "distribution": 0.9965
+        }
+      ]
+    },
+    "Set_High_Risk_True_Interval": {
+      "type": "SetAttribute",
+      "attribute": "bc_high_risk",
+      "value": true,
+      "direct_transition": "MSP_Interval_Wait"
+    },
+    "High_Risk_Branch_Symp": {
+      "type": "Simple",
+      "remarks": [
+        "BRCA high-risk overlay: 0.35% population-level (CARRIERS + BRIDGES), 🟢.",
+        "High-risk flag steers MRI surveillance and subtype skew (TNBC +40%) downstream."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Set_High_Risk_True_Symp",
+          "distribution": 0.0035
+        },
+        {
+          "transition": "Symptom_Discovery",
+          "distribution": 0.9965
+        }
+      ]
+    },
+    "Set_High_Risk_True_Symp": {
+      "type": "SetAttribute",
+      "attribute": "bc_high_risk",
+      "value": true,
+      "direct_transition": "Symptom_Discovery"
+    },
+    "MSP_Invitation_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 7,
+          "mode": 21,
+          "max": 60
+        }
+      },
+      "unit": "days",
+      "direct_transition": "MSP_Encounter",
+      "remarks": [
+        "Wartezeit nach Einladung: TRIANGULAR 7–21–60 Tage. 🟡 (kein direktes KoopMammo-Datum für diese Latenz)."
+      ]
+    },
+    "MSP_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "MSP_Mammography",
+      "remarks": [
+        "MSP-Untersuchungstermin — bilaterale Mammographie ohne BI-RADS-Befundung (deutsches MSP gibt kein BI-RADS aus).",
+        "Quelle: Konzept §2, KoopMammo 2023. 🟢"
+      ]
+    },
+    "MSP_Mammography": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "24623002",
+          "display": "Screening mammography (procedure)"
+        }
+      ],
+      "direct_transition": "Recall_Branch_Screen",
+      "remarks": [
+        "Bilaterale Screening-Mammographie (MSP). Kein BI-RADS im deutschen MSP. 🟢"
+      ]
+    },
+    "Recall_Branch_Screen": {
+      "type": "Simple",
+      "remarks": [
+        "Recall-Rate Erstuntersuchung 50-54 J.: 10.9%, 55-59 J.: 10.3%. Hier gemittelt auf 10.6%.",
+        "Im CANCER COHORT-Modell: Screen-detektierte Patientin wird IMMER recalled (100%).",
+        "Der Recall-Anteil bestimmt, wie viele Patientinnen diesen Arm erreichen (via Detection_Mode 44%).",
+        "Keine Non-recall-Verzweigung hier — alle in diesem Arm haben Recall-Ergebnis.",
+        "Quelle: KoopMammo-Kennzahlen 2023. 🟢"
+      ],
+      "direct_transition": "Recall_Wait"
+    },
+    "Recall_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 1,
+          "mode": 5,
+          "max": 14
+        }
+      },
+      "unit": "days",
+      "direct_transition": "Clarification_Encounter",
+      "remarks": [
+        "Recall → Klärungsuntersuchung: typischerweise innerhalb 1 Woche. TRIANGULAR 1–5–14 Tage. 🟡"
+      ]
+    },
+    "Clarification_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "Clarification_Mammography",
+      "remarks": [
+        "Stage-1 Abklärungsuntersuchung nach Recall: zusätzliche Mammographie-Projektionen + Sonographie."
+      ]
+    },
+    "Clarification_Mammography": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "566241000119107",
+          "display": "Diagnostic mammography (procedure)"
+        }
+      ],
+      "direct_transition": "Clarification_US",
+      "remarks": [
+        "Zusätzliche diagnostische Mammographie (Vergrößerung/Zusatzprojektionen)."
+      ]
+    },
+    "Clarification_US": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "47079000",
+          "display": "Ultrasonography of breast (procedure)"
+        }
+      ],
+      "direct_transition": "Biopsy_Indication_Branch_Screen",
+      "remarks": [
+        "Sonographie der Brust im Rahmen der Abklärungsuntersuchung."
+      ]
+    },
+    "Biopsy_Indication_Branch_Screen": {
+      "type": "Simple",
+      "remarks": [
+        "PPV I (Biopsieindikation nach Recall): 7.0% Erstuntersuchung / 11.9% Folgeuntersuchung.",
+        "Im cancer cohort: 100% der Screen-detektierten bekommen Biopsieindikation → 100% hier.",
+        "BI-RADS wird als Artefakt-Observation emittiert (kein MSP-Standard, aber klinisch dokumentiert).",
+        "Quelle: KoopMammo 2023. 🟢"
+      ],
+      "direct_transition": "BI_RADS_Screen_Artifact_Obs"
+    },
+    "BI_RADS_Screen_Artifact_Obs": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "36643-5",
+          "display": "Breast BI-RADS category"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "413099006",
+        "display": "BI-RADS Category 4 (finding)"
+      },
+      "direct_transition": "Biopsy_Wait_Screen",
+      "remarks": [
+        "BI-RADS 4 als Artefakt-Observation — steuert nichts, dokumentiert nur den Befund für FHIR. 🟢 (Konzept §2)"
+      ]
+    },
+    "Biopsy_Wait_Screen": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 2,
+          "mode": 7,
+          "max": 21
+        }
+      },
+      "unit": "days",
+      "direct_transition": "Biopsy_Encounter_Screen",
+      "remarks": [
+        "Biopsieindikation → Stanzbiopsie: TRIANGULAR 2–7–21 Tage.",
+        "OnkoZert KZ 30: ≥5 Tage in 92.7% der Fälle. 🟢"
+      ]
+    },
+    "Biopsy_Encounter_Screen": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185389009",
+          "display": "Follow-up visit (procedure)"
+        }
+      ],
+      "direct_transition": "Core_Needle_Biopsy_Screen"
+    },
+    "Core_Needle_Biopsy_Screen": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "44578009",
+          "display": "Core needle biopsy of breast (procedure)"
+        }
+      ],
+      "direct_transition": "B_Class_Screen_Obs",
+      "remarks": [
+        "Ultraschallgestützte Stanzbiopsie (core needle biopsy). Standard 14G."
+      ]
+    },
+    "B_Class_Screen_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85319-2",
+          "display": "B-Klassifikation Stanzbiopsie"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "413448000",
+        "display": "Malignant (qualifier value)"
+      },
+      "direct_transition": "Screen_Biopsy_Enc_End",
+      "remarks": [
+        "B5-Befund (maligne) — screen-detektiertes Mammakarzinom bestätigt."
+      ]
+    },
+    "Screen_Biopsy_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "DCIS_Check"
+    },
+    "MSP_Interval_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 7,
+          "mode": 21,
+          "max": 60
+        }
+      },
+      "unit": "days",
+      "direct_transition": "MSP_Interval_Encounter"
+    },
+    "MSP_Interval_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "MSP_Interval_Mammography"
+    },
+    "MSP_Interval_Mammography": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "24623002",
+          "display": "Screening mammography (procedure)"
+        }
+      ],
+      "direct_transition": "Negative_Screen_Obs",
+      "remarks": [
+        "MSP-Mammographie — Befund negativ (kein Recall). Intervallkarzinom entsteht im Folgeintervall."
+      ]
+    },
+    "Negative_Screen_Obs": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "36643-5",
+          "display": "Breast BI-RADS category"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "397138000",
+        "display": "BI-RADS Category 1 (finding)"
+      },
+      "direct_transition": "MSP_Interval_Enc_End",
+      "remarks": [
+        "Unauffälliger MSP-Befund (BI-RADS 1 analog) — Patientin verlässt Screening ohne Recall."
+      ]
+    },
+    "MSP_Interval_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Interval_Wait"
+    },
+    "Interval_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 180,
+          "mode": 365,
+          "max": 700
+        }
+      },
+      "unit": "days",
+      "direct_transition": "Symptom_Discovery",
+      "remarks": [
+        "Wartezeit negatives Screening → symptomatische Entdeckung des Intervallkarzinoms.",
+        "TRIANGULAR 6–12–24 Monate. Intervallkarzinom entsteht nach negativem Befund zwischen zwei Runden.",
+        "Quelle: KoopMammo — Screening-Intervall 22–30 Monate (2-Jahres-Takt). 🟢"
+      ]
+    },
+    "Symptom_Discovery": {
+      "type": "Symptom",
+      "symptom": "Tastbefund Brust",
+      "cause": "Malignant neoplasm of breast",
+      "probability": 1.0,
+      "direct_transition": "Symptom_Wait"
+    },
+    "Symptom_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 3,
+          "mode": 10,
+          "max": 30
+        }
+      },
+      "unit": "days",
+      "direct_transition": "Breast_Unit_Encounter",
+      "remarks": [
+        "Symptomwahrnehmung → Erstkontakt Mammazentrum: TRIANGULAR 3–10–30 Tage. 🟡",
+        "Kein direkter S3-Referenzwert für diese Latenz; Expertenkonsens."
+      ]
+    },
+    "Breast_Unit_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "Diagnostic_Mammography"
+    },
+    "Diagnostic_Mammography": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "566241000119107",
+          "display": "Diagnostic mammography (procedure)"
+        }
+      ],
+      "direct_transition": "Breast_US_Symp",
+      "remarks": [
+        "Diagnostische Mammographie im symptomatischen Setting (beidseitig)."
+      ]
+    },
+    "Breast_US_Symp": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "47079000",
+          "display": "Ultrasonography of breast (procedure)"
+        }
+      ],
+      "direct_transition": "BI_RADS_Symp_Branch",
+      "remarks": [
+        "Ergänzende Sonographie — Standard in der symptomatischen Diagnostik."
+      ]
+    },
+    "BI_RADS_Symp_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "BI-RADS-Verteilung im symptomatischen Setting (US/NL-Proxy, 🟡):",
+        "4A: 7.6% / 4B: 22.0% / 4C: 69.3% / 5: 0% (hier vereinfacht: alles maligne-positiv gesplittet)",
+        "Da 100% der Patientinnen in diesem Arm Krebs haben, werden hier nur Biopsiepflicht-BI-RADS emittiert.",
+        "Verteilung 4A/4B/4C/5 gemäß Verdachtsgrad — alle führen zur Biopsie."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "BI_RADS_4A_Obs",
+          "distribution": 0.076
+        },
+        {
+          "transition": "BI_RADS_4B_Obs",
+          "distribution": 0.22
+        },
+        {
+          "transition": "BI_RADS_4C_Obs",
+          "distribution": 0.574
+        },
+        {
+          "transition": "BI_RADS_5_Obs",
+          "distribution": 0.13
+        }
+      ]
+    },
+    "BI_RADS_4A_Obs": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "36643-5",
+          "display": "Breast BI-RADS category"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "413099006",
+        "display": "BI-RADS Category 4A (finding)"
+      },
+      "direct_transition": "Biopsy_Wait_Symp"
+    },
+    "BI_RADS_4B_Obs": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "36643-5",
+          "display": "Breast BI-RADS category"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "413100003",
+        "display": "BI-RADS Category 4B (finding)"
+      },
+      "direct_transition": "Biopsy_Wait_Symp"
+    },
+    "BI_RADS_4C_Obs": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "36643-5",
+          "display": "Breast BI-RADS category"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "413101004",
+        "display": "BI-RADS Category 4C (finding)"
+      },
+      "direct_transition": "Biopsy_Wait_Symp"
+    },
+    "BI_RADS_5_Obs": {
+      "type": "Observation",
+      "category": "imaging",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "36643-5",
+          "display": "Breast BI-RADS category"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "413102006",
+        "display": "BI-RADS Category 5 (finding)"
+      },
+      "direct_transition": "Biopsy_Wait_Symp"
+    },
+    "Biopsy_Wait_Symp": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 2,
+          "mode": 7,
+          "max": 21
+        }
+      },
+      "unit": "days",
+      "direct_transition": "Biopsy_Encounter_Symp",
+      "remarks": [
+        "Biopsieindikation → Stanzbiopsie: TRIANGULAR 2–7–21 Tage. OnkoZert KZ 30. 🟢"
+      ]
+    },
+    "Biopsy_Encounter_Symp": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185389009",
+          "display": "Follow-up visit (procedure)"
+        }
+      ],
+      "direct_transition": "Core_Needle_Biopsy_Symp"
+    },
+    "Core_Needle_Biopsy_Symp": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "44578009",
+          "display": "Core needle biopsy of breast (procedure)"
+        }
+      ],
+      "direct_transition": "B_Class_Symp_Obs"
+    },
+    "B_Class_Symp_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85319-2",
+          "display": "B-Klassifikation Stanzbiopsie"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "413448000",
+        "display": "Malignant (qualifier value)"
+      },
+      "direct_transition": "Symp_Biopsy_Enc_End",
+      "remarks": [
+        "B5-Befund (maligne) — symptomatisches Karzinom bestätigt."
+      ]
+    },
+    "Symp_Biopsy_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "DCIS_Check"
+    },
+    "DCIS_Check": {
+      "type": "Simple",
+      "remarks": [
+        "DCIS-Anteil abhängig vom Detektionsweg:",
+        "  Screen-detektiert: ~19% (KoopMammo-Erstuntersuchung, gewichteter Mittel). 🟢",
+        "  Intervall: ~15% (Expertenschätzung, da Intervalltumoren weniger In-situ). 🟡",
+        "  Symptomatisch: ~8% (RKI/ZfKD-Anteil Insitu unter symptomat. Diagnosen). 🟡",
+        "Quelle: Konzept §2, KoopMammo 2023, RKI KID 2025."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_detection_mode",
+            "operator": "==",
+            "value": "screening"
+          },
+          "distributions": [
+            {
+              "transition": "Set_DCIS_True",
+              "distribution": 0.19
+            },
+            {
+              "transition": "Set_Invasive_Path",
+              "distribution": 0.81
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_detection_mode",
+            "operator": "==",
+            "value": "interval"
+          },
+          "distributions": [
+            {
+              "transition": "Set_DCIS_True",
+              "distribution": 0.15
+            },
+            {
+              "transition": "Set_Invasive_Path",
+              "distribution": 0.85
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "Set_DCIS_True",
+              "distribution": 0.08
+            },
+            {
+              "transition": "Set_Invasive_Path",
+              "distribution": 0.92
+            }
+          ]
+        }
+      ]
+    },
+    "Set_DCIS_True": {
+      "type": "SetAttribute",
+      "attribute": "bc_dcis",
+      "value": true,
+      "direct_transition": "DCIS_Onset"
+    },
+    "Set_Invasive_Path": {
+      "type": "SetAttribute",
+      "attribute": "bc_dcis",
+      "value": false,
+      "direct_transition": "Invasive_Onset"
+    },
+    "DCIS_Onset": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "109889007",
+          "display": "Carcinoma in situ of breast (disorder)"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bim/icd-10-gm",
+          "code": "D05.1",
+          "display": "Lobuläres Carcinoma in situ"
+        }
+      ],
+      "direct_transition": "DCIS_MDT_Wait",
+      "remarks": [
+        "DCIS (Carcinoma in situ): ICD-10-GM D05.1, SCT 109889007. ICD-O-3: 8500/2.",
+        "DCIS-Anteil im deutschen Mammographie-Screening: ~19% der screen-detektierten Karzinome.",
+        "Quelle: KoopMammo 2023, RKI KID 2025. 🟢"
+      ]
+    },
+    "DCIS_MDT_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 14,
+          "max": 28
+        }
+      },
+      "unit": "days",
+      "direct_transition": "DCIS_Grade_Encounter",
+      "remarks": [
+        "Diagnose → Therapieplanung (MDT/Tumorkonferenz): OnkoZert KZ 31 — 95.6% innerhalb 4 Wochen.",
+        "S3-Empfehlung: ≤28 Tage. TRIANGULAR 5–14–28 Tage. 🟢"
+      ]
+    },
+    "DCIS_Grade_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "DCIS_Histology_Obs"
+    },
+    "DCIS_Histology_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "http://terminology.hl7.org/CodeSystem/icd-o-3",
+        "code": "8500/2",
+        "display": "Intraductal carcinoma, noninfiltrating"
+      },
+      "direct_transition": "DCIS_Grade_Branch"
+    },
+    "DCIS_Grade_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "DCIS-Grading (nuclear grade / Van Nuys): G1 15% / G2 44% / G3 41%.",
+        "Quelle: DCIS-Register Deutschland, Konzept §4. 🟡"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "DCIS_G1_Obs",
+          "distribution": 0.15
+        },
+        {
+          "transition": "DCIS_G2_Obs",
+          "distribution": 0.44
+        },
+        {
+          "transition": "DCIS_G3_Obs",
+          "distribution": 0.41
+        }
+      ]
+    },
+    "DCIS_G1_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "33732-9",
+          "display": "Histology grade [Identifier] in Cancer specimen"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "54102005",
+        "display": "G1 grade (finding)"
+      },
+      "direct_transition": "DCIS_Grade_Enc_End"
+    },
+    "DCIS_G2_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "33732-9",
+          "display": "Histology grade [Identifier] in Cancer specimen"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1663004",
+        "display": "G2 grade (finding)"
+      },
+      "direct_transition": "DCIS_Grade_Enc_End"
+    },
+    "DCIS_G3_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "33732-9",
+          "display": "Histology grade [Identifier] in Cancer specimen"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "61026006",
+        "display": "G3 grade (finding)"
+      },
+      "direct_transition": "DCIS_Grade_Enc_End"
+    },
+    "DCIS_Grade_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "DCIS_Surgery_Branch"
+    },
+    "DCIS_Surgery_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "DCIS Operationstyp: BET 79.3% / Mastektomie 20.7%.",
+        "Quelle: OnkoZert-Kennzahlen 2023, Konzept §7.1. 🟢"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "DCIS_BET_Encounter",
+          "distribution": 0.793
+        },
+        {
+          "transition": "DCIS_Mastectomy_Encounter",
+          "distribution": 0.207
+        }
+      ]
+    },
+    "DCIS_BET_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "305408004",
+          "display": "Admission to surgical department"
+        }
+      ],
+      "direct_transition": "DCIS_BET_Proc"
+    },
+    "DCIS_BET_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "392021009",
+          "display": "Lumpectomy of breast (procedure)"
+        }
+      ],
+      "direct_transition": "Set_DCIS_Surgery_BET"
+    },
+    "Set_DCIS_Surgery_BET": {
+      "type": "SetAttribute",
+      "attribute": "bc_surgery",
+      "value": "bet",
+      "direct_transition": "DCIS_RT_Branch"
+    },
+    "DCIS_Mastectomy_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "305408004",
+          "display": "Admission to surgical department"
+        }
+      ],
+      "direct_transition": "DCIS_Mastectomy_Proc"
+    },
+    "DCIS_Mastectomy_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "172043006",
+          "display": "Total mastectomy (procedure)"
+        }
+      ],
+      "direct_transition": "DCIS_Mastectomy_Enc_End"
+    },
+    "DCIS_Mastectomy_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "DCIS_Followup_Delay"
+    },
+    "DCIS_RT_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Radiotherapie nach BET bei DCIS: 78.4%.",
+        "Quelle: Onkologischer Jahresbericht, Konzept §7.3. 🟢"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "DCIS_RT_Encounter",
+          "distribution": 0.784
+        },
+        {
+          "transition": "DCIS_BET_Enc_End",
+          "distribution": 0.216
+        }
+      ]
+    },
+    "DCIS_RT_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "DCIS_RT_Proc"
+    },
+    "DCIS_RT_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "228748006",
+          "display": "Radiotherapy to breast (procedure)"
+        }
+      ],
+      "direct_transition": "DCIS_RT_Enc_End",
+      "remarks": [
+        "Adjuvante Strahlentherapie der Restbrust nach BET. Standard: Hypofractionation 40 Gy/2.5 Gy (15 Fr)."
+      ]
+    },
+    "DCIS_RT_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "DCIS_Followup_Delay"
+    },
+    "DCIS_BET_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "DCIS_Followup_Delay"
+    },
+    "DCIS_Followup_Delay": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 300,
+          "mode": 365,
+          "max": 420
+        }
+      },
+      "unit": "days",
+      "direct_transition": "DCIS_Terminal",
+      "remarks": [
+        "Jährliche Nachsorge-Mammographie nach DCIS. Nach 10 Jahren ohne Rezidiv → Terminal.",
+        "DCIS hat kein Rezidiv-Hazard-Modell in v1 (Konzept: keine TRM-Jahresraten für DCIS-Rezidiv verfügbar)."
+      ]
+    },
+    "DCIS_Terminal": {
+      "type": "Terminal"
+    },
+    "Invasive_Onset": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "254837009",
+          "display": "Malignant neoplasm of breast (disorder)"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bim/icd-10-gm",
+          "code": "C50.9",
+          "display": "Bösartige Neubildung der Brust, nicht näher bezeichnet"
+        }
+      ],
+      "direct_transition": "Laterality_Branch",
+      "remarks": [
+        "Invasives Mammakarzinom: SCT 254837009, ICD-10-GM C50.9.",
+        "Tritt nach DCIS_Check→Set_Invasive_Path auf (80–92% der Fälle, je nach Detektionsweg)."
+      ]
+    },
+    "Laterality_Branch": {
+      "type": "Simple",
+      "distributed_transition": [
+        {
+          "transition": "Set_Laterality_Left",
+          "distribution": 0.5
+        },
+        {
+          "transition": "Set_Laterality_Right",
+          "distribution": 0.5
+        }
+      ],
+      "remarks": [
+        "Seitenverteilung 50/50 (leicht L-Überhang bekannt, hier vereinfacht). 🟡"
+      ]
+    },
+    "Set_Laterality_Left": {
+      "type": "SetAttribute",
+      "attribute": "bc_laterality",
+      "value": "left",
+      "direct_transition": "Histology_Branch"
+    },
+    "Set_Laterality_Right": {
+      "type": "SetAttribute",
+      "attribute": "bc_laterality",
+      "value": "right",
+      "direct_transition": "Histology_Branch"
+    },
+    "Histology_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Histologischer Typ: NST (no special type, ehem. duktal-invasiv) 73% / Lobulär 12% / Andere 15%.",
+        "Quelle: IQWiG/Deutsche Gesellschaft für Senologie, Konzept §4. 🟢"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Histology_NST_Obs",
+          "distribution": 0.73
+        },
+        {
+          "transition": "Histology_Lobular_Obs",
+          "distribution": 0.12
+        },
+        {
+          "transition": "Histology_Other_Obs",
+          "distribution": 0.15
+        }
+      ]
+    },
+    "Histology_NST_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "http://terminology.hl7.org/CodeSystem/icd-o-3",
+        "code": "8500/3",
+        "display": "Invasive carcinoma of no special type"
+      },
+      "direct_transition": "Subtype_Branch"
+    },
+    "Histology_Lobular_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "http://terminology.hl7.org/CodeSystem/icd-o-3",
+        "code": "8520/3",
+        "display": "Lobular carcinoma"
+      },
+      "direct_transition": "Subtype_Branch"
+    },
+    "Histology_Other_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "59847-4",
+          "display": "Histology and Behavior ICD-O-3 Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "http://terminology.hl7.org/CodeSystem/icd-o-3",
+        "code": "8522/3",
+        "display": "Infiltrating duct and lobular carcinoma"
+      },
+      "direct_transition": "Subtype_Branch"
+    },
+    "Subtype_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Subtyp-Verteilung (TRM München 2016, St.-Gallen-Klassifikation, Ki-67-Cutoff 14%):",
+        "  Luminal A (HR+/HER2-/Ki67<14%/PR+): 35.7%",
+        "  Luminal B HER2- (HR+/HER2-/Ki67≥14% oder PR-): 40.8%",
+        "  Luminal B HER2+ (HR+/HER2+): 10.5%",
+        "  HER2-enriched (HR-/HER2+): 4.2%",
+        "  TNBC (HR-/HER2-): 8.7%",
+        "Subtyp ist ABGELEITET (nicht primär gezogen), aber für Synthea-v1 als distributed_transition modelliert.",
+        "Subtyp-bedingte Konditionierung auf Detektionsweg (Braun 2018) in v2 nachrüsten.",
+        "Quelle: TRM München 2016 (50–69-Altersband). 🟢"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Set_Subtype_LumA",
+          "distribution": 0.357
+        },
+        {
+          "transition": "Set_Subtype_LumBHER2neg",
+          "distribution": 0.408
+        },
+        {
+          "transition": "Set_Subtype_LumBHER2pos",
+          "distribution": 0.105
+        },
+        {
+          "transition": "Set_Subtype_HER2enr",
+          "distribution": 0.042
+        },
+        {
+          "transition": "Set_Subtype_TNBC",
+          "distribution": 0.088
+        }
+      ]
+    },
+    "Set_Subtype_LumA": {
+      "type": "SetAttribute",
+      "attribute": "bc_subtype",
+      "value": "luma",
+      "direct_transition": "Biomarker_LumA_ER"
+    },
+    "Set_Subtype_LumBHER2neg": {
+      "type": "SetAttribute",
+      "attribute": "bc_subtype",
+      "value": "lumbher2neg",
+      "direct_transition": "Biomarker_LumBneg_ER"
+    },
+    "Set_Subtype_LumBHER2pos": {
+      "type": "SetAttribute",
+      "attribute": "bc_subtype",
+      "value": "lumbher2pos",
+      "direct_transition": "Biomarker_LumBpos_ER"
+    },
+    "Set_Subtype_HER2enr": {
+      "type": "SetAttribute",
+      "attribute": "bc_subtype",
+      "value": "her2enr",
+      "direct_transition": "Biomarker_HER2enr_ER"
+    },
+    "Set_Subtype_TNBC": {
+      "type": "SetAttribute",
+      "attribute": "bc_subtype",
+      "value": "tnbc",
+      "direct_transition": "Biomarker_TNBC_ER"
+    },
+    "Biomarker_LumA_ER": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "40556-3",
+          "display": "Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "range": {
+        "low": 80,
+        "high": 100
+      },
+      "direct_transition": "Biomarker_LumA_PR",
+      "remarks": [
+        "ER positiv 80–100% — LumA. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_LumA_PR": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85319-2",
+          "display": "Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "range": {
+        "low": 50,
+        "high": 95
+      },
+      "direct_transition": "Biomarker_LumA_HER2",
+      "remarks": [
+        "PR 50–95% — LumA. 🟢"
+      ]
+    },
+    "Biomarker_LumA_HER2": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "48676-1",
+          "display": "HER2 [interpretation] in Tissue"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "260385009",
+        "display": "Negative (qualifier value)"
+      },
+      "direct_transition": "Biomarker_LumA_Ki67",
+      "remarks": [
+        "HER2 Negative — LumA. 🟢"
+      ]
+    },
+    "Biomarker_LumA_Ki67": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "29593-1",
+          "display": "Ki-67 nuclear antigen index in Breast cancer specimen"
+        }
+      ],
+      "range": {
+        "low": 5,
+        "high": 14
+      },
+      "direct_transition": "Biomarker_LumA_Grade",
+      "remarks": [
+        "Ki-67 5–14% — LumA. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_LumA_Grade": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "33732-9",
+          "display": "Histology grade [Identifier] in Cancer specimen"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "54102005",
+        "display": "G1 grade (finding)"
+      },
+      "direct_transition": "MDT_Wait",
+      "remarks": [
+        "Grading G1 — LumA. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_LumBneg_ER": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "40556-3",
+          "display": "Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "range": {
+        "low": 60,
+        "high": 100
+      },
+      "direct_transition": "Biomarker_LumBneg_PR",
+      "remarks": [
+        "ER positiv 60–100% — LumBneg. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_LumBneg_PR": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85319-2",
+          "display": "Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "range": {
+        "low": 0,
+        "high": 60
+      },
+      "direct_transition": "Biomarker_LumBneg_HER2",
+      "remarks": [
+        "PR 0–60% — LumBneg. 🟢"
+      ]
+    },
+    "Biomarker_LumBneg_HER2": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "48676-1",
+          "display": "HER2 [interpretation] in Tissue"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "260385009",
+        "display": "Negative (qualifier value)"
+      },
+      "direct_transition": "Biomarker_LumBneg_Ki67",
+      "remarks": [
+        "HER2 Negative — LumBneg. 🟢"
+      ]
+    },
+    "Biomarker_LumBneg_Ki67": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "29593-1",
+          "display": "Ki-67 nuclear antigen index in Breast cancer specimen"
+        }
+      ],
+      "range": {
+        "low": 15,
+        "high": 40
+      },
+      "direct_transition": "Biomarker_LumBneg_Grade",
+      "remarks": [
+        "Ki-67 15–40% — LumBneg. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_LumBneg_Grade": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "33732-9",
+          "display": "Histology grade [Identifier] in Cancer specimen"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1663004",
+        "display": "G2 grade (finding)"
+      },
+      "direct_transition": "MDT_Wait",
+      "remarks": [
+        "Grading G2 — LumBneg. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_LumBpos_ER": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "40556-3",
+          "display": "Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "range": {
+        "low": 50,
+        "high": 100
+      },
+      "direct_transition": "Biomarker_LumBpos_PR",
+      "remarks": [
+        "ER positiv 50–100% — LumBpos. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_LumBpos_PR": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85319-2",
+          "display": "Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "range": {
+        "low": 0,
+        "high": 70
+      },
+      "direct_transition": "Biomarker_LumBpos_HER2",
+      "remarks": [
+        "PR 0–70% — LumBpos. 🟢"
+      ]
+    },
+    "Biomarker_LumBpos_HER2": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "48676-1",
+          "display": "HER2 [interpretation] in Tissue"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "10828004",
+        "display": "Positive (qualifier value)"
+      },
+      "direct_transition": "Biomarker_LumBpos_Ki67",
+      "remarks": [
+        "HER2 Positive — LumBpos. 🟢"
+      ]
+    },
+    "Biomarker_LumBpos_Ki67": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "29593-1",
+          "display": "Ki-67 nuclear antigen index in Breast cancer specimen"
+        }
+      ],
+      "range": {
+        "low": 15,
+        "high": 40
+      },
+      "direct_transition": "Biomarker_LumBpos_Grade",
+      "remarks": [
+        "Ki-67 15–40% — LumBpos. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_LumBpos_Grade": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "33732-9",
+          "display": "Histology grade [Identifier] in Cancer specimen"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1663004",
+        "display": "G2 grade (finding)"
+      },
+      "direct_transition": "MDT_Wait",
+      "remarks": [
+        "Grading G2 — LumBpos. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_HER2enr_ER": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "40556-3",
+          "display": "Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "exact": {
+        "quantity": 0
+      },
+      "direct_transition": "Biomarker_HER2enr_PR",
+      "remarks": [
+        "ER negativ — HER2enr."
+      ]
+    },
+    "Biomarker_HER2enr_PR": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85319-2",
+          "display": "Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "exact": {
+        "quantity": 0
+      },
+      "direct_transition": "Biomarker_HER2enr_HER2",
+      "remarks": [
+        "PR negativ — HER2enr."
+      ]
+    },
+    "Biomarker_HER2enr_HER2": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "48676-1",
+          "display": "HER2 [interpretation] in Tissue"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "10828004",
+        "display": "Positive (qualifier value)"
+      },
+      "direct_transition": "Biomarker_HER2enr_Ki67",
+      "remarks": [
+        "HER2 Positive — HER2enr. 🟢"
+      ]
+    },
+    "Biomarker_HER2enr_Ki67": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "29593-1",
+          "display": "Ki-67 nuclear antigen index in Breast cancer specimen"
+        }
+      ],
+      "range": {
+        "low": 35,
+        "high": 60
+      },
+      "direct_transition": "Biomarker_HER2enr_Grade",
+      "remarks": [
+        "Ki-67 35–60% — HER2enr. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_HER2enr_Grade": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "33732-9",
+          "display": "Histology grade [Identifier] in Cancer specimen"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "61026006",
+        "display": "G3 grade (finding)"
+      },
+      "direct_transition": "MDT_Wait",
+      "remarks": [
+        "Grading G3 — HER2enr. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_TNBC_ER": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "40556-3",
+          "display": "Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "exact": {
+        "quantity": 0
+      },
+      "direct_transition": "Biomarker_TNBC_PR",
+      "remarks": [
+        "ER negativ — TNBC."
+      ]
+    },
+    "Biomarker_TNBC_PR": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85319-2",
+          "display": "Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+        }
+      ],
+      "exact": {
+        "quantity": 0
+      },
+      "direct_transition": "Biomarker_TNBC_HER2",
+      "remarks": [
+        "PR negativ — TNBC."
+      ]
+    },
+    "Biomarker_TNBC_HER2": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "48676-1",
+          "display": "HER2 [interpretation] in Tissue"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "260385009",
+        "display": "Negative (qualifier value)"
+      },
+      "direct_transition": "Biomarker_TNBC_Ki67",
+      "remarks": [
+        "HER2 Negative — TNBC. 🟢"
+      ]
+    },
+    "Biomarker_TNBC_Ki67": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "29593-1",
+          "display": "Ki-67 nuclear antigen index in Breast cancer specimen"
+        }
+      ],
+      "range": {
+        "low": 50,
+        "high": 80
+      },
+      "direct_transition": "Biomarker_TNBC_Grade",
+      "remarks": [
+        "Ki-67 50–80% — TNBC. 🟢 TRM München 2016."
+      ]
+    },
+    "Biomarker_TNBC_Grade": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "33732-9",
+          "display": "Histology grade [Identifier] in Cancer specimen"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "61026006",
+        "display": "G3 grade (finding)"
+      },
+      "direct_transition": "MDT_Wait",
+      "remarks": [
+        "Grading G3 — TNBC. 🟢 TRM München 2016."
+      ]
+    },
+    "MDT_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 5,
+          "mode": 14,
+          "max": 28
+        }
+      },
+      "unit": "days",
+      "direct_transition": "Staging_M1_Check",
+      "remarks": [
+        "Diagnose → Tumorkonferenz / Therapieplanung: S3-Empfehlung ≤28 Tage.",
+        "OnkoZert KZ 31: 95.6% innerhalb 4 Wochen. TRIANGULAR 5–14–28 Tage. 🟢"
+      ]
+    },
+    "Staging_M1_Check": {
+      "type": "Simple",
+      "remarks": [
+        "De-novo-M1-Anteil bei Erstdiagnose, subtyp-konditioniert (TRM München):",
+        "  LumA 2.6%, LumBHER2neg 7.2%, LumBHER2pos 10.1%, HER2enr 13.2%, TNBC 6.0%.",
+        "Hier: gewichteter Populationsmittel 6.2% (TRM, 50–59 J., direkt gemessen). 🟢",
+        "Subtyp-bedingte Konditionierung in v2 ergänzen (complex_transition nach bc_subtype)."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Set_M1_Flag",
+          "distribution": 0.062
+        },
+        {
+          "transition": "Stage_Group_Branch",
+          "distribution": 0.938
+        }
+      ]
+    },
+    "Set_M1_Flag": {
+      "type": "SetAttribute",
+      "attribute": "bc_m1",
+      "value": true,
+      "direct_transition": "cT_M1_Obs"
+    },
+    "cT_M1_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352972002",
+        "display": "cT2 (UICC)"
+      },
+      "direct_transition": "cN_M1_Obs"
+    },
+    "cN_M1_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353043007",
+        "display": "cN1 (UICC)"
+      },
+      "direct_transition": "cM_M1_Obs"
+    },
+    "cM_M1_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352514000",
+        "display": "cM1b (UICC)"
+      },
+      "direct_transition": "UICC_IV_Obs",
+      "remarks": [
+        "cM1b: Knochen-Metastase als häufigster M1-Typ beim Mammakarzinom. 🟡"
+      ]
+    },
+    "UICC_IV_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21908-9",
+          "display": "Stage group.clinical Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1228895000",
+        "display": "American Joint Commission on Cancer stage IV (qualifier value)"
+      },
+      "direct_transition": "M1_Diagnosis"
+    },
+    "Stage_Group_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "UICC-Stadienverteilung (M0-Fälle) bei Erstdiagnose, 50–69 J. (RKI KID 2025):",
+        "  Stadium I: 54.5% (51% / 0.938 renormiert)",
+        "  Stadium II: 37.3% (35% / 0.938)",
+        "  Stadium III: 7.5% (7% / 0.938)",
+        "Quelle: RKI Krebs in Deutschland 2025, 50–69 J. 🟢"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Set_Stage_I",
+          "distribution": 0.545
+        },
+        {
+          "transition": "Set_Stage_II",
+          "distribution": 0.373
+        },
+        {
+          "transition": "Set_Stage_III",
+          "distribution": 0.075
+        },
+        {
+          "transition": "Set_Stage_IIB_fallback",
+          "distribution": 0.007
+        }
+      ]
+    },
+    "Set_Stage_I": {
+      "type": "SetAttribute",
+      "attribute": "bc_uicc_stage",
+      "value": "I",
+      "direct_transition": "cT_I_Obs"
+    },
+    "cT_I_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352973007",
+        "display": "cT1c (UICC)"
+      },
+      "direct_transition": "cN_I_Obs"
+    },
+    "cN_I_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353041009",
+        "display": "cN0 (UICC)"
+      },
+      "direct_transition": "cM_I_Obs"
+    },
+    "cM_I_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352512001",
+        "display": "cM0 (UICC)"
+      },
+      "direct_transition": "pT_I_Obs"
+    },
+    "pT_I_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1229946007",
+        "display": "pT1c (UICC)"
+      },
+      "direct_transition": "pN_I_Obs"
+    },
+    "pN_I_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21900-6",
+          "display": "Regional lymph nodes.pathology [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352621009",
+        "display": "pN0 (UICC)"
+      },
+      "direct_transition": "UICC_I_Obs"
+    },
+    "UICC_I_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21908-9",
+          "display": "Stage group.clinical Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1228882005",
+        "display": "American Joint Commission on Cancer stage I (qualifier value)"
+      },
+      "direct_transition": "Set_M0_Flag"
+    },
+    "Set_Stage_II": {
+      "type": "SetAttribute",
+      "attribute": "bc_uicc_stage",
+      "value": "II",
+      "direct_transition": "cT_II_Obs"
+    },
+    "Set_Stage_IIB_fallback": {
+      "type": "SetAttribute",
+      "attribute": "bc_uicc_stage",
+      "value": "II",
+      "direct_transition": "cT_II_Obs"
+    },
+    "cT_II_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352972002",
+        "display": "cT2 (UICC)"
+      },
+      "direct_transition": "cN_II_Obs"
+    },
+    "cN_II_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353043007",
+        "display": "cN1 (UICC)"
+      },
+      "direct_transition": "cM_II_Obs"
+    },
+    "cM_II_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352512001",
+        "display": "cM0 (UICC)"
+      },
+      "direct_transition": "pT_II_Obs"
+    },
+    "pT_II_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352545001",
+        "display": "pT2 (UICC)"
+      },
+      "direct_transition": "pN_II_Obs"
+    },
+    "pN_II_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21900-6",
+          "display": "Regional lymph nodes.pathology [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352614009",
+        "display": "pN1 (UICC)"
+      },
+      "direct_transition": "UICC_II_Obs"
+    },
+    "UICC_II_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21908-9",
+          "display": "Stage group.clinical Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1228884006",
+        "display": "American Joint Commission on Cancer stage II (qualifier value)"
+      },
+      "direct_transition": "Set_M0_Flag"
+    },
+    "Set_Stage_III": {
+      "type": "SetAttribute",
+      "attribute": "bc_uicc_stage",
+      "value": "III",
+      "direct_transition": "cT_III_Obs"
+    },
+    "cT_III_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21905-5",
+          "display": "Primary tumor.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352989005",
+        "display": "cT3 (UICC)"
+      },
+      "direct_transition": "cN_III_Obs"
+    },
+    "cN_III_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21906-3",
+          "display": "Regional lymph nodes.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1353044001",
+        "display": "cN2 (UICC)"
+      },
+      "direct_transition": "cM_III_Obs"
+    },
+    "cM_III_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21907-1",
+          "display": "Distant metastases.clinical [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352512001",
+        "display": "cM0 (UICC)"
+      },
+      "direct_transition": "pT_III_Obs"
+    },
+    "pT_III_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352551006",
+        "display": "pT3 (UICC)"
+      },
+      "direct_transition": "pN_III_Obs"
+    },
+    "pN_III_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21900-6",
+          "display": "Regional lymph nodes.pathology [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352614009",
+        "display": "pN1 (UICC)"
+      },
+      "direct_transition": "UICC_III_Obs"
+    },
+    "UICC_III_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21908-9",
+          "display": "Stage group.clinical Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1228889001",
+        "display": "American Joint Commission on Cancer stage III (qualifier value)"
+      },
+      "direct_transition": "Set_M0_Flag"
+    },
+    "Set_M0_Flag": {
+      "type": "SetAttribute",
+      "attribute": "bc_m1",
+      "value": false,
+      "direct_transition": "NAC_Branch"
+    },
+    "NAC_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Neoadjuvante Chemotherapie (PST): subtyp-bedingte Frequenz (Ortmann 2023, alterskorr. für 50-60 J.):",
+        "  TNBC: 31.8% | HER2-enriched: 31.9% | LumBHER2+: 26.5% | LumBHER2-: 5.8% | LumA: 5.8%",
+        "Hier vereinfacht als complex_transition nach bc_subtype. 🟢",
+        "M1-Patienten werden über Set_M1_Flag direkt zur M1_Diagnosis geleitet (kein NAC)."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_m1",
+            "operator": "==",
+            "value": true
+          },
+          "transition": "M1_Diagnosis"
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "tnbc"
+          },
+          "distributions": [
+            {
+              "transition": "NAC_Encounter",
+              "distribution": 0.318
+            },
+            {
+              "transition": "Surgery_Branch",
+              "distribution": 0.682
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "her2enr"
+          },
+          "distributions": [
+            {
+              "transition": "NAC_Encounter",
+              "distribution": 0.319
+            },
+            {
+              "transition": "Surgery_Branch",
+              "distribution": 0.681
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "lumbbher2pos"
+          },
+          "distributions": [
+            {
+              "transition": "NAC_Encounter",
+              "distribution": 0.265
+            },
+            {
+              "transition": "Surgery_Branch",
+              "distribution": 0.735
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "NAC_Encounter",
+              "distribution": 0.058
+            },
+            {
+              "transition": "Surgery_Branch",
+              "distribution": 0.942
+            }
+          ]
+        }
+      ]
+    },
+    "NAC_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "Set_NAC_Flag"
+    },
+    "Set_NAC_Flag": {
+      "type": "SetAttribute",
+      "attribute": "bc_neoadjuvant",
+      "value": true,
+      "direct_transition": "NAC_Chemo_Proc"
+    },
+    "NAC_Chemo_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "367336001",
+          "display": "Chemotherapy (procedure)"
+        }
+      ],
+      "direct_transition": "NAC_Trastuzumab_Branch",
+      "remarks": [
+        "NAC-Regime: FEC-Taxan (HR+/HER2-) oder Carboplatin-Taxan (TNBC) — als generische Chemotherapie kodiert.",
+        "Subtyp-spezifische Protokolle in v2 via separate Procedure-States modellieren."
+      ]
+    },
+    "NAC_Trastuzumab_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Trastuzumab + Pertuzumab für HER2+ im NAC-Setting. Standard in DE seit 2013. 🟢"
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Or",
+            "conditions": [
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "lumbbher2pos"
+              },
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "her2enr"
+              }
+            ]
+          },
+          "transition": "NAC_Trastuzumab_Order"
+        },
+        {
+          "transition": "NAC_Duration_Wait"
+        }
+      ]
+    },
+    "NAC_Trastuzumab_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FD01",
+          "display": "trastuzumab"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FD01",
+          "display": "Trastuzumab"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "NAC_Pertuzumab_Order",
+      "remarks": [
+        "Trastuzumab im NAC-Setting (duale HER2-Blockade mit Pertuzumab). ATC L01FD01. 🟢"
+      ]
+    },
+    "NAC_Pertuzumab_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FD02",
+          "display": "pertuzumab"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FD02",
+          "display": "Pertuzumab"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "NAC_Duration_Wait",
+      "remarks": [
+        "Pertuzumab (duale HER2-Blockade). ATC L01FD02. 🟢"
+      ]
+    },
+    "NAC_Duration_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 120,
+          "mode": 168,
+          "max": 210
+        }
+      },
+      "unit": "days",
+      "direct_transition": "pCR_Branch",
+      "remarks": [
+        "NAC-Dauer: 4–6 Monate (TRIANGULAR 120–168–210 Tage). 🟢 S3-Standard."
+      ]
+    },
+    "pCR_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "pCR-Raten (ypT0/is ypN0) nach NAC, subtyp-bedingt (Calibration Part C §3.3, Ortmann 2023):",
+        "  TNBC: 38% | HER2-enriched: 53% | LumBHER2+: 36% | HR+/HER2-: 12% | LumA: 12%",
+        "Hier als gewichtetes Mittel modelliert; subtyp-bedingte complex_transition in v2.",
+        "Weighted mean: (0.357×0.12 + 0.408×0.12 + 0.105×0.36 + 0.042×0.53 + 0.088×0.38) = ~0.19"
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "tnbc"
+          },
+          "distributions": [
+            {
+              "transition": "Set_pCR_True",
+              "distribution": 0.38
+            },
+            {
+              "transition": "Set_pCR_False",
+              "distribution": 0.62
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "her2enr"
+          },
+          "distributions": [
+            {
+              "transition": "Set_pCR_True",
+              "distribution": 0.53
+            },
+            {
+              "transition": "Set_pCR_False",
+              "distribution": 0.47
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "lumbbher2pos"
+          },
+          "distributions": [
+            {
+              "transition": "Set_pCR_True",
+              "distribution": 0.36
+            },
+            {
+              "transition": "Set_pCR_False",
+              "distribution": 0.64
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "Set_pCR_True",
+              "distribution": 0.12
+            },
+            {
+              "transition": "Set_pCR_False",
+              "distribution": 0.88
+            }
+          ]
+        }
+      ]
+    },
+    "Set_pCR_True": {
+      "type": "SetAttribute",
+      "attribute": "bc_pcr",
+      "value": true,
+      "direct_transition": "ypTNM_Obs"
+    },
+    "Set_pCR_False": {
+      "type": "SetAttribute",
+      "attribute": "bc_pcr",
+      "value": false,
+      "direct_transition": "NAC_Residual_Escalation_Branch"
+    },
+    "ypTNM_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21899-0",
+          "display": "Primary tumor.pathology Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352633004",
+        "display": "ypT0 (UICC)"
+      },
+      "direct_transition": "ypN0_Obs",
+      "remarks": [
+        "ypT0 — komplette pathologische Remission nach NAC. SCT 1352633004. 🟢"
+      ]
+    },
+    "ypN0_Obs": {
+      "type": "Observation",
+      "category": "laboratory",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "21900-6",
+          "display": "Regional lymph nodes.pathology [Class] Cancer"
+        }
+      ],
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1352797005",
+        "display": "ypN0 (UICC)"
+      },
+      "direct_transition": "NAC_Enc_End",
+      "remarks": [
+        "ypN0 nach NAC. SCT 1352797005. 🟢"
+      ]
+    },
+    "NAC_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Surgery_Branch"
+    },
+    "NAC_Residual_Escalation_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Eskalation bei Residualtumor nach NAC (S3-Leitlinie, Calibration C §3.4):",
+        "  HER2+: T-DM1 (Trastuzumab-Emtansin) — CREATE-X / KATHERINE-Daten",
+        "  TNBC: Capecitabin oder Olaparib (bei gBRCA)",
+        "  HR+: weiter mit adjuvanter Chemotherapie + Endokrintherapie"
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Or",
+            "conditions": [
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "lumbbher2pos"
+              },
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "her2enr"
+              }
+            ]
+          },
+          "transition": "T_DM1_Order"
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "tnbc"
+          },
+          "transition": "Capecitabine_Order"
+        },
+        {
+          "transition": "NAC_Residual_Enc_End"
+        }
+      ]
+    },
+    "T_DM1_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FD03",
+          "display": "trastuzumab emtansine"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FD03",
+          "display": "Trastuzumab Emtansin (T-DM1)"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "NAC_Residual_Enc_End",
+      "remarks": [
+        "T-DM1 bei HER2+ Residualtumor nach NAC (KATHERINE). ATC L01FD03. 🟢"
+      ]
+    },
+    "Capecitabine_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01BC06",
+          "display": "capecitabine"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01BC06",
+          "display": "Capecitabin"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "NAC_Residual_Enc_End",
+      "remarks": [
+        "Capecitabin bei TNBC Residualtumor nach NAC (CREATE-X). ATC L01BC06. 🟢"
+      ]
+    },
+    "NAC_Residual_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Surgery_Branch"
+    },
+    "Surgery_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Operationstyp BET vs. Mastektomie, stadien-abhängig:",
+        "  Stadium I: 86.2% BET / 13.8% Mastektomie",
+        "  Stadium II: 70.5% BET / 29.5% Mastektomie",
+        "  Stadium III: 57.5% BET / 42.5% Mastektomie",
+        "Hier als Gesamtmittel (gewichtet I/II/III): ~78% BET / 22% Mastektomie.",
+        "Quelle: OnkoZert-Auswertung 2023, Konzept §7.1. 🟢"
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_uicc_stage",
+            "operator": "==",
+            "value": "I"
+          },
+          "distributions": [
+            {
+              "transition": "BET_Encounter",
+              "distribution": 0.862
+            },
+            {
+              "transition": "Mastectomy_Encounter",
+              "distribution": 0.138
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_uicc_stage",
+            "operator": "==",
+            "value": "II"
+          },
+          "distributions": [
+            {
+              "transition": "BET_Encounter",
+              "distribution": 0.705
+            },
+            {
+              "transition": "Mastectomy_Encounter",
+              "distribution": 0.295
+            }
+          ]
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_uicc_stage",
+            "operator": "==",
+            "value": "III"
+          },
+          "distributions": [
+            {
+              "transition": "BET_Encounter",
+              "distribution": 0.575
+            },
+            {
+              "transition": "Mastectomy_Encounter",
+              "distribution": 0.425
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "BET_Encounter",
+              "distribution": 0.75
+            },
+            {
+              "transition": "Mastectomy_Encounter",
+              "distribution": 0.25
+            }
+          ]
+        }
+      ]
+    },
+    "BET_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "305408004",
+          "display": "Admission to surgical department"
+        }
+      ],
+      "direct_transition": "BET_Proc"
+    },
+    "BET_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "392021009",
+          "display": "Lumpectomy of breast (procedure)"
+        }
+      ],
+      "direct_transition": "SLNB_Branch",
+      "remarks": [
+        "Brusterhaltende Therapie (BET) / Lumpektomie. SCT 392021009.",
+        "bodySite wird im postprocess_ccdm.py auf bc_laterality + Quadrant ergänzt (v1: kein Quadrant-Attribut)."
+      ]
+    },
+    "Mastectomy_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "305408004",
+          "display": "Admission to surgical department"
+        }
+      ],
+      "direct_transition": "Mastectomy_Proc"
+    },
+    "Mastectomy_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "172043006",
+          "display": "Total mastectomy (procedure)"
+        }
+      ],
+      "direct_transition": "ALND_Branch",
+      "remarks": [
+        "Totale Mastektomie. SCT 172043006. bodySite = bc_laterality."
+      ]
+    },
+    "SLNB_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Sentinel-Lymphknotenbiopsie (SLNB) bei klinisch N0 (cN0): ~95%.",
+        "Bei vorbekanntem cN+ → ALND direkt. Hier vereinfacht: 90% SLNB / 10% direkt ALND.",
+        "Quelle: S3-Leitlinie Mammakarzinom, Konzept §7.2. 🟢"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "SLNB_Proc",
+          "distribution": 0.9
+        },
+        {
+          "transition": "ALND_Branch_Post_BET",
+          "distribution": 0.1
+        }
+      ]
+    },
+    "SLNB_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "234262008",
+          "display": "Sentinel lymph node biopsy of breast (procedure)"
+        }
+      ],
+      "direct_transition": "ALND_Branch_Post_BET",
+      "remarks": [
+        "Sentinel-Lymphknotenbiopsie (SCT 234262008)."
+      ]
+    },
+    "ALND_Branch_Post_BET": {
+      "type": "Simple",
+      "remarks": [
+        "ALND nach SLNB bei positiven Sentinel-Knoten oder primär cN+: ~25% der BET-Patientinnen.",
+        "Quelle: OnkoZert 2023. 🟡"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "ALND_Proc_BET",
+          "distribution": 0.25
+        },
+        {
+          "transition": "Set_Surgery_BET",
+          "distribution": 0.75
+        }
+      ]
+    },
+    "ALND_Proc_BET": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "79544006",
+          "display": "Complete axillary lymph node dissection (procedure)"
+        }
+      ],
+      "direct_transition": "Set_Surgery_BET"
+    },
+    "Set_Surgery_BET": {
+      "type": "SetAttribute",
+      "attribute": "bc_surgery",
+      "value": "bet",
+      "direct_transition": "Surgery_Enc_End_BET"
+    },
+    "Surgery_Enc_End_BET": {
+      "type": "EncounterEnd",
+      "direct_transition": "RT_Branch"
+    },
+    "ALND_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "ALND bei Mastektomie: ~60% (cN+ oder post-NAC N+). 🟡"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "ALND_Proc_Mast",
+          "distribution": 0.6
+        },
+        {
+          "transition": "Set_Surgery_Mastectomy",
+          "distribution": 0.4
+        }
+      ]
+    },
+    "ALND_Proc_Mast": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "79544006",
+          "display": "Complete axillary lymph node dissection (procedure)"
+        }
+      ],
+      "direct_transition": "Set_Surgery_Mastectomy"
+    },
+    "Set_Surgery_Mastectomy": {
+      "type": "SetAttribute",
+      "attribute": "bc_surgery",
+      "value": "mastectomy",
+      "direct_transition": "Surgery_Enc_End_Mast"
+    },
+    "Surgery_Enc_End_Mast": {
+      "type": "EncounterEnd",
+      "direct_transition": "RT_Branch"
+    },
+    "RT_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Radiotherapie-Indikation:",
+        "  Nach BET (invasiv): ~91% erhalten adjuvante Strahlentherapie. 🟢 (S3-Standard)",
+        "  Nach Mastektomie + pN+/T3-T4: ~60%. 🟢",
+        "  Nach Mastektomie + pN0/T1-T2: ~10%.",
+        "Hier vereinfacht auf bc_surgery-Attribut."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_surgery",
+            "operator": "==",
+            "value": "bet"
+          },
+          "distributions": [
+            {
+              "transition": "RT_Breast_Encounter",
+              "distribution": 0.91
+            },
+            {
+              "transition": "Systemic_Therapy_Branch",
+              "distribution": 0.09
+            }
+          ]
+        },
+        {
+          "distributions": [
+            {
+              "transition": "RT_Chestwall_Encounter",
+              "distribution": 0.6
+            },
+            {
+              "transition": "Systemic_Therapy_Branch",
+              "distribution": 0.4
+            }
+          ]
+        }
+      ]
+    },
+    "RT_Breast_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "RT_Whole_Breast_Proc"
+    },
+    "RT_Whole_Breast_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "228748006",
+          "display": "Radiotherapy to breast (procedure)"
+        }
+      ],
+      "direct_transition": "RT_Axilla_Branch",
+      "remarks": [
+        "Adjuvante Strahlentherapie der Restbrust nach BET.",
+        "Standard DE: Hypofraktionierung 40 Gy / 2.5 Gy in 16 Fraktionen (START-B / ASTRO)."
+      ]
+    },
+    "RT_Axilla_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Lokoregionäre RT (Axilla + Supraklavikula) bei pN+: ~60% nach BET. 🟡"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "RT_Axilla_Proc",
+          "distribution": 0.6
+        },
+        {
+          "transition": "RT_Breast_Enc_End",
+          "distribution": 0.4
+        }
+      ]
+    },
+    "RT_Axilla_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "228751009",
+          "display": "Radiotherapy to axilla (procedure)"
+        }
+      ],
+      "direct_transition": "RT_Breast_Enc_End"
+    },
+    "RT_Breast_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Systemic_Therapy_Branch"
+    },
+    "RT_Chestwall_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "RT_Chestwall_Proc"
+    },
+    "RT_Chestwall_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "228752002",
+          "display": "Radiotherapy to chest wall (procedure)"
+        }
+      ],
+      "direct_transition": "RT_Chestwall_Enc_End",
+      "remarks": [
+        "Strahlentherapie der Thoraxwand nach Mastektomie bei pN+ oder T3/T4."
+      ]
+    },
+    "RT_Chestwall_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Systemic_Therapy_Branch"
+    },
+    "Systemic_Therapy_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Systemtherapie-Verzweigung nach Subtyp:",
+        "  HR+ (LumA, LumBHER2-): Endokrintherapie",
+        "  HER2+ (LumBHER2+, HER2enr): Trastuzumab ± Endokrintherapie",
+        "  TNBC: ggf. Pembrolizumab (PD-L1+, KEYNOTE-522) oder Olaparib (gBRCA)",
+        "  M1: direkt zu M1_Palliative (wurde schon vor Chirurgie gerouted über NAC_Branch)"
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Or",
+            "conditions": [
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "luma"
+              },
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "lumbbher2neg"
+              }
+            ]
+          },
+          "transition": "Endocrine_Branch"
+        },
+        {
+          "condition": {
+            "condition_type": "Or",
+            "conditions": [
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "lumbbher2pos"
+              },
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "her2enr"
+              }
+            ]
+          },
+          "transition": "Trastuzumab_Adjuvant_Branch"
+        },
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "tnbc"
+          },
+          "transition": "TNBC_Adjuvant_Branch"
+        },
+        {
+          "transition": "Followup_Start"
+        }
+      ]
+    },
+    "Endocrine_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Endokrintherapie für HR+: Aromatasehemmer (AI) 46% / Tamoxifen 54% für 50-60 J.",
+        "Persistenz nach 5 Jahren: AI 35.1%, TAM 32.5% (Kostev 2023). 🟢",
+        "Hinweis: AI ist Standard postmenopausaler Frauen; TAM für prä/perimenopausale Frauen 50-55 J."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "AI_Encounter",
+          "distribution": 0.46
+        },
+        {
+          "transition": "TAM_Encounter",
+          "distribution": 0.54
+        }
+      ]
+    },
+    "AI_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "Letrozole_Order"
+    },
+    "Letrozole_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L02BG04",
+          "display": "letrozole"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L02BG04",
+          "display": "Letrozol"
+        }
+      ],
+      "chronic": true,
+      "direct_transition": "Systemic_Enc_End",
+      "remarks": [
+        "Aromatasehemmer (Letrozol). ATC L02BG04. Standard 5 Jahre (±5 Jahre extended). 🟢"
+      ]
+    },
+    "TAM_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "Tamoxifen_Order"
+    },
+    "Tamoxifen_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L02BA01",
+          "display": "tamoxifen"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L02BA01",
+          "display": "Tamoxifen"
+        }
+      ],
+      "chronic": true,
+      "direct_transition": "Systemic_Enc_End",
+      "remarks": [
+        "Tamoxifen. ATC L02BA01. Standard 5–10 Jahre. 🟢"
+      ]
+    },
+    "Trastuzumab_Adjuvant_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Adjuvante Trastuzumab-Therapie (12 Monate) für HER2+ mit pT1c+: ~95%.",
+        "Quelle: S3-Leitlinie, Konzept §8.2. 🟢"
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Trastuzumab_Adj_Encounter",
+          "distribution": 0.95
+        },
+        {
+          "transition": "Systemic_Enc_End",
+          "distribution": 0.05
+        }
+      ]
+    },
+    "Trastuzumab_Adj_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "Trastuzumab_Adj_Order"
+    },
+    "Trastuzumab_Adj_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FD01",
+          "display": "trastuzumab"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FD01",
+          "display": "Trastuzumab"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "HER2_Endocrine_Branch",
+      "remarks": [
+        "Adjuvantes Trastuzumab (12 Monate). ATC L01FD01. 🟢"
+      ]
+    },
+    "HER2_Endocrine_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "LumBHER2+ erhält zusätzlich Endokrintherapie (AI oder TAM). HER2-enriched: nicht."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_subtype",
+            "operator": "==",
+            "value": "lumbbher2pos"
+          },
+          "distributions": [
+            {
+              "transition": "AI_Encounter",
+              "distribution": 0.46
+            },
+            {
+              "transition": "TAM_Encounter",
+              "distribution": 0.54
+            }
+          ]
+        },
+        {
+          "transition": "Systemic_Enc_End"
+        }
+      ]
+    },
+    "TNBC_Adjuvant_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "TNBC: Pembrolizumab bei PD-L1+ (KEYNOTE-522 — 66% der TNBC). 🟡 (PD-L1-Status nicht explizit modelliert)",
+        "Olaparib bei gBRCA (OlympiA) — bc_high_risk-Flag als Proxy für BRCA-Trägerinnen."
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Attribute",
+            "attribute": "bc_high_risk",
+            "operator": "==",
+            "value": true
+          },
+          "transition": "Olaparib_Order"
+        },
+        {
+          "distributions": [
+            {
+              "transition": "Pembrolizumab_Adj_Order",
+              "distribution": 0.66
+            },
+            {
+              "transition": "Systemic_Enc_End",
+              "distribution": 0.34
+            }
+          ]
+        }
+      ]
+    },
+    "Pembrolizumab_Adj_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FF02",
+          "display": "pembrolizumab"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FF02",
+          "display": "Pembrolizumab"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "Systemic_Enc_End",
+      "remarks": [
+        "Pembrolizumab adjuvant bei TNBC (KEYNOTE-522, EMA-zugelassen). ATC L01FF02. 🟢"
+      ]
+    },
+    "Olaparib_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01XX46",
+          "display": "olaparib"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01XX46",
+          "display": "Olaparib"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "Systemic_Enc_End",
+      "remarks": [
+        "Olaparib adjuvant bei TNBC mit gBRCA-Mutation (OlympiA). ATC L01XX46. 🟢"
+      ]
+    },
+    "Systemic_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Followup_Start"
+    },
+    "M1_Diagnosis": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "277649004",
+          "display": "Recurrent malignant neoplasm of breast (disorder)"
+        }
+      ],
+      "direct_transition": "M1_Palliative_Encounter",
+      "remarks": [
+        "Fernmetastasierung bei Erstdiagnose (de-novo M1) oder Progression.",
+        "SCT 277649004 als Rezidiv/Metastasierung-Condition."
+      ]
+    },
+    "M1_Palliative_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "M1_Therapy_Branch"
+    },
+    "M1_Therapy_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Palliative Erstlinientherapie nach Subtyp (Stand 2023):",
+        "  HR+/HER2-: CDK4/6-Inhibitor + AI (Palbociclib + Letrozol)",
+        "  HER2+: Trastuzumab + Pertuzumab + Taxan (THP)",
+        "  TNBC: Pembrolizumab + Chemotherapie (KEYNOTE-522-Regime) oder Sacituzumab-Govitecan"
+      ],
+      "complex_transition": [
+        {
+          "condition": {
+            "condition_type": "Or",
+            "conditions": [
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "luma"
+              },
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "lumbbher2neg"
+              }
+            ]
+          },
+          "transition": "CDK46_Order"
+        },
+        {
+          "condition": {
+            "condition_type": "Or",
+            "conditions": [
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "lumbbher2pos"
+              },
+              {
+                "condition_type": "Attribute",
+                "attribute": "bc_subtype",
+                "operator": "==",
+                "value": "her2enr"
+              }
+            ]
+          },
+          "transition": "Trastuzumab_Pertuzumab_M1_Order"
+        },
+        {
+          "transition": "Sacituzumab_Order"
+        }
+      ]
+    },
+    "CDK46_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FF01",
+          "display": "palbociclib"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FF01",
+          "display": "Palbociclib"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "AI_M1_Order",
+      "remarks": [
+        "CDK4/6-Inhibitor Palbociclib (PALOMA-2). ATC L01FF01. 🟢"
+      ]
+    },
+    "AI_M1_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L02BG04",
+          "display": "letrozole"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L02BG04",
+          "display": "Letrozol"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "M1_Duration_Wait",
+      "remarks": [
+        "Letrozol als endokriner Backbone im M1-Setting. ATC L02BG04. 🟢"
+      ]
+    },
+    "Trastuzumab_Pertuzumab_M1_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FD01",
+          "display": "trastuzumab"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FD01",
+          "display": "Trastuzumab"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "Pertuzumab_M1_Order",
+      "remarks": [
+        "Trastuzumab im M1-Setting (THP). ATC L01FD01. 🟢"
+      ]
+    },
+    "Pertuzumab_M1_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FD02",
+          "display": "pertuzumab"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FD02",
+          "display": "Pertuzumab"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "M1_Duration_Wait"
+    },
+    "Sacituzumab_Order": {
+      "type": "MedicationOrder",
+      "codes": [
+        {
+          "system": "http://www.whocc.no/atc",
+          "code": "L01FX23",
+          "display": "sacituzumab govitecan"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/atc",
+          "code": "L01FX23",
+          "display": "Sacituzumab-Govitecan"
+        }
+      ],
+      "chronic": false,
+      "direct_transition": "M1_Duration_Wait",
+      "remarks": [
+        "Sacituzumab-Govitecan bei TNBC M1 (ASCENT). ATC L01FX23. 🟢"
+      ]
+    },
+    "M1_Duration_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 180,
+          "mode": 365,
+          "max": 730
+        }
+      },
+      "unit": "days",
+      "direct_transition": "M1_Outcome_Branch",
+      "remarks": [
+        "Palliative Therapiedauer bis Outcome: TRIANGULAR 6–12–24 Monate.",
+        "Post-Metastasierungs-Überleben (DE, TRM): 1-J. 69.3%, 5-J. 23.8%, 10-J. 10.7%.",
+        "Hier vereinfachtes binäres Outcome (Tod / Weiterleben). 🟡"
+      ]
+    },
+    "M1_Outcome_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "5-J-OS nach M1 (TRM): 23.8%. Hier: nach 1-2 Jahren wird ~60% der Patientinnen sterben.",
+        "Vereinfacht — keine multi-line Therapiesequenz in v1."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Breast_Cancer_Death",
+          "distribution": 0.6
+        },
+        {
+          "transition": "M1_Longterm_Terminal",
+          "distribution": 0.4
+        }
+      ]
+    },
+    "Breast_Cancer_Death": {
+      "type": "Death",
+      "remarks": [
+        "Tod durch Mammakarzinom."
+      ]
+    },
+    "M1_Longterm_Terminal": {
+      "type": "Terminal"
+    },
+    "Followup_Start": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 90,
+          "mode": 180,
+          "max": 270
+        }
+      },
+      "unit": "days",
+      "direct_transition": "Annual_Followup_Encounter",
+      "remarks": [
+        "Erste Nachsorge nach Abschluss der Primärtherapie: TRIANGULAR 3–6–9 Monate.",
+        "S3-Leitlinie: klinische Untersuchung alle 3 Monate im 1. Jahr. 🟢"
+      ]
+    },
+    "Annual_Followup_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185389009",
+          "display": "Follow-up visit (procedure)"
+        }
+      ],
+      "direct_transition": "Annual_Followup_Mammography"
+    },
+    "Annual_Followup_Mammography": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "566241000119107",
+          "display": "Diagnostic mammography (procedure)"
+        }
+      ],
+      "direct_transition": "Recurrence_Check",
+      "remarks": [
+        "Jährliche Nachsorge-Mammographie (bilat. oder kontralat. je nach Operationstyp)."
+      ]
+    },
+    "Recurrence_Check": {
+      "type": "Simple",
+      "remarks": [
+        "Jährliche Rezidivhazards aus TRM-Spezialauswertung (RisikoM0, n=46,418):",
+        "  Gesamtprogression: 16.3% / 24.0% / 28.7% bei 5/10/15 Jahren (kumulativ).",
+        "  TNBC: Hazardpeak ~Jahr 3, danach steil abfallend.",
+        "  ER+ (Luminal): konstanter spätes Tail 1–2%/J. über 20 Jahre (Pan 2017).",
+        "Hier vereinfacht: jährliche Hazardrate ~2.5% (gewichtetes Mittel über Subtypen). 🟡",
+        "Subtyp-bedingte Hazards in v2 als complex_transition implementieren."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Recurrence_Onset",
+          "distribution": 0.025
+        },
+        {
+          "transition": "Followup_Enc_End_Continue",
+          "distribution": 0.975
+        }
+      ]
+    },
+    "Followup_Enc_End_Continue": {
+      "type": "EncounterEnd",
+      "direct_transition": "Annual_Followup_Wait"
+    },
+    "Annual_Followup_Wait": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "TRIANGULAR",
+        "parameters": {
+          "min": 300,
+          "mode": 365,
+          "max": 420
+        }
+      },
+      "unit": "days",
+      "direct_transition": "Annual_Followup_Encounter",
+      "remarks": [
+        "Jahresintervall zwischen Nachsorge-Besuchen: TRIANGULAR 10–12–14 Monate."
+      ]
+    },
+    "Recurrence_Onset": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "277649004",
+          "display": "Recurrent malignant neoplasm of breast (disorder)"
+        }
+      ],
+      "direct_transition": "Recurrence_Encounter",
+      "remarks": [
+        "Rezidiv/Progression des Mammakarzinoms. SCT 277649004."
+      ]
+    },
+    "Recurrence_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "11429006",
+          "display": "Consultation (procedure)"
+        }
+      ],
+      "direct_transition": "Recurrence_Branch"
+    },
+    "Recurrence_Branch": {
+      "type": "Simple",
+      "remarks": [
+        "Rezidivtyp: Lokoregionäres Rezidiv ~40% / Fernmetastasierung ~60%. 🟡",
+        "Quelle: TRM München, konzeptuell — eigentliche Daten subtyp-stratifiziert."
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Local_Recurrence_Proc",
+          "distribution": 0.4
+        },
+        {
+          "transition": "Recurrence_M1_Onset",
+          "distribution": 0.6
+        }
+      ]
+    },
+    "Local_Recurrence_Proc": {
+      "type": "Procedure",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "81989007",
+          "display": "Excision of lesion of breast (procedure)"
+        }
+      ],
+      "direct_transition": "Recurrence_Enc_End",
+      "remarks": [
+        "Lokoregionäres Rezidiv: operative Therapie (Nachresektion oder Mastektomie). Vereinfacht als generische Exzision."
+      ]
+    },
+    "Recurrence_Enc_End": {
+      "type": "EncounterEnd",
+      "direct_transition": "Annual_Followup_Wait"
+    },
+    "Recurrence_M1_Onset": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "277649004",
+          "display": "Recurrent malignant neoplasm of breast (disorder)"
+        }
+      ],
+      "direct_transition": "M1_Palliative_Encounter",
+      "remarks": [
+        "Fernmetastasierung als Rezidivform → palliatives Setting."
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal"
+    }
+  }
+}

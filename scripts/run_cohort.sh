@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
-# Generate a prostate cohort with the custom Synthea module.
+# Generate a cancer cohort with a custom Synthea module.
 #
-# Usage: scripts/run_cohort.sh [population] [ageRange] [gender] [state]
-# Defaults: 100 males aged 50-60 (US demographics for now; EU localization TBD).
+# Usage: scripts/run_cohort.sh [population] [ageRange] [gender] [state] [cancer]
+# Examples:
+#   scripts/run_cohort.sh 10  50-60 M Massachusetts prostate   # 10 prostate patients (default)
+#   scripts/run_cohort.sh 10  50-60 F Massachusetts breast     # 10 breast cancer patients
+#   scripts/run_cohort.sh 200 50-60 F Massachusetts breast     # 200 breast cancer patients
+#
+# CANCER arg selects the module (default: prostate → modules/adult/prostate.json).
+#   breast  → modules/adult/breast.json  (women 50-60, SenologieOnFHIR)
+#   prostate → modules/adult/prostate.json (men 50-60)
 #
 # Reproducibility: SEED and CLINICIAN_SEED are pinned (default 42) so a run is
 # bit-for-bit reproducible given the same Synthea version + module version. Set
@@ -10,7 +17,6 @@
 # TIMELINES across different days, also pin REFERENCE_DATE (Synthea ages people
 # relative to it; unset = today), e.g. REFERENCE_DATE=20260701.
 #
-# Loads modules/adult/prostate.json via Synthea's -d (local module dir) flag.
 # Output (FHIR R4 bundles) lands in synthea/output/ (gitignored).
 set -euo pipefail
 
@@ -18,6 +24,7 @@ POP="${1:-100}"
 AGE="${2:-50-60}"
 GENDER="${3:-M}"
 STATE="${4:-Massachusetts}"
+CANCER="${5:-prostate}"
 
 # Reproducibility knobs (override via env). Default: fixed seed 42.
 SEED="${SEED:-42}"
@@ -41,8 +48,27 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 SYNTHEA="$REPO/synthea"
 # NOTE: Synthea treats files in SUBDIRECTORIES of the -d dir as *submodules*
 # (only run when CALLED via CallSubmodule). Top-level modules must sit directly
-# in the -d dir. So we point -d at modules/adult, where prostate.json lives flat.
+# in the -d dir. So we point -d at modules/adult, where both prostate.json and
+# breast.json live flat.
 MODULES="${MODULE_DIR:-$REPO/modules/adult}"
+
+# Cancer-type defaults: breast cohort uses F / 50-60; prostate uses M / 50-60.
+case "$CANCER" in
+  breast)
+    GENDER="${3:-F}"   # override default only if not set by caller
+    ;;
+  prostate)
+    GENDER="${3:-M}"
+    ;;
+  *)
+    echo "Unknown cancer type '$CANCER'. Supported: prostate, breast." >&2
+    exit 1
+    ;;
+esac
+MODULE_FILE="$MODULES/${CANCER}.json"
+if [ ! -f "$MODULE_FILE" ]; then
+  echo "Module file not found: $MODULE_FILE" >&2; exit 1
+fi
 
 if [ ! -x "$SYNTHEA/run_synthea" ]; then
   echo "Synthea not found at $SYNTHEA (clone it first: git clone https://github.com/synthetichealth/synthea)" >&2
@@ -58,7 +84,7 @@ if [ -n "$REFERENCE_DATE" ]; then
   SEED_FLAGS+=(-r "$REFERENCE_DATE")
 fi
 
-echo "Generating $POP patients | age $AGE | gender $GENDER | $STATE | modules: $MODULES"
+echo "Generating $POP $CANCER patients | age $AGE | gender $GENDER | $STATE | module: $MODULE_FILE"
 echo "Reproducibility: seed=$SEED clinicianSeed=$CLINICIAN_SEED referenceDate=${REFERENCE_DATE:-<today>}"
 cd "$SYNTHEA"
 # --exporter.fhir.use_us_core_ig=false: EU dataset - do not stamp US-Core meta.profile
