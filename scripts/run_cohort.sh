@@ -102,6 +102,12 @@ echo "Post-processing: synthetic-data tag (SYNDERAI convention) on every resourc
 python3 "$(winpath "$REPO/scripts/postprocess_synthetic_tag.py")" "$(winpath "$SYNTHEA/output/fhir")"
 echo "Post-processing: ECCDM layer (HL7-EU Cancer Common draft profiles)"
 python3 "$(winpath "$REPO/scripts/postprocess_ccdm.py")" "$(winpath "$SYNTHEA/output/fhir")"
+# SenologieOnFHIR demographics: replace US names/addresses/identifiers with
+# German demographics sourced directly from the SenologieOnFHIR IG example pool.
+if [ "$CANCER" = "breast" ]; then
+  echo "Post-processing: SenologieOnFHIR demographics (DE names, SENO-IDs, DE cities)"
+  python3 "$(winpath "$REPO/scripts/postprocess_senologie_demographics.py")" "$(winpath "$SYNTHEA/output/fhir")"
+fi
 
 # --- provenance: document exactly how this cohort was produced -------------
 FHIR_DIR="$SYNTHEA/output/fhir"
@@ -110,7 +116,7 @@ mkdir -p "$PROV_DIR"
 
 RUN_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 RUN_ID="run_seed${SEED}_${RUN_TS}"
-MODULE_FILE="$MODULES/prostate.json"
+MODULE_FILE="$MODULES/${CANCER}.json"
 
 # generator + module provenance (with fallbacks if git/tools are absent)
 SYNTHEA_VER="$(git -C "$SYNTHEA" describe --tags --always 2>/dev/null || echo unknown)"
